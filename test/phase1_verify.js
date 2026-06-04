@@ -129,6 +129,68 @@ function compute(obj) {
     ok('export carries overlay + custom evidence', /"overlay"/.test(html) && /"confidence": "B"/.test(html) && /"technologyIds"/.test(html));
   }
 
+  console.log('\n── Chunk 4: dedup (Option 1 + override, named shared pool) ──');
+  const throws = fn => { try { fn(); return false; } catch (e) { return e.message; } };
+  {
+    const g = applied(readJSON(V2)).gatherEngagement();
+    ok('dedup[] round-trips losslessly', diff(g.dedup, readJSON(V2).dedup) === null);
+  }
+  {
+    const w = loadApp().window;
+    ok('validateDedup throws on shares > 100%',
+       !!throws(() => w.validateDedup([{ poolId:'p', rationale:'x', members:[{leverId:'A',share:0.7},{leverId:'B',share:0.6}] }])));
+    ok('validateDedup throws on missing rationale',
+       !!throws(() => w.validateDedup([{ poolId:'p', members:[{leverId:'A',share:0.5}] }])));
+    ok('validateDedup throws on a lever in two groups',
+       !!throws(() => w.validateDedup([
+         { poolId:'p1', rationale:'x', members:[{leverId:'A',share:0.5}] },
+         { poolId:'p2', rationale:'y', members:[{leverId:'A',share:0.4}] }])));
+    ok('validateDedup accepts a valid group (sum exactly 100%)',
+       throws(() => w.validateDedup([{ poolId:'p', rationale:'x', members:[{leverId:'A',share:0.6},{leverId:'B',share:0.4}] }])) === false);
+  }
+  {
+    const w = applied(readJSON(V2));
+    ok('dedupShareFor: WH-02=0.6, CUSTOM-01=0.4, WH-06=null',
+       w.dedupShareFor('WH-02') === 0.6 && w.dedupShareFor('CUSTOM-01') === 0.4 && w.dedupShareFor('WH-06') === null);
+    // Exact override: a deduped hard_labor lever (fcf=1) uses share, not (1-haircut).
+    const c1 = readJSON(V2).customScenarios.find(s => s.id === 'CUSTOM-01');
+    const rows = w.calcDriverWalkdown(c1, {});
+    const ratio = rows[2].afterHaircut / rows[2].afterAccess;
+    ok('deduped lever applies SHARE (0.4), overriding its 0.10 haircut', Math.abs(ratio - 0.4) < 1e-9, ratio.toFixed(4));
+    // Non-deduped library hard_labor lever keeps (1-haircut)=0.9.
+    const rowsWH1 = w.calcDriverWalkdown({ id:'WH-01', rampType:'hard_labor', accessibilityTier:'configured', haircut:0.10 }, {});
+    const ratio1 = rowsWH1[2].afterHaircut / rowsWH1[2].afterAccess;
+    ok('non-deduped lever keeps (1 - haircut) = 0.9', Math.abs(ratio1 - 0.9) < 1e-9, ratio1.toFixed(4));
+  }
+  {
+    // No double-counting BY CONSTRUCTION: the pool's member shares sum to <=100%.
+    const pool = readJSON(V2).dedup[0];
+    const sum = pool.members.reduce((s, m) => s + m.share, 0);
+    ok('shared pool is credited once (member shares sum to <= 100%)', sum <= 1.0000001, `${(sum*100).toFixed(0)}%`);
+    // Same lever, same ramp/access/fcf — only the overlap factor differs: a deduped
+    // lever is credited LESS than it would be standalone (its 0.10 haircut => 0.9).
+    const c1 = readJSON(V2).customScenarios.find(s => s.id === 'CUSTOM-01');
+    const peakDe = applied(readJSON(V2)).calcDriverWalkdown(c1, {})[2].afterHaircut;
+    const noDe = readJSON(V2); noDe.dedup = [];
+    const peakNo = applied(noDe).calcDriverWalkdown(c1, {})[2].afterHaircut;
+    ok('deduped lever is credited less than standalone (0.4 vs 0.9)',
+       peakDe < peakNo && Math.abs(peakDe / peakNo - (0.4 / 0.9)) < 1e-9, `${Math.round(peakDe)} < ${Math.round(peakNo)}`);
+  }
+  {
+    // Auditable render: rationale + split + per-row pool marker.
+    const w = applied(readJSON(V2)); w.renderROI();
+    const wk = w.document.getElementById('nrv-walkdown-body').innerHTML;
+    ok('walkdown renders dedup rationale + split',
+       /Inbound receiving labor/.test(wk) && /credit it once/.test(wk) && /WH-02 60% \/ CUSTOM-01 40%/.test(wk));
+    ok('walkdown marks deduped lever rows ([pool NN%])', /\[pool 60%\]/.test(wk) && /\[pool 40%\]/.test(wk));
+  }
+  {
+    // Hard error on load: an invalid dedup file aborts applyEngagement.
+    const bad = readJSON(V2); bad.dedup = [{ poolId:'p', rationale:'x', members:[{leverId:'WH-02',share:0.8},{leverId:'CUSTOM-01',share:0.5}] }];
+    const w = loadApp().window;
+    ok('applyEngagement hard-errors on invalid dedup', !!throws(() => w.applyEngagement(bad)));
+  }
+
   console.log(`\n${fail ? '✗' : '✓'} ${pass} passed, ${fail} failed\n`);
   process.exit(fail ? 1 : 0);
 })();

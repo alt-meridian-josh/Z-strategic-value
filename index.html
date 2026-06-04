@@ -3869,6 +3869,56 @@ function leverEvidence(sc) {
   if (sc && sc.custom === true) return sc.evidence || null;
   return (sc && engagementOverlay[sc.id] && engagementOverlay[sc.id].evidence) || null;
 }
+
+// v2 (req 4): dedup declarations — named shared loss pools. Each group:
+//   { poolId, label, rationale (required), members: [{ leverId, share }] }
+// Within a group a member's SHARE REPLACES its per-lever (1 - haircut) — override,
+// no stacking. Shares per group must sum to <= 100% and each lever may appear in
+// at most one group, so no-double-counting holds BY CONSTRUCTION, not by discount.
+// [] => no dedup, every lever keeps its own haircut (v1 behavior).
+let engagementDedup = [];
+
+// Hard validation. Throws on: missing rationale, shares > 100%, or a lever in two
+// groups. Called on load (before any state change) and available to any edit path.
+function validateDedup(dedup) {
+  if (!Array.isArray(dedup)) return;
+  const seen = {};
+  dedup.forEach((g, i) => {
+    const tag = `Dedup group "${g && (g.poolId || g.label) || i}"`;
+    if (!g || !g.rationale || !String(g.rationale).trim())
+      throw new Error(`${tag}: a rationale is required.`);
+    if (!Array.isArray(g.members) || !g.members.length)
+      throw new Error(`${tag}: must list at least one member.`);
+    let sum = 0;
+    g.members.forEach(m => {
+      if (!m || !m.leverId) throw new Error(`${tag}: every member needs a leverId.`);
+      if (seen[m.leverId]) throw new Error(`Lever ${m.leverId} appears in more than one dedup group.`);
+      seen[m.leverId] = true;
+      sum += (+m.share || 0);
+    });
+    if (sum > 1.0000001)
+      throw new Error(`${tag}: member shares sum to ${(sum * 100).toFixed(1)}% (must be <= 100%).`);
+  });
+}
+
+// Dedup share for a lever id, or null if it is not in any group.
+function dedupShareFor(scId) {
+  for (const g of engagementDedup) {
+    const m = (g.members || []).find(x => x && x.leverId === scId);
+    if (m) return +m.share || 0;
+  }
+  return null;
+}
+
+// The overlap-discipline factor applied to a lever's ramped/accessible benefit:
+// the dedup share when grouped (override), else (1 - haircut). Single multiply —
+// keeps calcNRV a one-liner.
+function overlapFactor(sc) {
+  const s = dedupShareFor(sc.id);
+  if (s !== null) return s;
+  const h = (sc.haircut !== undefined) ? sc.haircut : 0.10;
+  return 1 - h;
+}
 function techScope() {
   return (engagementTechnologies && engagementTechnologies.length)
     ? engagementTechnologies
@@ -3906,9 +3956,11 @@ function migrateEngagement(p) {
 function applyEngagement(p) {
   if(!p || typeof p !== 'object') { console.warn('applyEngagement: nothing to load'); return false; }
   p = migrateEngagement(p);
+  validateDedup(p.dedup); // hard error on invalid dedup — abort before any state change
   appMode = p.mode;
   engagementTechnologies = Array.isArray(p.technologies) ? p.technologies.map(t => Object.assign({}, t)) : [];
   engagementOverlay = (p.overlay && typeof p.overlay === 'object') ? JSON.parse(JSON.stringify(p.overlay)) : {};
+  engagementDedup = Array.isArray(p.dedup) ? JSON.parse(JSON.stringify(p.dedup)) : [];
   const setVal = (id,v) => { const el = document.getElementById(id); if(el && v!=null) el.value = v; };
 
   // 0) Optional notice banner (e.g. illustrative-sample disclaimer)
@@ -4004,6 +4056,7 @@ function gatherEngagement() {
     mode: appMode,
     technologies: engagementTechnologies.map(t => Object.assign({}, t)),
     overlay: JSON.parse(JSON.stringify(engagementOverlay)),
+    dedup: JSON.parse(JSON.stringify(engagementDedup)),
     engagement: eng,
     verticals: [...activeIndustries],
     selectedIds: sel,
@@ -4821,8 +4874,7 @@ function calcNRV(activeScenarios, costs, wacc) {
       const ann = Math.max(0, calcSc(sc));
       const ramp = RAMP[sc.rampType].y[t];
       const access = ACCESS_TIER[sc.accessibilityTier || 'configured'][t];
-      const h = (sc.haircut !== undefined) ? sc.haircut : 0.10;
-      return sum + ann * ramp * access * (1 - h) * financeCreditFactor(sc);
+      return sum + ann * ramp * access * overlapFactor(sc) * financeCreditFactor(sc);
     }, 0);
 
     const decayAvoided = B0 * (Math.pow(1.035, yr) - 1);
@@ -4877,10 +4929,9 @@ function calcDriverWalkdown(sc, result) {
   for (let t = 0; t < 5; t++) {
     const ramp = RAMP[sc.rampType].y[t];
     const access = ACCESS_TIER[sc.accessibilityTier || 'configured'][t];
-    const h = (sc.haircut !== undefined) ? sc.haircut : 0.10;
     const afterRamp = ann * ramp;
     const afterAccess = afterRamp * access;
-    const afterHaircut = afterAccess * (1 - h) * financeCreditFactor(sc);
+    const afterHaircut = afterAccess * overlapFactor(sc) * financeCreditFactor(sc);
     rows.push({ year: t + 1, gross: ann, afterRamp, afterAccess, afterHaircut });
   }
   return rows;
@@ -4892,17 +4943,18 @@ function renderWalkdownTable(activeScenarios, result) {
 
   const rows = activeScenarios.map(sc => {
     const ann = Math.max(0, calcSc(sc));
-    const h = (sc.haircut !== undefined) ? sc.haircut : 0.10;
     const tier = sc.accessibilityTier || 'configured';
     const peakT = 2; // Y3 index
     const ramp = RAMP[sc.rampType].y[peakT];
     const access = ACCESS_TIER[tier][peakT];
     const afterRamp = ann * ramp;
     const afterAccess = afterRamp * access;
-    const afterHaircut = afterAccess * (1 - h) * financeCreditFactor(sc);
+    const afterHaircut = afterAccess * overlapFactor(sc) * financeCreditFactor(sc);
     const isCustom = sc.custom === true;
+    const dShare = dedupShareFor(sc.id);
+    const poolMark = (dShare !== null) ? ` <span style="font-size:9px;color:var(--muted)">[pool ${Math.round(dShare*100)}%]</span>` : '';
     return `<tr${isCustom ? ' style="font-style:italic;opacity:0.8"' : ''}>
-      <td>${sc.id}${isCustom ? ' <span style="font-size:9px;color:var(--muted)">[user]</span>' : ''}</td>
+      <td>${sc.id}${isCustom ? ' <span style="font-size:9px;color:var(--muted)">[user]</span>' : ''}${poolMark}</td>
       <td style="text-align:right">${fmt(Math.round(ann))}</td>
       <td style="text-align:right">${fmt(Math.round(afterRamp))}</td>
       <td style="text-align:right">${fmt(Math.round(afterAccess))}</td>
@@ -4929,7 +4981,14 @@ function renderWalkdownTable(activeScenarios, result) {
     <td></td>
   </tr>`;
 
-  el.innerHTML = rows + decayRow + tcoRow + nrvRow;
+  // v2 (req 4): make every applied dedup auditable — rationale + share split.
+  const dedupNote = engagementDedup.length ? engagementDedup.map(g => {
+    const split = (g.members || []).map(m => `${m.leverId} ${Math.round((+m.share||0)*100)}%`).join(' / ');
+    return `<tr style="background:var(--gray-50)"><td colspan="6" style="font-size:10px;color:var(--muted);padding:6px 8px;line-height:1.5">`
+      + `<strong>Dedup — ${g.label || g.poolId} (${split}):</strong> ${g.rationale}</td></tr>`;
+  }).join('') : '';
+
+  el.innerHTML = rows + dedupNote + decayRow + tcoRow + nrvRow;
 }
 
 // ── CUSTOM VALUE SCENARIO BUILDER ──
@@ -6549,13 +6608,12 @@ function exportFullPDF() {
       const peakT = 2;
       const wkRows = active.map(sc => {
         const ann = Math.max(0, calcSc(sc));
-        const h = (sc.haircut !== undefined) ? sc.haircut : 0.10;
         const tier = sc.accessibilityTier || 'configured';
         const ramp = RAMP[sc.rampType].y[peakT];
         const access = ACCESS_TIER[tier][peakT];
         const afterRamp = ann * ramp;
         const afterAccess = afterRamp * access;
-        const afterHaircut = afterAccess * (1 - h);
+        const afterHaircut = afterAccess * overlapFactor(sc);
         const isCustom = sc.custom === true;
         return `<tr${isCustom ? ' style="font-style:italic;color:#555"' : ''}>
           <td>${sc.id}${isCustom ? ' <span style="color:#999">(user-generated)</span>' : ''} — ${sc.name}</td>
