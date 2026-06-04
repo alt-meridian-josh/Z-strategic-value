@@ -923,6 +923,36 @@ svg{max-width:100%;height:auto}
 
 <main class="main">
 
+<!-- == ENTRY CHOOSER (Phase 2) — three doors onto the one guided pipeline. Shown on
+     load only when no engagement is embedded and no ?example= is present. A front
+     door over the existing loader; it adds no new load mechanism. == -->
+<div id="entry-chooser" style="display:none;position:fixed;inset:0;z-index:1000;background:var(--brand-black,#0b0b0c);overflow:auto;color:#fff">
+  <div style="max-width:900px;margin:0 auto;padding:64px 24px 48px">
+    <div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#A8F931;font-weight:700">Zebra Value Accelerator</div>
+    <h1 style="font-size:30px;margin:10px 0 4px;font-weight:800">Start an engagement</h1>
+    <p style="color:rgba(255,255,255,.55);font-size:14px;margin:0 0 28px">Three ways in — all land in the same guided analysis.</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+      <button class="entry-door" onclick="chooseStartNew()" style="text-align:left;background:#151517;border:1px solid #2a2a2e;border-radius:10px;padding:22px 18px;color:#fff;cursor:pointer">
+        <div style="font-size:22px;line-height:1">＋</div>
+        <div style="font-weight:700;margin:10px 0 4px;font-size:15px">Start new</div>
+        <div style="color:rgba(255,255,255,.5);font-size:12px;line-height:1.5">A blank engagement. Straight into the guided flow.</div>
+      </button>
+      <button class="entry-door" onclick="chooseProfiles()" style="text-align:left;background:#151517;border:1px solid #2a2a2e;border-radius:10px;padding:22px 18px;color:#fff;cursor:pointer">
+        <div style="font-size:22px;line-height:1">⬡</div>
+        <div style="font-weight:700;margin:10px 0 4px;font-size:15px">Start from a profile</div>
+        <div style="color:rgba(255,255,255,.5);font-size:12px;line-height:1.5">A bundled vertical starter you can tailor.</div>
+      </button>
+      <button class="entry-door" onclick="chooseOpenJson()" style="text-align:left;background:#151517;border:1px solid #2a2a2e;border-radius:10px;padding:22px 18px;color:#fff;cursor:pointer">
+        <div style="font-size:22px;line-height:1">↥</div>
+        <div style="font-weight:700;margin:10px 0 4px;font-size:15px">Open a JSON</div>
+        <div style="color:rgba(255,255,255,.5);font-size:12px;line-height:1.5">Reload a saved engagement from a .json file.</div>
+      </button>
+    </div>
+    <div id="entry-profiles" style="display:none;margin-top:28px"></div>
+  </div>
+</div>
+
+
 <!-- Engagement notice banner — populated from a loaded engagement's _notice field -->
 <div id="engagement-notice" style="display:none;align-items:center;gap:10px;background:#fff7e6;border:1px solid #f0c36d;border-left:4px solid #e0a020;color:#7a5200;font-size:12px;padding:8px 14px;margin:0 0 14px;border-radius:5px">
   <span style="font-size:14px">&#9432;</span>
@@ -4109,6 +4139,7 @@ function importEngagementFile(file) {
         if(!confirm('This file may not be a saved Strategic Value analysis. Load it anyway?')) return;
       }
       applyEngagement(obj);
+      hideChooser();  // dismiss the entry chooser if a JSON was opened through it
       go(0);
       const fi = document.getElementById('import-file'); if(fi) fi.value = '';
     } catch(err) { alert('Could not read that file: ' + err.message); }
@@ -4116,6 +4147,44 @@ function importEngagementFile(file) {
   reader.readAsText(file);
 }
 function triggerImport() { document.getElementById('import-file')?.click(); }
+
+// ── ENTRY CHOOSER (Phase 2) ───────────────────────────────────────────────────
+// The three doors are thin wrappers over the existing loaders. The chooser is an
+// overlay; choosing a door hides it and lands in the one guided pipeline.
+function showChooser() { const el = document.getElementById('entry-chooser'); if(el) el.style.display = 'block'; }
+function hideChooser() { const el = document.getElementById('entry-chooser'); if(el) el.style.display = 'none'; }
+
+// Start new → a blank engagement (keep the analyst's own company/seller/email),
+// then into the guided flow at Step 1.
+function clearEngagement() {
+  ['i-customer','i-partners','i-pain'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  const t = document.getElementById('i-title'); if(t) t.value = 'RFID Strategic Value Analysis';
+  const s = document.getElementById('i-sites'); if(s) s.value = 1;
+  state.selectedIds = new Set();
+  state.customScenarios = [];
+  if (typeof activeIndustries !== 'undefined') activeIndustries.clear();
+  document.querySelectorAll('.vbtn').forEach(b => b.classList.remove('active'));
+  engagementTechnologies = []; engagementOverlay = {}; engagementDedup = [];
+  engagementProvenance = {}; engagementAnnotations = {};
+  Object.keys(nrvOverrides).forEach(k => delete nrvOverrides[k]);
+  appMode = 'analyst';
+  costRowsEdited = false; costRowsPreset = false;
+  costRows = defaultCostRows(); rebuildCostState();
+  try { renderLeverGrid(); } catch(e) {}
+  try { syncNav(); } catch(e) {}
+}
+function chooseStartNew() { hideChooser(); clearEngagement(); go(0); }
+function chooseOpenJson() { triggerImport(); } // import success hides the chooser + go(0)
+function chooseProfiles() {
+  const host = document.getElementById('entry-profiles');
+  if(host) { host.style.display = 'block'; host.innerHTML = '<p style="color:rgba(255,255,255,.5);font-size:13px">Loading profiles…</p>'; }
+  renderProfileGrid();
+}
+// Profile grid — populated in Phase 2 chunk 2 (manifest-driven).
+function renderProfileGrid() {
+  const host = document.getElementById('entry-profiles');
+  if(host) host.innerHTML = '<p style="color:rgba(255,255,255,.5);font-size:13px">No profiles configured.</p>';
+}
 
 // If this file was produced by "Export standalone tool", an engagement is baked in
 // as a JSON script block (id "embedded-engagement") — read and apply it.
@@ -8408,8 +8477,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Init cost state from slider defaults (sliders have value= attrs so this works)
   costRows = defaultCostRows();
   rebuildCostState();
-  checkEmbeddedEngagement();  // standalone export: engagement baked into the file
+  const embedded = checkEmbeddedEngagement();  // standalone export: engagement baked into the file
   checkExampleParam();        // opt-in ?example=<key> — applied after defaults so it wins
+  const hasExample = !!new URLSearchParams(location.search).get('example');
+  if(!embedded && !hasExample) showChooser();  // no engagement + no example → three-door entry
   syncNav();
 });
 
