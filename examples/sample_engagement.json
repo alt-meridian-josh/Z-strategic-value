@@ -1,0 +1,141 @@
+{
+  "_type": "strategic-value-engagement",
+  "_version": 1,
+  "_label": "Zebra Apparel Co. — saved 2026-06-04",
+  "engagement": {
+    "company": "Zebra Apparel Co.",
+    "customer": "Zebra Apparel Co.",
+    "title": "RFID Inventory Accuracy — Illustrative Business Case",
+    "sites": 50,
+    "seller": "Joshua Willis",
+    "email": "",
+    "partners": "",
+    "pain": "Cycle-count labor burden, chronic out-of-stocks, and shrink across 50 apparel stores."
+  },
+  "verticals": [
+    "retail"
+  ],
+  "selectedIds": [
+    "RET-01",
+    "RET-02",
+    "RET-03",
+    "RET-05"
+  ],
+  "inputs": {
+    "RET-01": {
+      "total_sku_locations": 50000,
+      "hours_per_sku_manual": 0.05,
+      "hours_per_sku_rfid": 0.0033,
+      "loaded_rate": 24,
+      "annual_count_cycles": 12
+    },
+    "RET-02": {
+      "annual_store_revenue": 5000000,
+      "out_of_stock_baseline_pct": 0.05,
+      "osa_improvement_pct": 0.5,
+      "gross_margin_pct": 0.4
+    },
+    "RET-03": {
+      "annual_store_revenue": 5000000,
+      "shrink_pct_baseline": 0.014,
+      "shrink_reduction_pct": 0.2
+    },
+    "RET-05": {
+      "annual_receiving_labor_hours": 8000,
+      "labor_reduction_pct": 0.4,
+      "loaded_rate": 24
+    }
+  },
+  "customScenarios": [],
+  "financeCredit": {
+    "enabled": true,
+    "rate": 0.4
+  },
+  "wacc": 0.1,
+  "contingencyRate": 0.07,
+  "costRows": [
+    {
+      "label": "Fixed readers / handheld units",
+      "qty": 200,
+      "unitCost": 1200,
+      "yr0": 240000,
+      "yr1": 0,
+      "yr2": 0,
+      "cadence": "one-time"
+    },
+    {
+      "label": "Mounting / installation fixtures",
+      "qty": 50,
+      "unitCost": 650,
+      "yr0": 32500,
+      "yr1": 0,
+      "yr2": 0,
+      "cadence": "one-time"
+    },
+    {
+      "label": "Initial tag deployment",
+      "qty": 750000,
+      "unitCost": 0.08,
+      "yr0": 60000,
+      "yr1": 0,
+      "yr2": 0,
+      "cadence": "one-time"
+    },
+    {
+      "label": "Annual tag replenishment",
+      "qty": 300000,
+      "unitCost": 0.08,
+      "yr0": 0,
+      "yr1": 24000,
+      "yr2": 24000,
+      "cadence": "annual"
+    },
+    {
+      "label": "SaaS / platform license",
+      "qty": 50,
+      "unitCost": 4800,
+      "yr0": 0,
+      "yr1": 240000,
+      "yr2": 240000,
+      "cadence": "annual"
+    },
+    {
+      "label": "Professional services / impl.",
+      "qty": 50,
+      "unitCost": 8500,
+      "yr0": 425000,
+      "yr1": 0,
+      "yr2": 0,
+      "cadence": "one-time"
+    },
+    {
+      "label": "Training & enablement",
+      "qty": 50,
+      "unitCost": 1200,
+      "yr0": 60000,
+      "yr1": 0,
+      "yr2": 0,
+      "cadence": "one-time"
+    },
+    {
+      "label": "Internal FTE time (project)",
+      "qty": 480,
+      "unitCost": 55,
+      "yr0": 26400,
+      "yr1": 0,
+      "yr2": 0,
+      "cadence": "one-time"
+    },
+    {
+      "label": "Contingency",
+      "qty": "",
+      "unitCost": "",
+      "yr0": 59073,
+      "yr1": 0,
+      "yr2": 0,
+      "cadence": "one-time",
+      "contingency": true
+    }
+  ],
+  "_notice": "Illustrative sample — figures are published industry benchmarks, not a real customer engagement."
+}

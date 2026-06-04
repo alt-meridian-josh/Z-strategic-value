@@ -1,0 +1,118 @@
+{
+  "_type": "strategic-value-engagement",
+  "_version": 2,
+  "_label": "Multi-tech Warehouse — v2 test fixture",
+  "_notice": "Illustrative v2 test fixture — published benchmarks only, not a real engagement.",
+  "mode": "analyst",
+  "engagement": {
+    "company": "Acme Distribution (illustrative)",
+    "customer": "Acme Distribution (illustrative)",
+    "title": "Multi-Technology Warehouse Value Case",
+    "sites": 5,
+    "seller": "Joshua Willis",
+    "email": "",
+    "partners": "",
+    "pain": "Inbound receiving labor, cycle-count labor, and pick errors across 5 DCs."
+  },
+  "verticals": ["warehouse"],
+  "technologies": [
+    { "id": "rfid", "label": "RFID", "captureLabel": "Readers & tags", "role": "capture" },
+    { "id": "mv", "label": "Machine Vision", "captureLabel": "Cameras & edge units", "role": "capture" },
+    { "id": "platform", "label": "Software Platform", "role": "platform" }
+  ],
+  "selectedIds": ["WH-01", "WH-02", "WH-06"],
+  "inputs": {
+    "WH-01": { "count_cycles_per_year": 12, "total_pallet_positions": 20000, "time_per_position_manual_min": 2, "time_per_position_rfid_sec": 6, "loaded_rate": 28 },
+    "WH-02": { "annual_inbound_pallets": 120000, "hours_per_pallet_manual": 0.1, "hours_per_pallet_rfid": 0.02, "loaded_rate": 28 },
+    "WH-06": { "outbound_labor_hours": 40000, "labor_reduction_pct": 0.2, "loaded_rate": 28 }
+  },
+  "customScenarios": [
+    {
+      "id": "CUSTOM-01",
+      "name": "Machine-vision receiving verification",
+      "custom": true,
+      "active": true,
+      "mechanismId": "labor_recovery",
+      "rampType": "hard_labor",
+      "accessibilityTier": "configured",
+      "haircut": 0.10,
+      "inputs": { "events_per_week": 600, "hours_per_event": 0.15, "loaded_rate": 28, "reduction_pct": 0.5 },
+      "technologyIds": ["mv"],
+      "evidence": {
+        "confidence": "B",
+        "citation": "GS1 US receiving-accuracy benchmark (machine-vision analog), 2023",
+        "evidenceIds": [],
+        "formulaSource": "Labor-recovery: events/wk x hrs/event x rate x reduction x 52"
+      }
+    },
+    {
+      "id": "CUSTOM-02",
+      "name": "Platform data-quality dividend",
+      "custom": true,
+      "active": true,
+      "mechanismId": "custom_formula",
+      "rampType": "soft",
+      "accessibilityTier": "commodity",
+      "haircut": 0.15,
+      "inputs": { "annual_value": 90000 },
+      "technologyIds": ["platform"],
+      "evidence": {
+        "confidence": "C",
+        "citation": "",
+        "evidenceIds": [],
+        "formulaSource": "Analyst estimate — directional only"
+      }
+    }
+  ],
+  "overlay": {
+    "WH-01": { "technologyIds": ["rfid"], "evidence": { "confidence": "A", "citation": "Auburn RFID Lab cycle-count study, 2022" } },
+    "WH-02": { "technologyIds": ["rfid", "mv"], "evidence": { "confidence": "B", "citation": "GS1 US inbound-accuracy benchmark, 2023" } },
+    "WH-06": { "technologyIds": ["rfid"], "evidence": { "confidence": "B", "citation": "Industry outbound-labor benchmark" } }
+  },
+  "dedup": [
+    {
+      "poolId": "receiving-labor",
+      "label": "Inbound receiving labor",
+      "rationale": "RFID portal reads and machine-vision verification recover the same inbound receiving labor pool; credit it once, split by mechanism contribution.",
+      "members": [
+        { "leverId": "WH-02", "share": 0.6 },
+        { "leverId": "CUSTOM-01", "share": 0.4 }
+      ]
+    }
+  ],
+  "_provenance": {
+    "WH-01": {
+      "loaded_rate": { "confidence": "A", "source": "Customer payroll export", "needs": "" },
+      "total_pallet_positions": { "confidence": "B", "source": "WMS estimate", "needs": "Confirm from WMS slotting report" }
+    },
+    "WH-02": {
+      "annual_inbound_pallets": { "confidence": "B", "source": "Receiving dock logs", "needs": "Confirm 12-month volume" },
+      "hours_per_pallet_rfid": { "confidence": "C", "source": "Benchmark", "needs": "Validate in pilot" }
+    },
+    "WH-06": {
+      "labor_reduction_pct": { "confidence": "C", "source": "Benchmark", "needs": "Confirm against time study" }
+    }
+  },
+  "annotations": {
+    "engagement": "Multi-technology pilot scoped across 5 DCs; RFID + MV capture, shared software platform.",
+    "levers": {
+      "WH-02": "Receiving labor is shared with the MV verification lever — see dedup pool 'receiving-labor'.",
+      "CUSTOM-01": "MV lever is directional pending pilot; confidence B."
+    },
+    "costRows": {
+      "0": "Reader/camera counts assume 8 capture points per DC."
+    }
+  },
+  "financeCredit": { "enabled": true, "rate": 0.40 },
+  "wacc": 0.10,
+  "contingencyRate": 0.07,
+  "costRows": [
+    { "label": "RFID fixed readers", "qty": 40, "unitCost": 1200, "yr0": 48000, "yr1": 0, "yr2": 0, "cadence": "one-time", "technologyId": "rfid" },
+    { "label": "RFID tags (initial)", "qty": 250000, "unitCost": 0.07, "yr0": 17500, "yr1": 0, "yr2": 0, "cadence": "one-time", "technologyId": "rfid" },
+    { "label": "RFID tag replenishment", "qty": 62500, "unitCost": 0.07, "yr0": 0, "yr1": 4375, "yr2": 4375, "cadence": "annual", "technologyId": "rfid" },
+    { "label": "Machine-vision cameras & edge units", "qty": 40, "unitCost": 2200, "yr0": 88000, "yr1": 0, "yr2": 0, "cadence": "one-time", "technologyId": "mv" },
+    { "label": "Software platform license", "qty": 5, "unitCost": 6000, "yr0": 0, "yr1": 30000, "yr2": 30000, "cadence": "annual", "technologyId": "platform" },
+    { "label": "Professional services / impl.", "qty": 5, "unitCost": 8500, "yr0": 42500, "yr1": 0, "yr2": 0, "cadence": "one-time", "technologyId": "platform" },
+    { "label": "Contingency", "qty": "", "unitCost": "", "yr0": 0, "yr1": 0, "yr2": 0, "cadence": "one-time", "contingency": true }
+  ]
+}
