@@ -1381,6 +1381,13 @@ svg{max-width:100%;height:auto}
     <div id="exec-evidence"></div>
   </div>
 
+  <!-- Data-status panel (Phase 5) — measured vs. estimated inputs + analyst notes,
+       driven entirely by the JSON's _provenance / annotations. Hidden when empty. -->
+  <div class="card" id="data-status-card" style="display:none">
+    <div class="card-title">Data Status — measured vs. estimated</div>
+    <div id="data-status-body"></div>
+  </div>
+
   <!-- Deployment Maturity Card -->
   <div class="card" style="margin-bottom:16px;border-left:4px solid var(--brand-green)">
     <div class="card-title">Deployment Maturity — Realizing Full Value</div>
@@ -3993,6 +4000,8 @@ function techScopeLabel() {
   return labels.length === 1 ? labels[0]
     : labels.slice(0, -1).join(', ') + ' & ' + labels[labels.length - 1];
 }
+// Technology label for inline prose ("RFID" for v1; the declared stack otherwise).
+function _techLabelForCopy() { return techScopeLabel(); }
 
 // ── SCHEMA v2 MIGRATION ───────────────────────────────────────────────────────
 // Any pre-v2 file (or one missing the additive blocks) loads unchanged: this
@@ -4238,6 +4247,50 @@ function updateCustomerFooter() {
 // In-session revert: re-apply the baseline snapshot exactly (customer-lite).
 function revertToBaseline() { if(engagementBaseline) applyEngagement(engagementBaseline); }
 
+// Phase 5 — Data-status panel. Lists B/C (estimated/benchmarked) inputs with their
+// source and "needs", grouped by source/owner, plus analyst annotations. Driven
+// entirely by the JSON's _provenance / annotations; hidden when both are empty.
+function renderDataStatus() {
+  const card = document.getElementById('data-status-card');
+  const body = document.getElementById('data-status-body');
+  if(!card || !body) return;
+  const badge = c => `<span style="display:inline-block;min-width:15px;text-align:center;font-size:9px;font-weight:700;border-radius:3px;padding:1px 4px;margin-left:4px;background:${c==='B'?'#fff3cd':'#f8d7da'};color:${c==='B'?'#7a5200':'#842029'}">${c}</span>`;
+  const bySource = {};
+  let total = 0;
+  Object.entries(engagementProvenance || {}).forEach(([scId, fields]) => {
+    Object.entries(fields || {}).forEach(([key, pv]) => {
+      if(pv && (pv.confidence === 'B' || pv.confidence === 'C')) {
+        const src = pv.source || 'Unspecified source';
+        (bySource[src] = bySource[src] || []).push({ scId, key, confidence: pv.confidence, needs: pv.needs || '' });
+        total++;
+      }
+    });
+  });
+  const ann = engagementAnnotations || {};
+  const hasAnn = !!(ann.engagement || (ann.levers && Object.keys(ann.levers).length) || (ann.costRows && Object.keys(ann.costRows).length));
+  if(!total && !hasAnn) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  let html = '';
+  if(total) {
+    html += `<p style="font-size:12px;color:var(--muted);margin:0 0 10px">${total} input${total>1?'s':''} estimated or benchmarked (confidence B/C) — confirm before relying on the model. Grouped by source / owner:</p>`;
+    Object.keys(bySource).sort().forEach(src => {
+      html += `<div style="margin-bottom:10px"><div style="font-weight:700;font-size:12px;margin-bottom:4px">${_entryEsc(src)}</div><ul style="margin:0;padding-left:18px;font-size:12px;color:#444;line-height:1.6">`;
+      bySource[src].forEach(r => {
+        html += `<li><code style="font-size:11px">${_entryEsc(r.scId)}.${_entryEsc(r.key)}</code>${badge(r.confidence)}${r.needs ? ` — needs: ${_entryEsc(r.needs)}` : ''}</li>`;
+      });
+      html += `</ul></div>`;
+    });
+  }
+  if(hasAnn) {
+    html += `<div style="margin-top:8px;border-top:1px solid var(--gray-300);padding-top:8px"><div style="font-weight:700;font-size:12px;margin-bottom:4px">Analyst notes</div><ul style="margin:0;padding-left:18px;font-size:12px;color:#444;line-height:1.6">`;
+    if(ann.engagement) html += `<li><em>Engagement:</em> ${_entryEsc(ann.engagement)}</li>`;
+    Object.entries(ann.levers || {}).forEach(([id, note]) => { html += `<li><code style="font-size:11px">${_entryEsc(id)}</code>: ${_entryEsc(note)}</li>`; });
+    Object.entries(ann.costRows || {}).forEach(([i, note]) => { html += `<li><em>Cost row ${_entryEsc(i)}:</em> ${_entryEsc(note)}</li>`; });
+    html += `</ul></div>`;
+  }
+  body.innerHTML = html;
+}
+
 // Start new → a blank engagement (keep the analyst's own company/seller/email),
 // then into the guided flow at Step 1.
 function clearEngagement() {
@@ -4437,7 +4490,7 @@ function go(n) {
   if(n===2) { renderDisc(); renderCustomScenarios(); }
   if(n===3) { syncCost(); }                   // Cost — rebuild from sliders
   if(n===4) { ensureCosts(); renderROI(); }   // ROI
-  if(n===5) { ensureCosts(); if(!state.benefits || !state.benefits.totAnnual) renderROI(); renderExec(); renderSolutionComparison(); }  // Full Analysis
+  if(n===5) { ensureCosts(); if(!state.benefits || !state.benefits.totAnnual) renderROI(); renderExec(); renderSolutionComparison(); renderDataStatus(); }  // Full Analysis
   if(n===6) renderEvidence();
   if(n===8) initForecastSignal();
   document.querySelector('.main').scrollTop = 0;
@@ -4545,6 +4598,12 @@ function renderLeverGrid() {
   [...state.selectedIds].forEach(id => { if(!matched.find(s=>s.id===id)) state.selectedIds.delete(id); });
 
   if(label) label.textContent = '— ' + matched.length + ' levers, ' + state.selectedIds.size + ' selected';
+
+  // Phase 5: never show a blank grid on click — badge instead.
+  if(!matched.length) {
+    grid.innerHTML = `<div style="padding:18px;text-align:center;color:var(--muted);font-size:12px;border:1px dashed var(--gray-300);border-radius:8px">No bundled levers for the selected industr${(activeIndustries && activeIndustries.size>1)?'ies':'y'} yet — <strong>custom levers / profile only</strong>. Add custom value levers below, or start from a profile.</div>`;
+    return;
+  }
 
   // Group by verticalKey
   const groups = {};
@@ -5176,8 +5235,11 @@ function renderWalkdownTable(activeScenarios, result) {
     const isCustom = sc.custom === true;
     const dShare = dedupShareFor(sc.id);
     const poolMark = (dShare !== null) ? ` <span style="font-size:9px;color:var(--muted)">[pool ${Math.round(dShare*100)}%]</span>` : '';
+    const _ev = leverEvidence(sc);
+    const confMark = (_ev && (_ev.confidence === 'B' || _ev.confidence === 'C'))
+      ? ` <span title="estimated/benchmarked input" style="font-size:9px;font-weight:700;color:${_ev.confidence==='B'?'#7a5200':'#842029'}">[${_ev.confidence}]</span>` : '';
     return `<tr${isCustom ? ' style="font-style:italic;opacity:0.8"' : ''}>
-      <td>${sc.id}${isCustom ? ' <span style="font-size:9px;color:var(--muted)">[user]</span>' : ''}${poolMark}</td>
+      <td>${sc.id}${isCustom ? ' <span style="font-size:9px;color:var(--muted)">[user]</span>' : ''}${poolMark}${confMark}</td>
       <td style="text-align:right">${fmt(Math.round(ann))}</td>
       <td style="text-align:right">${fmt(Math.round(afterRamp))}</td>
       <td style="text-align:right">${fmt(Math.round(afterAccess))}</td>
@@ -6059,7 +6121,7 @@ function renderExec() {
   // Hard case % of total
   const hardPct = totAnnual>0 ? Math.round((hardAnn/totAnnual)*100) : 0;
   document.getElementById('exec-narrative').innerHTML=`
-    <p>Based on analysis of <strong>${co}</strong>'s operations, deploying Zebra RFID Technology delivers <strong>${fmt(totAnnual)} in full annual value</strong> across ${active.length} quantified scenarios. The investment pays back in ${pbText}, with a <strong>5-year net ROI of ${roi5}%</strong> and a <strong>NRV (5-year NPV) of ${fmt(npv5)}</strong>.</p>
+    <p>Based on analysis of <strong>${co}</strong>'s operations, deploying ${_techLabelForCopy()} delivers <strong>${fmt(totAnnual)} in full annual value</strong> across ${active.length} quantified scenarios. The investment pays back in ${pbText}, with a <strong>5-year net ROI of ${roi5}%</strong> and a <strong>NRV (5-year NPV) of ${fmt(npv5)}</strong>.</p>
     <p>${rampSentence}These curves are grounded in GS1 US deployment guidance and peer-reviewed adoption data from the Auburn RFID Lab, ensuring the model is conservative and defensible at the finance level.</p>
     <p>The Year 1 business case is anchored in Hard Labor and Hard Cost scenarios, which require no demand-side assumptions and are credited at 100% by finance teams. ${hardRowsN.length>0?`These ${hardRowsN.length} scenario${hardRowsN.length>1?'s':''} represent <strong>${hardPct}% of total annual value</strong> and deliver <strong>${fmt(hardY1N)} in Year 1</strong> &#8212; the floor of the financial case.`:''} ${revRowsN.length>0?`Revenue uplift scenarios contribute an additional <strong>${fmt(revAnn)}</strong> at full realization (Year 3), modeled conservatively at ${fmt(revY1N)} in Year 1 (30% ramp) and presented as validated upside, not the anchor.`:''}</p>
     <p>Total Yr 0 investment: <strong>${fmt(c.yr0)}</strong> one-time; <strong>${fmt(c.yr1)}</strong> Yr 1 ongoing; <strong>${fmt(c.yr2)}</strong>/yr from Yr 2. All quantified values reference Tier 1&#8211;3 evidence published by Auburn University RFID Lab, GS1 US, the National Retail Federation, ECR Retail Loss, and Zebra Technologies / VDC Research. Evidence identifiers are cited inline for each scenario.</p>`;
@@ -6781,7 +6843,7 @@ function exportFullPDF() {
     <p>This assessment is based upon information and explanation from <b>${co}</b> and is indicative only. It is therefore not a part of the contractual offer from Zebra Technologies.</p>
 
     <h1 style="margin-top:24px">Background to Investment Appraisal</h1><hr class="rule-heavy">
-    <p>This business case aims to show, in modelled dollars, how RFID can address the identified challenges at <b>${co}</b>${pain?' · Discovery KPIs: '+pain:''} — covering the project investment and delivering attractive payback and multi-year ROI. The objective is to tie each lever to a specific P&L line so stakeholders can see where savings land and how RFID supports more reliable operational performance.</p>
+    <p>This business case aims to show, in modelled dollars, how ${_techLabelForCopy()} can address the identified challenges at <b>${co}</b>${pain?' · Discovery KPIs: '+pain:''} — covering the project investment and delivering attractive payback and multi-year ROI. The objective is to tie each lever to a specific P&L line so stakeholders can see where savings land and how ${_techLabelForCopy()} supports more reliable operational performance.</p>
     ${seller&&seller!=='—'?`<p>This appraisal has been prepared by <b>${seller}</b> in collaboration with ${partners}. It should be cross-referred to the sales proposal submitted separately.</p>`:''}
     <p>The following appraisal methods have been used:</p>
 
