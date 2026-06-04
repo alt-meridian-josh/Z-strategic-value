@@ -3854,6 +3854,25 @@ SCENARIOS.forEach(sc => {
 // customer guardrails) is wired in later phases — here it only round-trips.
 let appMode = 'analyst';
 
+// v2: declared technology stack. [] => implicit single RFID technology, so v1
+// files render exactly as before. Drives cost-model and report copy.
+let engagementTechnologies = [];
+function techScope() {
+  return (engagementTechnologies && engagementTechnologies.length)
+    ? engagementTechnologies
+    : [{ id: 'rfid', label: 'RFID' }];
+}
+function techLabelById(id) {
+  const t = (engagementTechnologies || []).find(x => x && x.id === id);
+  return t ? (t.label || t.id) : (id || '');
+}
+// Human label for the whole stack: "RFID" or "RFID, Machine Vision & Software Platform".
+function techScopeLabel() {
+  const labels = techScope().map(t => t.label || t.id);
+  return labels.length === 1 ? labels[0]
+    : labels.slice(0, -1).join(', ') + ' & ' + labels[labels.length - 1];
+}
+
 // ── SCHEMA v2 MIGRATION ───────────────────────────────────────────────────────
 // Any pre-v2 file (or one missing the additive blocks) loads unchanged: this
 // fills the v2 fields with v1-equivalent defaults so the rest of the app can
@@ -3876,6 +3895,7 @@ function applyEngagement(p) {
   if(!p || typeof p !== 'object') { console.warn('applyEngagement: nothing to load'); return false; }
   p = migrateEngagement(p);
   appMode = p.mode;
+  engagementTechnologies = Array.isArray(p.technologies) ? p.technologies.map(t => Object.assign({}, t)) : [];
   const setVal = (id,v) => { const el = document.getElementById(id); if(el && v!=null) el.value = v; };
 
   // 0) Optional notice banner (e.g. illustrative-sample disclaimer)
@@ -3969,6 +3989,7 @@ function gatherEngagement() {
     _type: 'strategic-value-engagement', _version: 2,
     _label: (eng.customer || 'Engagement') + ' — saved ' + new Date().toISOString().slice(0,10),
     mode: appMode,
+    technologies: engagementTechnologies.map(t => Object.assign({}, t)),
     engagement: eng,
     verticals: [...activeIndustries],
     selectedIds: sel,
@@ -4510,7 +4531,13 @@ function renderCost() {
     // Compute display total for this row
     const rowTotal = computeRowTotal(r);
     const cadenceLabels = {'one-time':'ONE-TIME','monthly':'MONTHLY','annual':'ANNUAL','per-site/yr':'PER SITE/YR','other':'OTHER'};
-    if(r.contingency) return `
+    // v2: per-technology section header when rows carry a technologyId. Fires only
+    // when technologies are declared, so v1 cost tables render unchanged.
+    const techHeader = (engagementTechnologies.length && r.technologyId &&
+        (i === 0 || costRows[i-1].technologyId !== r.technologyId))
+      ? `<tr class="cost-tech-header"><td colspan="6" style="background:var(--gray-100);font-size:10px;font-weight:700;letter-spacing:.04em;color:var(--muted);text-transform:uppercase;padding:6px 8px">${techLabelById(r.technologyId)}</td></tr>`
+      : '';
+    if(r.contingency) return techHeader + `
       <tr style="background:var(--gray-50)">
         <td colspan="3" style="color:var(--muted);font-size:11px;font-style:italic">Contingency
           <input class="editable-input num-input" value="${+(contingencyRate*100).toFixed(2)}" style="width:46px;text-align:right;margin:0 2px"
@@ -4519,7 +4546,7 @@ function renderCost() {
         <td class="r" style="color:var(--muted);font-family:var(--mono)">${fmt(cont)}</td>
         <td></td>
       </tr>`;
-    return `<tr>
+    return techHeader + `<tr>
       <td><input class="editable-input" style="width:100%;text-align:left;font-size:12px" value="${r.label}" oninput="costRows[${i}].label=this.value"></td>
       <td>
         <select class="editable-input cadence-sel" onchange="costRows[${i}].cadence=this.value;recalcCostRow(${i})">
@@ -5698,7 +5725,7 @@ function renderExec() {
   const payback = paybackMo !== null ? paybackMo : '—';
 
   document.getElementById('exec-heading').textContent = title + ' — ' + co;
-  document.getElementById('exec-sub').textContent = `Prepared by ${seller} · Parties & Partners: ${partners} · Discovery KPIs: ${document.getElementById('i-pain')?.value||'—'}`;
+  document.getElementById('exec-sub').textContent = `Technologies in scope: ${techScopeLabel()} · Prepared by ${seller} · Parties & Partners: ${partners} · Discovery KPIs: ${document.getElementById('i-pain')?.value||'—'}`;
   const dateDisplay = document.getElementById('exec-date-display');
   if(dateDisplay) dateDisplay.textContent = new Date().toLocaleDateString();
   document.getElementById('exec-kpis').innerHTML=`

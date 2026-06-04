@@ -32,11 +32,13 @@ function fixpoint(obj) {
   return [A, B, diff(A, B)];
 }
 const norm = s => (s || '').replace(/\s+/g, ' ').trim();
+const txt = (w, id) => norm(w.document.getElementById(id)?.textContent);
 function compute(obj) {
-  const w = applied(obj); w.renderROI();
+  const w = applied(obj); w.renderROI(); w.renderCost();
   return {
-    kpi: norm(w.document.getElementById('kpi-grid')?.textContent),
-    walkdown: norm(w.document.getElementById('nrv-walkdown-body')?.textContent),
+    kpi: txt(w, 'kpi-grid'),
+    walkdown: txt(w, 'nrv-walkdown-body'),
+    cost: txt(w, 'cost-tbody') + ' || ' + txt(w, 'cost-tfoot'),
   };
 }
 
@@ -58,6 +60,7 @@ console.log('\n── v1 backward compatibility (must hold every chunk) ──')
   const base = readJSON(BASE), now = compute(v1);
   ok('v1 compute UNCHANGED vs pre-edit baseline (kpi)', now.kpi === base.kpi, now.kpi === base.kpi ? '' : now.kpi.slice(0,80));
   ok('v1 compute UNCHANGED vs pre-edit baseline (walkdown)', now.walkdown === base.walkdown);
+  ok('v1 cost table UNCHANGED vs pre-edit baseline', now.cost === base.cost, now.cost === base.cost ? '' : now.cost.slice(0,80));
 }
 
 console.log('\n── Chunk 1: envelope v2 + migration shim + nrvOverrides fix ──');
@@ -82,6 +85,41 @@ console.log('\n── Chunk 1: envelope v2 + migration shim + nrvOverrides fix �
   ok('mode defaults to analyst', def.mode === 'analyst', def.mode);
   const cust = readJSON(V1); cust.mode = 'customer';
   ok('mode:"customer" round-trips', applied(cust).gatherEngagement().mode === 'customer');
+}
+
+console.log('\n── Chunk 2: technologies block + technology-driven copy ──');
+{
+  const w = applied(readJSON(V2));
+  const g = w.gatherEngagement();
+  ok('technologies[] round-trips (3 techs)', g.technologies.length === 3
+     && g.technologies.map(t => t.id).join(',') === 'rfid,mv,platform', g.technologies.map(t=>t.id).join(','));
+  ok('costRows[].technologyId survives Save', g.costRows.filter(r => r.technologyId).length === 6);
+}
+{
+  // techScopeLabel: v1 fallback vs v2 stack
+  const w1 = applied(readJSON(V1));
+  ok('techScopeLabel() falls back to "RFID" with no technologies', w1.techScopeLabel() === 'RFID', w1.techScopeLabel());
+  const w2 = applied(readJSON(V2));
+  ok('techScopeLabel() reflects the declared stack',
+     w2.techScopeLabel() === 'RFID, Machine Vision & Software Platform', w2.techScopeLabel());
+}
+{
+  // Cost model driven by technologies: v2 shows section headers, v1 does not.
+  const w2 = applied(readJSON(V2)); w2.renderCost();
+  const cost2 = txt(w2, 'cost-tbody');
+  ok('v2 cost table shows per-technology section headers',
+     /RFID/.test(cost2) && /MACHINE VISION/i.test(cost2) && /SOFTWARE PLATFORM/i.test(cost2));
+  const w1 = applied(readJSON(V1)); w1.renderCost();
+  ok('v1 cost table has NO technology headers (cost-tech-header absent)',
+     !/cost-tech-header/.test(w1.document.getElementById('cost-tbody').innerHTML));
+}
+{
+  // Report copy driven by technologies: exec subtitle (heading stays the user's title).
+  const w1 = applied(readJSON(V1)); w1.renderExec();
+  ok('exec subtitle names "RFID" for v1', /^Technologies in scope: RFID ·/.test(txt(w1, 'exec-sub')), txt(w1,'exec-sub').slice(0,50));
+  const w2 = applied(readJSON(V2)); w2.renderExec();
+  ok('exec subtitle follows the stack for v2',
+     /^Technologies in scope: RFID, Machine Vision & Software Platform ·/.test(txt(w2, 'exec-sub')), txt(w2,'exec-sub').slice(0,70));
 }
 
 console.log(`\n${fail ? '✗' : '✓'} ${pass} passed, ${fail} failed\n`);
