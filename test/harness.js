@@ -62,14 +62,24 @@ function diff(a, b, ignore = new Set(['_label']), p = '') {
 // Drive the real exportStandaloneHTML() offline and capture the produced HTML.
 // jsdom has no fetch, so the export's fetch(location.href)/CDN fetches throw and
 // hit the documented fallbacks; we intercept URL.createObjectURL to grab the Blob.
-async function exportStandalone(window) {
+async function exportStandalone(window, fn = 'exportStandaloneHTML') {
   let captured = null;
   const realCreate = window.URL.createObjectURL;
   window.URL.createObjectURL = (blob) => { captured = blob; return 'blob:captured'; };
-  try { await window.exportStandaloneHTML(); }
+  try { await window[fn](); }
   finally { window.URL.createObjectURL = realCreate; }
-  if (!captured) throw new Error('no blob captured from exportStandaloneHTML');
+  if (!captured) throw new Error('no blob captured from ' + fn);
   return await captured.text();
 }
 
-module.exports = { loadApp, diff, exportStandalone, ready };
+// Pull and parse the embedded-engagement JSON out of an exported HTML string.
+function embeddedEngagement(html) {
+  // The REAL block has a contiguous <script type="application/json"> tag; the app's
+  // own source (also present in the export) builds that tag non-contiguously, so
+  // this pattern matches only the genuine embedded block.
+  const m = html.match(/<script type="application\/json" id="embedded-engagement">\s*([\s\S]*?)<\/script>/i);
+  if (!m) return null;
+  return JSON.parse(m[1].replace(/<\\\//g, '</'));
+}
+
+module.exports = { loadApp, diff, exportStandalone, ready, embeddedEngagement };

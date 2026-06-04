@@ -869,6 +869,14 @@ svg{max-width:100%;height:auto}
   .nrv-bar{flex-direction:column;align-items:flex-start}
   .nrv-bar-controls{gap:10px}
 }
+/* Phase 4 — customer-lite guardrails (UX guardrail, not security) */
+.customer-mode .analyst-only { display: none !important; }
+.customer-mode #cost-tbody .cost-remove { display: none !important; }
+.customer-mode .lever-locked { pointer-events: none; opacity: .85; }
+.customer-mode #cost-tbody input, .customer-mode #cost-tbody select { pointer-events: none; background: #f6f6f6; color: #555; }
+#customer-footer { display: none; }
+.customer-mode #customer-footer { display: block; }
+@media print { .customer-mode #customer-footer { display: block; } }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
@@ -969,8 +977,8 @@ svg{max-width:100%;height:auto}
   <div class="step-desc">Capture the key engagement details. This drives the output branding and filters the scenario library. Revenue is collected in Discovery — where it belongs to each scenario.</div>
 
   <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 14px">
-    <button class="btn btn-outline" style="height:32px;padding:0 14px;font-size:12px;border-radius:16px" onclick="triggerImport()">Load analysis</button>
-    <button class="btn btn-outline" style="height:32px;padding:0 14px;font-size:12px;border-radius:16px" onclick="loadExample('sample_engagement')">Load sample</button>
+    <button class="btn btn-outline analyst-only" style="height:32px;padding:0 14px;font-size:12px;border-radius:16px" onclick="triggerImport()">Load analysis</button>
+    <button class="btn btn-outline analyst-only" style="height:32px;padding:0 14px;font-size:12px;border-radius:16px" onclick="loadExample('sample_engagement')">Load sample</button>
     <input type="file" id="import-file" accept="application/json,.json" style="display:none" onchange="importEngagementFile(this.files[0])">
     <span style="font-size:11px;color:var(--muted)">Reload a saved engagement from a <code style="font-size:10px;background:#eee;padding:1px 4px;border-radius:3px;">.json</code> file, or load an illustrative sample. Save &amp; standalone export are on the Full Analysis page.</span>
   </div>
@@ -1098,7 +1106,7 @@ svg{max-width:100%;height:auto}
       clearly flagged as user-generated in all exports.
     </div>
     <div id="custom-scenarios-list"></div>
-    <button class="btn btn-outline" onclick="addCustomScenario()"
+    <button class="btn btn-outline analyst-only" onclick="addCustomScenario()"
       style="margin-top:12px;font-size:12px">
       + Add Value Lever
     </button>
@@ -1433,8 +1441,12 @@ svg{max-width:100%;height:auto}
       <button class="btn btn-outline" onclick="saveEngagementFile()" style="height:34px;padding:0 16px;font-size:12.5px;border-radius:17px;">
         Save analysis
       </button>
-      <button class="btn btn-outline" onclick="exportStandaloneHTML()" style="height:34px;padding:0 16px;font-size:12.5px;border-radius:17px;">
+      <span id="customer-save-hint" style="display:none;font-size:11px;color:var(--muted);align-self:center">To share your scenario back, click Save and send us the file.</span>
+      <button class="btn btn-outline analyst-only" onclick="exportStandaloneHTML()" style="height:34px;padding:0 16px;font-size:12.5px;border-radius:17px;">
         Export standalone tool
+      </button>
+      <button class="btn btn-outline analyst-only" onclick="exportCustomerHTML()" style="height:34px;padding:0 16px;font-size:12.5px;border-radius:17px;" title="Single-file export locked to bounded customer edits">
+        Export customer version
       </button>
     </div>
   </div>
@@ -1999,6 +2011,8 @@ svg{max-width:100%;height:auto}
 <!-- ══ PANEL 9 — SOLUTION COMPARATOR ══════════════════════════════════════ -->
 
 
+<!-- Customer-lite footer (Phase 4) — shown on every page and in print in customer mode. -->
+<div id="customer-footer" style="margin-top:24px;padding:12px 16px;border-top:2px solid var(--brand-black,#0b0b0c);font-size:11px;color:#555;line-height:1.6"></div>
 </main>
 </div>
 
@@ -3917,6 +3931,11 @@ let engagementProvenance = {};
 // v2 (req 6): analyst notes that survive Save/Load and appear in exports:
 // { engagement, levers: { id: note }, costRows: { index: note } }. {} => none.
 let engagementAnnotations = {};
+// Phase 4: snapshot embedded in a customer-lite export so reload reverts in-session
+// edits exactly. null in analyst files.
+let engagementBaseline = null;
+// Saved/exported date parsed from _label, for the customer footer.
+let engagementSavedDate = '';
 
 // Hard validation. Throws on: missing rationale, shares > 100%, or a lever in two
 // groups. Called on load (before any state change) and available to any edit path.
@@ -4004,6 +4023,8 @@ function applyEngagement(p) {
   engagementDedup = Array.isArray(p.dedup) ? JSON.parse(JSON.stringify(p.dedup)) : [];
   engagementProvenance = (p._provenance && typeof p._provenance === 'object') ? JSON.parse(JSON.stringify(p._provenance)) : {};
   engagementAnnotations = (p.annotations && typeof p.annotations === 'object') ? JSON.parse(JSON.stringify(p.annotations)) : {};
+  engagementBaseline = (p.baseline && typeof p.baseline === 'object') ? JSON.parse(JSON.stringify(p.baseline)) : null;
+  engagementSavedDate = (p._label && (p._label.match(/(\d{4}-\d{2}-\d{2})/) || [])[1]) || '';
   const setVal = (id,v) => { const el = document.getElementById(id); if(el && v!=null) el.value = v; };
 
   // 0) Optional notice banner (e.g. illustrative-sample disclaimer)
@@ -4078,6 +4099,7 @@ function applyEngagement(p) {
   if(document.getElementById('panel-2')?.classList.contains('active')) { try { renderDisc(); renderCustomScenarios(); } catch(e){} }
   if(document.getElementById('panel-3')?.classList.contains('active')) { try { renderCost(); } catch(e){} }
   if(document.getElementById('panel-4')?.classList.contains('active')) { try { ensureCosts(); renderROI(); } catch(e){} }
+  applyModeGuards();  // customer-lite locks/footer (no-op in analyst mode); after fields are set
   console.log('Applied engagement:', p._label || p.engagement?.customer || '(unnamed)');
   return true;
 }
@@ -4093,7 +4115,7 @@ function gatherEngagement() {
     sites: +val('i-sites') || undefined, seller: val('i-seller'), email: val('i-email'),
     partners: val('i-partners'), pain: val('i-pain')
   };
-  return {
+  const out = {
     _type: 'strategic-value-engagement', _version: 2,
     _label: (eng.customer || 'Engagement') + ' — saved ' + new Date().toISOString().slice(0,10),
     mode: appMode,
@@ -4115,6 +4137,9 @@ function gatherEngagement() {
     contingencyRate: contingencyRate,
     costRows: (costRows || []).map(r => Object.assign({}, r))
   };
+  // Carry the customer-lite revert snapshot when present (set on customer export).
+  if (engagementBaseline) out.baseline = JSON.parse(JSON.stringify(engagementBaseline));
+  return out;
 }
 
 // Download the current analysis as a .json file.
@@ -4169,6 +4194,50 @@ function updateModeBand() {
   el.title            = customer ? 'Customer-facing view' : 'Analyst — full edit access';
 }
 
+// Phase 4: apply/remove the customer-lite UX guardrails. Analyst mode is a no-op,
+// so existing behavior is untouched. (Field locks + bounded sliders + footer in
+// the customer-mode chunk below.)
+function applyModeGuards() {
+  const customer = (appMode === 'customer');
+  document.body.classList.toggle('customer-mode', customer);
+  const hint = document.getElementById('customer-save-hint'); if(hint) hint.style.display = customer ? 'inline' : 'none';
+  applyCustomerLocks(customer);
+  updateCustomerFooter();
+}
+
+// Field locks + bounded sliders for customer mode. All reversible: analyst mode
+// restores the original ranges/editability, so nothing changes outside customer mode.
+function applyCustomerLocks(customer) {
+  // Identity / intake identity fields visible but read-only.
+  ['i-company','i-customer','i-title','i-sites','i-seller','i-email','i-partners'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.readOnly = customer;
+  });
+  // Finance-credit toggle locked ON; rate bounded to its cited range (default 40%).
+  const finOn = document.getElementById('fin-credit-on');
+  if(finOn) { if(customer) { finOn.value = '1'; financeCreditEnabled = true; } finOn.disabled = customer; }
+  const finRate = document.getElementById('fin-credit-rate');
+  if(finRate) { if(customer) { finRate.min = 0; finRate.max = 60; if(+finRate.value > 60) finRate.value = 60; } }
+  // WACC bounded 8–12% in customer mode; restored to the full range in analyst.
+  const wacc = document.getElementById('nrv-wacc');
+  if(wacc) {
+    if(customer) { wacc.min = 0.08; wacc.max = 0.12; const v = +wacc.value; if(v < 0.08) wacc.value = 0.08; if(v > 0.12) wacc.value = 0.12; }
+    else { wacc.min = 0.04; wacc.max = 0.18; }
+  }
+  // Lever structure locked (no add/remove/select).
+  const lg = document.getElementById('lever-grid'); if(lg) lg.classList.toggle('lever-locked', customer);
+}
+
+// Footer shown on every page + in print in customer mode.
+function updateCustomerFooter() {
+  const el = document.getElementById('customer-footer'); if(!el) return;
+  const name = (document.getElementById('i-customer')?.value || 'Engagement').trim() || 'Engagement';
+  const date = engagementSavedDate || new Date().toISOString().slice(0, 10);
+  el.textContent = `${name} · Exported ${date} · Prepared by Joshua Willis — illustrative analysis; assumptions within published benchmark ranges.`;
+}
+
+// In-session revert: re-apply the baseline snapshot exactly (customer-lite).
+function revertToBaseline() { if(engagementBaseline) applyEngagement(engagementBaseline); }
+
 // Start new → a blank engagement (keep the analyst's own company/seller/email),
 // then into the guided flow at Step 1.
 function clearEngagement() {
@@ -4183,7 +4252,9 @@ function clearEngagement() {
   engagementProvenance = {}; engagementAnnotations = {};
   Object.keys(nrvOverrides).forEach(k => delete nrvOverrides[k]);
   appMode = 'analyst';
+  engagementBaseline = null;
   updateModeBand();
+  applyModeGuards();
   costRowsEdited = false; costRowsPreset = false;
   costRows = defaultCostRows(); rebuildCostState();
   try { renderLeverGrid(); } catch(e) {}
@@ -4257,10 +4328,25 @@ function checkEmbeddedEngagement() {
 // baked in. The result opens straight from local disk, runs fully offline, makes
 // no network calls, and is fully editable by the recipient.
 async function exportStandaloneHTML() {
+  try { ensureCosts(); await _buildStandalone(gatherEngagement(), '-value-tool.html'); }
+  catch(e) { alert('Standalone export error: ' + e.message); }
+}
+
+// Customer-lite export: same single-file mechanism, but mode:"customer" and a
+// baseline snapshot so reload reverts in-session edits. UX guardrail, not security.
+async function exportCustomerHTML() {
   try {
     ensureCosts();
     const data = gatherEngagement();
+    const baseline = gatherEngagement(); delete baseline.baseline;
+    data.mode = 'customer';
+    data.baseline = baseline;
+    await _buildStandalone(data, '-customer-view.html');
+  } catch(e) { alert('Customer export error: ' + e.message); }
+}
 
+async function _buildStandalone(data, suffix) {
+  {
     // Get a pristine copy of the tool's own source. fetch() works on the hosted
     // site; on file:// it's blocked, so fall back to serializing the live document.
     let src;
@@ -4309,9 +4395,9 @@ async function exportStandaloneHTML() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     const co = (data.engagement.customer || 'engagement').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '');
-    a.href = url; a.download = co + '-value-tool.html'; a.click();
+    a.href = url; a.download = co + suffix; a.click();
     URL.revokeObjectURL(url);
-  } catch(e) { alert('Standalone export error: ' + e.message); }
+  }
 }
 
 // Fetch a bundled example engagement (examples/<key>.json) and apply it.
@@ -8538,6 +8624,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const hasExample = !!new URLSearchParams(location.search).get('example');
   if(!embedded && !hasExample) showChooser();  // no engagement + no example → three-door entry
   updateModeBand();
+  applyModeGuards();
   syncNav();
 });
 
