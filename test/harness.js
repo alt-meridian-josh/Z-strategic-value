@@ -48,4 +48,17 @@ function diff(a, b, ignore = new Set(['_label']), p = '') {
   return `${p}: ${JSON.stringify(a)} != ${JSON.stringify(b)}`;
 }
 
-module.exports = { loadApp, diff };
+// Drive the real exportStandaloneHTML() offline and capture the produced HTML.
+// jsdom has no fetch, so the export's fetch(location.href)/CDN fetches throw and
+// hit the documented fallbacks; we intercept URL.createObjectURL to grab the Blob.
+async function exportStandalone(window) {
+  let captured = null;
+  const realCreate = window.URL.createObjectURL;
+  window.URL.createObjectURL = (blob) => { captured = blob; return 'blob:captured'; };
+  try { await window.exportStandaloneHTML(); }
+  finally { window.URL.createObjectURL = realCreate; }
+  if (!captured) throw new Error('no blob captured from exportStandaloneHTML');
+  return await captured.text();
+}
+
+module.exports = { loadApp, diff, exportStandalone };

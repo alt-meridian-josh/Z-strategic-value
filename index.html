@@ -3857,6 +3857,18 @@ let appMode = 'analyst';
 // v2: declared technology stack. [] => implicit single RFID technology, so v1
 // files render exactly as before. Drives cost-model and report copy.
 let engagementTechnologies = [];
+
+// v2 (§B overlay): per-library-lever metadata keyed by lever id — { technologyIds,
+// evidence{confidence,citation,...} }. Lets a JSON attach technology attribution
+// and evidence/confidence to library levers (which are referenced by id, not
+// redefined). {} => no overlay, v1 behavior. Custom levers carry the same fields
+// inline on the scenario object itself.
+let engagementOverlay = {};
+// Evidence/confidence for any lever id (custom inline, else overlay). null if none.
+function leverEvidence(sc) {
+  if (sc && sc.custom === true) return sc.evidence || null;
+  return (sc && engagementOverlay[sc.id] && engagementOverlay[sc.id].evidence) || null;
+}
 function techScope() {
   return (engagementTechnologies && engagementTechnologies.length)
     ? engagementTechnologies
@@ -3896,6 +3908,7 @@ function applyEngagement(p) {
   p = migrateEngagement(p);
   appMode = p.mode;
   engagementTechnologies = Array.isArray(p.technologies) ? p.technologies.map(t => Object.assign({}, t)) : [];
+  engagementOverlay = (p.overlay && typeof p.overlay === 'object') ? JSON.parse(JSON.stringify(p.overlay)) : {};
   const setVal = (id,v) => { const el = document.getElementById(id); if(el && v!=null) el.value = v; };
 
   // 0) Optional notice banner (e.g. illustrative-sample disclaimer)
@@ -3990,6 +4003,7 @@ function gatherEngagement() {
     _label: (eng.customer || 'Engagement') + ' — saved ' + new Date().toISOString().slice(0,10),
     mode: appMode,
     technologies: engagementTechnologies.map(t => Object.assign({}, t)),
+    overlay: JSON.parse(JSON.stringify(engagementOverlay)),
     engagement: eng,
     verticals: [...activeIndustries],
     selectedIds: sel,
