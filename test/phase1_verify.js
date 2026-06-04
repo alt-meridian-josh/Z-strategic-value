@@ -191,6 +191,28 @@ function compute(obj) {
     ok('applyEngagement hard-errors on invalid dedup', !!throws(() => w.applyEngagement(bad)));
   }
 
+  console.log('\n── Chunk 5: _provenance + annotations ──');
+  {
+    const v2 = readJSON(V2);
+    const g = applied(v2).gatherEngagement();
+    ok('_provenance round-trips losslessly', diff(g._provenance, v2._provenance) === null);
+    ok('annotations round-trips losslessly', diff(g.annotations, v2.annotations) === null);
+    ok('_provenance carries mixed A/B/C', g._provenance['WH-01'].loaded_rate.confidence === 'A'
+       && g._provenance['WH-02'].hours_per_pallet_rfid.confidence === 'C');
+    ok('annotations carry engagement + per-lever + per-costRow',
+       !!g.annotations.engagement && !!g.annotations.levers['WH-02'] && !!g.annotations.costRows['0']);
+  }
+  {
+    // Both appear in the standalone export (carried in embedded state).
+    const html = await exportStandalone(applied(readJSON(V2)));
+    ok('export carries _provenance + annotations', /"_provenance"/.test(html) && /"annotations"/.test(html));
+  }
+  {
+    // Full v2 fixture reaches a save/load fixpoint (every v2 block now round-trips).
+    const [, , d] = fixpoint(readJSON(V2));
+    ok('full v2 fixture round-trips losslessly (fixpoint)', d === null, d || '');
+  }
+
   console.log(`\n${fail ? '✗' : '✓'} ${pass} passed, ${fail} failed\n`);
   process.exit(fail ? 1 : 0);
 })();

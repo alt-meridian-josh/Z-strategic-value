@@ -3878,6 +3878,14 @@ function leverEvidence(sc) {
 // [] => no dedup, every lever keeps its own haircut (v1 behavior).
 let engagementDedup = [];
 
+// v2 (req 5): per-input provenance, a sibling map to `inputs` so the numeric
+// inputs stay clean: { scId: { inputKey: { confidence:"A"|"B"|"C", source, needs } } }.
+// {} => unflagged (v1). The data-status panel that surfaces this is Phase 5.
+let engagementProvenance = {};
+// v2 (req 6): analyst notes that survive Save/Load and appear in exports:
+// { engagement, levers: { id: note }, costRows: { index: note } }. {} => none.
+let engagementAnnotations = {};
+
 // Hard validation. Throws on: missing rationale, shares > 100%, or a lever in two
 // groups. Called on load (before any state change) and available to any edit path.
 function validateDedup(dedup) {
@@ -3961,6 +3969,8 @@ function applyEngagement(p) {
   engagementTechnologies = Array.isArray(p.technologies) ? p.technologies.map(t => Object.assign({}, t)) : [];
   engagementOverlay = (p.overlay && typeof p.overlay === 'object') ? JSON.parse(JSON.stringify(p.overlay)) : {};
   engagementDedup = Array.isArray(p.dedup) ? JSON.parse(JSON.stringify(p.dedup)) : [];
+  engagementProvenance = (p._provenance && typeof p._provenance === 'object') ? JSON.parse(JSON.stringify(p._provenance)) : {};
+  engagementAnnotations = (p.annotations && typeof p.annotations === 'object') ? JSON.parse(JSON.stringify(p.annotations)) : {};
   const setVal = (id,v) => { const el = document.getElementById(id); if(el && v!=null) el.value = v; };
 
   // 0) Optional notice banner (e.g. illustrative-sample disclaimer)
@@ -4057,6 +4067,8 @@ function gatherEngagement() {
     technologies: engagementTechnologies.map(t => Object.assign({}, t)),
     overlay: JSON.parse(JSON.stringify(engagementOverlay)),
     dedup: JSON.parse(JSON.stringify(engagementDedup)),
+    _provenance: JSON.parse(JSON.stringify(engagementProvenance)),
+    annotations: JSON.parse(JSON.stringify(engagementAnnotations)),
     engagement: eng,
     verticals: [...activeIndustries],
     selectedIds: sel,
