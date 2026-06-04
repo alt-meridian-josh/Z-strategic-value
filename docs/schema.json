@@ -1,0 +1,146 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://z-strategic-value/schema/v1",
+  "title": "Strategic Value Engagement (v1)",
+  "description": "Documents the engagement JSON exactly as index.html reads/writes it today (gatherEngagement at index.html:3935, applyEngagement at index.html:3854). Library lever definitions, formulas, evidence text, and ramp/tier tables live in CODE, not in this JSON. Saved engagements reference library levers by id via selectedIds and override input values via inputs. This is descriptive of v1; it is intentionally permissive (additionalProperties:true) because the loader ignores unknown keys and v2 will add fields additively.",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "_type": {
+      "const": "strategic-value-engagement",
+      "description": "Type guard. importEngagementFile warns if present and different (index.html:3981)."
+    },
+    "_version": {
+      "type": "integer",
+      "enum": [1],
+      "description": "Written as 1; nothing reads it in v1 (no migration branch). A real consumer is added in the v2 migration shim."
+    },
+    "_label": {
+      "type": "string",
+      "description": "Human label, regenerated every save as '<customer> — saved <YYYY-MM-DD>' (index.html:3947). Display/console only; not loaded into any field."
+    },
+    "_notice": {
+      "type": "string",
+      "description": "Optional disclaimer banner text. Read by applyEngagement (index.html:3862); NEVER written by gatherEngagement. Authoring field for example/profile JSONs."
+    },
+    "engagement": {
+      "type": "object",
+      "description": "Intake/identity fields. All optional; all map 1:1 to text inputs.",
+      "additionalProperties": true,
+      "properties": {
+        "company":  { "type": "string", "description": "#i-company" },
+        "customer": { "type": "string", "description": "#i-customer; drives filenames and _label" },
+        "title":    { "type": "string", "description": "#i-title" },
+        "sites":    { "type": ["number", "null"], "description": "#i-sites; +val||undefined on save" },
+        "seller":   { "type": "string", "description": "#i-seller" },
+        "email":    { "type": "string", "description": "#i-email" },
+        "partners": { "type": "string", "description": "#i-partners" },
+        "pain":     { "type": "string", "description": "#i-pain; free-text discovery notes" }
+      }
+    },
+    "verticals": {
+      "type": "array",
+      "description": "Active industry keys (index.html:3949/3879). Values are vertical keys such as retail, warehouse, healthcare, manufacturing, government, carriers, aviation, hospitality, datacenter, energy, foodservice.",
+      "items": { "type": "string" }
+    },
+    "selectedIds": {
+      "type": "array",
+      "description": "IDs of selected library levers (e.g. RET-01) and any active custom IDs as tracked in state.selectedIds (index.html:3937/3887).",
+      "items": { "type": "string" }
+    },
+    "inputs": {
+      "type": "object",
+      "description": "Map of scenarioId -> { inputKey: number }. On save, only selected scenarios are emitted (index.html:3938); on load, values are merged onto library defaults (index.html:3890). Keys per scenario are defined by SCENARIOS[i].inputs and the matching calcSc case. Values are bare numbers (no per-value provenance).",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": { "type": "number" }
+      }
+    },
+    "customScenarios": {
+      "type": "array",
+      "description": "User-defined levers (index.html:3952/3901). Enter calcNRV through the same ramp/tier/haircut/financeCredit gates as library levers, but carry no evidence citation or A/B/C confidence flag in v1.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["id", "custom", "mechanismId", "rampType", "accessibilityTier", "haircut", "inputs"],
+        "properties": {
+          "id":     { "type": "string", "description": "Auto 'CUSTOM-NN'" },
+          "name":   { "type": "string" },
+          "custom": { "const": true, "description": "Branch flag in calcSc (index.html:4597)" },
+          "active": { "type": "boolean", "description": "Only active customs fold into the active set (index.html:5163)" },
+          "mechanismId": {
+            "type": "string",
+            "description": "One of CUSTOM_MECHANISMS ids (index.html:4868-4922); selects the closed-form formula.",
+            "examples": ["labor_recovery", "shrink_reduction", "availability_uplift", "compliance_fines", "custom_formula"]
+          },
+          "rampType": {
+            "type": "string",
+            "enum": ["hard_labor", "hard_cost", "revenue", "soft", "working_cap", "strategic"],
+            "description": "Keys of RAMP (index.html:2101)."
+          },
+          "accessibilityTier": {
+            "type": "string",
+            "enum": ["commodity", "configured", "infrastructure"],
+            "description": "Keys of ACCESS_TIER (index.html:2110)."
+          },
+          "haircut": { "type": "number", "minimum": 0, "maximum": 1, "description": "Covariance haircut; default 0.10" },
+          "inputs": {
+            "type": "object",
+            "description": "Mechanism var values keyed by the mechanism's vars[].key.",
+            "additionalProperties": { "type": "number" }
+          }
+        }
+      }
+    },
+    "financeCredit": {
+      "type": "object",
+      "description": "Global finance-credit state (index.html:3953/3906).",
+      "additionalProperties": true,
+      "properties": {
+        "enabled": { "type": "boolean", "description": "Default true" },
+        "rate": { "type": "number", "minimum": 0, "maximum": 1, "description": "Credit applied to revenue/working_cap/soft ramp types; default 0.40" }
+      }
+    },
+    "wacc": {
+      "type": "number",
+      "description": "Discount rate; default 0.10 (index.html:3954/3913)."
+    },
+    "contingencyRate": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 0.25,
+      "description": "Buffer on the Yr-0 cost subtotal; default 0.07 (index.html:3955/3916)."
+    },
+    "costRows": {
+      "type": "array",
+      "description": "Explicit cost model. When present, the app stops merging slider defaults (index.html:3917-3921). Default rows assume an RFID hardware/tag/SaaS stack; no per-row technology label in v1.",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "label":    { "type": "string" },
+          "qty":      { "type": ["number", "string"], "description": "number, or \"\" on the contingency row" },
+          "unitCost": { "type": ["number", "string"], "description": "number, or \"\" on the contingency row" },
+          "yr0":      { "type": "number" },
+          "yr1":      { "type": "number" },
+          "yr2":      { "type": "number" },
+          "cadence":  { "type": "string", "enum": ["one-time", "annual"] },
+          "contingency": { "type": "boolean", "description": "Present/true only on the contingency row; its yr0 is recomputed from contingencyRate (index.html:4474)" }
+        }
+      }
+    },
+    "nrvOverrides": {
+      "type": "object",
+      "description": "Per-lever overrides for the SECONDARY NRV layer (nrvCfg), keyed by lever id, each { profile?, access?, h? } (index.html:2151-2161). READ by applyEngagement (index.html:3896) but NEVER written by gatherEngagement — a round-trip loss in v1. Hand-authored example JSONs may inject it and it will take effect on load.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "profile": { "type": "string", "enum": ["hardware", "software", "behavior", "compliance"], "description": "Keys of NRV_RAMPS (index.html:2127)" },
+          "access":  { "type": "string", "enum": ["commodity", "configured", "infra"], "description": "Keys of NRV_ACCESS (index.html:2134)" },
+          "h":       { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      }
+    }
+  }
+}
