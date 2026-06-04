@@ -3850,9 +3850,32 @@ SCENARIOS.forEach(sc => {
 // from file:// too). Example engagements live as real .json files under examples/
 // and load through the exact same path — nothing is hard-coded into the app.
 
+// Current export mode. Carried in the v2 envelope; the mode SYSTEM (banner,
+// customer guardrails) is wired in later phases — here it only round-trips.
+let appMode = 'analyst';
+
+// ── SCHEMA v2 MIGRATION ───────────────────────────────────────────────────────
+// Any pre-v2 file (or one missing the additive blocks) loads unchanged: this
+// fills the v2 fields with v1-equivalent defaults so the rest of the app can
+// assume they exist. Absent => v1 behavior. First and only reader of _version.
+function migrateEngagement(p) {
+  if(!p || typeof p !== 'object') return p;
+  p = Object.assign({}, p); // shallow clone — never mutate the caller's object
+  if(!Array.isArray(p.technologies))                   p.technologies = [];
+  if(!p.overlay     || typeof p.overlay     !== 'object') p.overlay = {};
+  if(!Array.isArray(p.dedup))                          p.dedup = [];
+  if(!p._provenance || typeof p._provenance !== 'object') p._provenance = {};
+  if(!p.annotations || typeof p.annotations !== 'object') p.annotations = {};
+  if(!p.nrvOverrides|| typeof p.nrvOverrides !== 'object') p.nrvOverrides = {};
+  if(p.mode !== 'customer' && p.mode !== 'analyst')    p.mode = 'analyst';
+  return p;
+}
+
 // Rehydrate the full live state + DOM from an engagement object, then re-render.
 function applyEngagement(p) {
   if(!p || typeof p !== 'object') { console.warn('applyEngagement: nothing to load'); return false; }
+  p = migrateEngagement(p);
+  appMode = p.mode;
   const setVal = (id,v) => { const el = document.getElementById(id); if(el && v!=null) el.value = v; };
 
   // 0) Optional notice banner (e.g. illustrative-sample disclaimer)
@@ -3943,13 +3966,17 @@ function gatherEngagement() {
     partners: val('i-partners'), pain: val('i-pain')
   };
   return {
-    _type: 'strategic-value-engagement', _version: 1,
+    _type: 'strategic-value-engagement', _version: 2,
     _label: (eng.customer || 'Engagement') + ' — saved ' + new Date().toISOString().slice(0,10),
+    mode: appMode,
     engagement: eng,
     verticals: [...activeIndustries],
     selectedIds: sel,
     inputs,
     customScenarios: (state.customScenarios || []).map(s => Object.assign({}, s, { inputs: Object.assign({}, s.inputs) })),
+    // nrvOverrides: per-lever secondary-NRV overrides. Read on load since v1 but
+    // never serialized before v2 — this closes that round-trip loss.
+    nrvOverrides: Object.fromEntries(Object.entries(nrvOverrides).map(([k,v]) => [k, Object.assign({}, v)])),
     financeCredit: { enabled: financeCreditEnabled, rate: financeCreditRate },
     wacc: +val('nrv-wacc') || 0.10,
     contingencyRate: contingencyRate,

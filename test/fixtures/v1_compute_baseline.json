@@ -1,0 +1,4 @@
+{
+  "kpi": "NRV Peak Annual $666,479 Peak NRV (Yr 3) · decay-adjusted Payback Period — mo discounted at 10% WACC NRV (5-yr NPV) -$452,391 discounted at 10% · normalized 5-Year Net ROI -8% NRV-normalized · decay applied",
+  "walkdown": "RET-01 $672,480 $672,480 $551,434 $496,290 configured RET-02 $50,000 $50,000 $41,000 $14,760 configured RET-03 $14,000 $14,000 $11,480 $10,332 configured RET-05 $76,800 $76,800 $62,976 $56,678 configured + Decay Avoided (status quo growth @ 3.5%/yr) $88,418 − Annual TCO (opex + attrition + training) -$449,595 NRV (5-yr discounted @ 10% WACC) -$452,391"
+}
