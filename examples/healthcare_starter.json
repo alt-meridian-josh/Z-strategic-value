@@ -1,0 +1,250 @@
+{
+  "_type": "strategic-value-engagement",
+  "_version": 2,
+  "_label": "Healthcare Starter (illustrative) — saved 2026-06-04",
+  "mode": "analyst",
+  "technologies": [],
+  "overlay": {},
+  "dedup": [],
+  "_provenance": {
+    "HC-01": {
+      "annual_rental_spend": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      },
+      "rental_reduction_pct": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      },
+      "num_nursing_staff": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      },
+      "nursing_search_hours_per_shift": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      },
+      "shifts_per_year": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      },
+      "loaded_nursing_rate": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      }
+    },
+    "HC-02": {
+      "annual_or_cases": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      },
+      "instrument_delay_rate_pct": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      },
+      "delay_reduction_pct": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      },
+      "avg_delay_duration_hr": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      },
+      "or_delay_cost_per_hour": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      }
+    },
+    "HC-05": {
+      "annual_audit_prep_hours": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      },
+      "labor_reduction_pct": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      },
+      "loaded_rate": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      }
+    },
+    "HC-06": {
+      "annual_expired_writeoffs": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      },
+      "expiry_reduction_pct": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      },
+      "annual_stockout_cost": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      },
+      "stockout_reduction_pct": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      }
+    }
+  },
+  "annotations": {},
+  "engagement": {
+    "company": "Zebra Technologies",
+    "customer": "Healthcare Starter (illustrative)",
+    "title": "RFID Healthcare Value Case — Starter",
+    "sites": 5,
+    "seller": "Joshua Willis",
+    "email": "",
+    "partners": "",
+    "pain": "Equipment search time, OR instrument delays, audit-prep labor, and supply expiry/stockouts."
+  },
+  "verticals": [
+    "healthcare"
+  ],
+  "selectedIds": [
+    "HC-01",
+    "HC-02",
+    "HC-05",
+    "HC-06"
+  ],
+  "inputs": {
+    "HC-01": {
+      "annual_rental_spend": 1200000,
+      "rental_reduction_pct": 0.15,
+      "num_nursing_staff": 200,
+      "nursing_search_hours_per_shift": 0.5,
+      "shifts_per_year": 365,
+      "loaded_nursing_rate": 48
+    },
+    "HC-02": {
+      "annual_or_cases": 8000,
+      "instrument_delay_rate_pct": 0.05,
+      "delay_reduction_pct": 0.25,
+      "avg_delay_duration_hr": 0.5,
+      "or_delay_cost_per_hour": 6000
+    },
+    "HC-05": {
+      "annual_audit_prep_hours": 4000,
+      "labor_reduction_pct": 0.4,
+      "loaded_rate": 45
+    },
+    "HC-06": {
+      "annual_expired_writeoffs": 400000,
+      "expiry_reduction_pct": 0.15,
+      "annual_stockout_cost": 200000,
+      "stockout_reduction_pct": 0.2
+    }
+  },
+  "customScenarios": [],
+  "nrvOverrides": {},
+  "financeCredit": {
+    "enabled": true,
+    "rate": 0.4
+  },
+  "wacc": 0.1,
+  "contingencyRate": 0.07,
+  "costRows": [
+    {
+      "label": "Fixed readers / handheld units",
+      "qty": 20,
+      "unitCost": 1200,
+      "yr0": 24000,
+      "yr1": 0,
+      "yr2": 0,
+      "cadence": "one-time"
+    },
+    {
+      "label": "Mounting / installation fixtures",
+      "qty": 5,
+      "unitCost": 650,
+      "yr0": 3250,
+      "yr1": 0,
+      "yr2": 0,
+      "cadence": "one-time"
+    },
+    {
+      "label": "Initial tag deployment",
+      "qty": 25000,
+      "unitCost": 0.12,
+      "yr0": 3000,
+      "yr1": 0,
+      "yr2": 0,
+      "cadence": "one-time"
+    },
+    {
+      "label": "Annual tag replenishment",
+      "qty": 7500,
+      "unitCost": 0.12,
+      "yr0": 0,
+      "yr1": 900,
+      "yr2": 900,
+      "cadence": "annual"
+    },
+    {
+      "label": "SaaS / platform license",
+      "qty": 5,
+      "unitCost": 5000,
+      "yr0": 0,
+      "yr1": 25000,
+      "yr2": 25000,
+      "cadence": "annual"
+    },
+    {
+      "label": "Professional services / impl.",
+      "qty": 5,
+      "unitCost": 8500,
+      "yr0": 42500,
+      "yr1": 0,
+      "yr2": 0,
+      "cadence": "one-time"
+    },
+    {
+      "label": "Training & enablement",
+      "qty": 5,
+      "unitCost": 1200,
+      "yr0": 6000,
+      "yr1": 0,
+      "yr2": 0,
+      "cadence": "one-time"
+    },
+    {
+      "label": "Internal FTE time (project)",
+      "qty": 480,
+      "unitCost": 55,
+      "yr0": 26400,
+      "yr1": 0,
+      "yr2": 0,
+      "cadence": "one-time"
+    },
+    {
+      "label": "Contingency",
+      "qty": "",
+      "unitCost": "",
+      "yr0": 7361,
+      "yr1": 0,
+      "yr2": 0,
+      "cadence": "one-time",
+      "contingency": true
+    }
+  ],
+  "_notice": "Illustrative healthcare starter — published industry benchmarks only, not a real engagement. Confirm every input against customer data."
+}

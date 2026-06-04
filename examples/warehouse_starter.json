@@ -1,0 +1,238 @@
+{
+  "_type": "strategic-value-engagement",
+  "_version": 2,
+  "_label": "Warehouse / DC Starter (illustrative) — saved 2026-06-04",
+  "mode": "analyst",
+  "technologies": [],
+  "overlay": {},
+  "dedup": [],
+  "_provenance": {
+    "WH-01": {
+      "total_pallet_positions": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      },
+      "count_cycles_per_year": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      },
+      "time_per_position_manual_min": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      },
+      "time_per_position_rfid_sec": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      },
+      "loaded_rate": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      }
+    },
+    "WH-02": {
+      "annual_inbound_pallets": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      },
+      "hours_per_pallet_manual": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      },
+      "hours_per_pallet_rfid": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      },
+      "loaded_rate": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      }
+    },
+    "WH-03": {
+      "annual_orders_picked": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      },
+      "error_rate_baseline_pct": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      },
+      "error_reduction_pct": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      },
+      "cost_per_error": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      }
+    },
+    "WH-06": {
+      "outbound_labor_hours": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      },
+      "labor_reduction_pct": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      },
+      "loaded_rate": {
+        "confidence": "B",
+        "source": "Published benchmark",
+        "needs": "Confirm with customer data"
+      }
+    }
+  },
+  "annotations": {},
+  "engagement": {
+    "company": "Zebra Technologies",
+    "customer": "Warehouse / DC Starter (illustrative)",
+    "title": "RFID Warehouse Value Case — Starter",
+    "sites": 5,
+    "seller": "Joshua Willis",
+    "email": "",
+    "partners": "",
+    "pain": "Cycle-count labor, inbound receiving labor, pick errors, and outbound labor across DCs."
+  },
+  "verticals": [
+    "warehouse"
+  ],
+  "selectedIds": [
+    "WH-01",
+    "WH-02",
+    "WH-03",
+    "WH-06"
+  ],
+  "inputs": {
+    "WH-01": {
+      "total_pallet_positions": 25000,
+      "count_cycles_per_year": 12,
+      "time_per_position_manual_min": 3,
+      "time_per_position_rfid_sec": 20,
+      "loaded_rate": 24
+    },
+    "WH-02": {
+      "annual_inbound_pallets": 150000,
+      "hours_per_pallet_manual": 0.133,
+      "hours_per_pallet_rfid": 0.083,
+      "loaded_rate": 24
+    },
+    "WH-03": {
+      "annual_orders_picked": 2000000,
+      "error_rate_baseline_pct": 0.005,
+      "error_reduction_pct": 0.8,
+      "cost_per_error": 20
+    },
+    "WH-06": {
+      "outbound_labor_hours": 10000,
+      "labor_reduction_pct": 0.35,
+      "loaded_rate": 26
+    }
+  },
+  "customScenarios": [],
+  "nrvOverrides": {},
+  "financeCredit": {
+    "enabled": true,
+    "rate": 0.4
+  },
+  "wacc": 0.1,
+  "contingencyRate": 0.07,
+  "costRows": [
+    {
+      "label": "Fixed readers / handheld units",
+      "qty": 40,
+      "unitCost": 1200,
+      "yr0": 48000,
+      "yr1": 0,
+      "yr2": 0,
+      "cadence": "one-time"
+    },
+    {
+      "label": "Mounting / installation fixtures",
+      "qty": 5,
+      "unitCost": 650,
+      "yr0": 3250,
+      "yr1": 0,
+      "yr2": 0,
+      "cadence": "one-time"
+    },
+    {
+      "label": "Initial tag deployment",
+      "qty": 250000,
+      "unitCost": 0.07,
+      "yr0": 17500,
+      "yr1": 0,
+      "yr2": 0,
+      "cadence": "one-time"
+    },
+    {
+      "label": "Annual tag replenishment",
+      "qty": 62500,
+      "unitCost": 0.07,
+      "yr0": 0,
+      "yr1": 4375,
+      "yr2": 4375,
+      "cadence": "annual"
+    },
+    {
+      "label": "SaaS / platform license",
+      "qty": 5,
+      "unitCost": 6000,
+      "yr0": 0,
+      "yr1": 30000,
+      "yr2": 30000,
+      "cadence": "annual"
+    },
+    {
+      "label": "Professional services / impl.",
+      "qty": 5,
+      "unitCost": 8500,
+      "yr0": 42500,
+      "yr1": 0,
+      "yr2": 0,
+      "cadence": "one-time"
+    },
+    {
+      "label": "Training & enablement",
+      "qty": 5,
+      "unitCost": 1200,
+      "yr0": 6000,
+      "yr1": 0,
+      "yr2": 0,
+      "cadence": "one-time"
+    },
+    {
+      "label": "Internal FTE time (project)",
+      "qty": 480,
+      "unitCost": 55,
+      "yr0": 26400,
+      "yr1": 0,
+      "yr2": 0,
+      "cadence": "one-time"
+    },
+    {
+      "label": "Contingency",
+      "qty": "",
+      "unitCost": "",
+      "yr0": 10056,
+      "yr1": 0,
+      "yr2": 0,
+      "cadence": "one-time",
+      "contingency": true
+    }
+  ],
+  "_notice": "Illustrative warehouse starter — published industry benchmarks only, not a real engagement. Confirm every input against customer data."
+}
