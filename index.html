@@ -902,6 +902,8 @@ svg{max-width:100%;height:auto}
 
 <div class="shell">
 <aside class="sidebar">
+  <!-- Persistent mode identity band (Phase 3) — reflects appMode; addition, not a redesign. -->
+  <div id="mode-band" style="font-size:11px;font-weight:700;letter-spacing:.04em;padding:7px 10px;margin:0 0 10px;border-radius:5px;background:#15301a;color:#A8F931;border-left:3px solid #A8F931" title="Analyst — full edit access">Analyst — full edit</div>
   <div class="sb-section">Workflow</div>
   <div class="sb-item active" onclick="go(0)"><div class="sb-num">1</div><span class="sb-label">Engagement Setup</span><span class="sb-short">Setup</span></div>
   <div class="sb-item" onclick="go(1)"><div class="sb-num">2</div><span class="sb-label">Industry &amp; Value Levers</span><span class="sb-short">Industry</span></div>
@@ -3996,6 +3998,7 @@ function applyEngagement(p) {
   p = migrateEngagement(p);
   validateDedup(p.dedup); // hard error on invalid dedup — abort before any state change
   appMode = p.mode;
+  updateModeBand();
   engagementTechnologies = Array.isArray(p.technologies) ? p.technologies.map(t => Object.assign({}, t)) : [];
   engagementOverlay = (p.overlay && typeof p.overlay === 'object') ? JSON.parse(JSON.stringify(p.overlay)) : {};
   engagementDedup = Array.isArray(p.dedup) ? JSON.parse(JSON.stringify(p.dedup)) : [];
@@ -4154,6 +4157,18 @@ function triggerImport() { document.getElementById('import-file')?.click(); }
 function showChooser() { const el = document.getElementById('entry-chooser'); if(el) el.style.display = 'block'; }
 function hideChooser() { const el = document.getElementById('entry-chooser'); if(el) el.style.display = 'none'; }
 
+// Phase 3: the persistent sidebar identity band reflects the current mode.
+function updateModeBand() {
+  const el = document.getElementById('mode-band');
+  if(!el) return;
+  const customer = (appMode === 'customer');
+  el.textContent = customer ? 'Customer view' : 'Analyst — full edit';
+  el.style.background = customer ? '#3a2a12' : '#15301a';
+  el.style.color      = customer ? '#f0c36d' : '#A8F931';
+  el.style.borderLeft = '3px solid ' + (customer ? '#e0a020' : '#A8F931');
+  el.title            = customer ? 'Customer-facing view' : 'Analyst — full edit access';
+}
+
 // Start new → a blank engagement (keep the analyst's own company/seller/email),
 // then into the guided flow at Step 1.
 function clearEngagement() {
@@ -4168,6 +4183,7 @@ function clearEngagement() {
   engagementProvenance = {}; engagementAnnotations = {};
   Object.keys(nrvOverrides).forEach(k => delete nrvOverrides[k]);
   appMode = 'analyst';
+  updateModeBand();
   costRowsEdited = false; costRowsPreset = false;
   costRows = defaultCostRows(); rebuildCostState();
   try { renderLeverGrid(); } catch(e) {}
@@ -8521,6 +8537,7 @@ document.addEventListener('DOMContentLoaded', () => {
   checkExampleParam();        // opt-in ?example=<key> — applied after defaults so it wins
   const hasExample = !!new URLSearchParams(location.search).get('example');
   if(!embedded && !hasExample) showChooser();  // no engagement + no example → three-door entry
+  updateModeBand();
   syncNav();
 });
 
