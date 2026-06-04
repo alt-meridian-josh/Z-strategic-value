@@ -8,9 +8,9 @@ const fs = require('fs');
 const path = require('path');
 const { JSDOM, VirtualConsole } = require('jsdom');
 
-function loadApp({ quiet = true } = {}) {
+function loadApp({ quiet = true, html = null } = {}) {
   const htmlPath = path.resolve(__dirname, '..', 'index.html');
-  const html = fs.readFileSync(htmlPath, 'utf8');
+  if (html == null) html = fs.readFileSync(htmlPath, 'utf8');
   const errors = [];
   const vc = new VirtualConsole();
   vc.on('jsdomError', e => errors.push(e.message || String(e)));
@@ -24,6 +24,16 @@ function loadApp({ quiet = true } = {}) {
     virtualConsole: vc,
   });
   return { dom, window: dom.window, errors };
+}
+
+// Resolve once the document's DOMContentLoaded init has had a chance to run
+// (that is where a standalone export auto-applies its embedded engagement).
+function ready(window) {
+  return new Promise(resolve => {
+    if (window.document.readyState === 'complete') return resolve();
+    window.addEventListener('load', () => resolve());
+    setTimeout(resolve, 200); // fallback so the harness never hangs
+  });
 }
 
 // Deep-equal that ignores volatile/derived keys (e.g. _label is a timestamp
@@ -61,4 +71,4 @@ async function exportStandalone(window) {
   return await captured.text();
 }
 
-module.exports = { loadApp, diff, exportStandalone };
+module.exports = { loadApp, diff, exportStandalone, ready };

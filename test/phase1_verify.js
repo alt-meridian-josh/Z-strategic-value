@@ -3,7 +3,7 @@
 //   node test/phase1_verify.js
 const fs = require('fs');
 const path = require('path');
-const { loadApp, diff, exportStandalone } = require('./harness.js');
+const { loadApp, diff, exportStandalone, ready } = require('./harness.js');
 
 let pass = 0, fail = 0;
 const ok = (name, cond, detail = '') => {
@@ -211,6 +211,34 @@ function compute(obj) {
     // Full v2 fixture reaches a save/load fixpoint (every v2 block now round-trips).
     const [, , d] = fixpoint(readJSON(V2));
     ok('full v2 fixture round-trips losslessly (fixpoint)', d === null, d || '');
+  }
+
+  console.log('\n── Chunk 6: standalone opens offline + full acceptance ──');
+  {
+    // Export the v2 engagement, then OPEN the exported file in a fresh, offline
+    // jsdom (external <script src> are never fetched) and confirm it auto-loads
+    // and reconstructs every v2 block — load -> compute -> save -> reload -> export.
+    const html = await exportStandalone(applied(readJSON(V2)));
+    const { window, errors } = loadApp({ html });
+    await ready(window);
+    ok('exported file opens offline with zero jsdom errors', errors.length === 0, `${errors.length} errors`);
+    const cust = window.document.getElementById('i-customer')?.value || '';
+    ok('exported file auto-loads its embedded engagement', /Acme Distribution/.test(cust), cust);
+    const g = window.gatherEngagement();
+    ok('reopened engagement reconstructs all v2 blocks',
+       g._version === 2 && g.technologies.length === 3 && g.dedup.length === 1
+       && Object.keys(g.overlay).length === 3 && Object.keys(g._provenance).length === 3
+       && !!g.annotations.engagement && g.customScenarios.length === 2);
+    window.ensureCosts(); window.renderROI();
+    ok('reopened engagement computes (kpi-grid rendered)', /\$/.test((window.document.getElementById('kpi-grid')?.textContent) || ''));
+  }
+  {
+    // The whole point: v1 file from before this work still loads without complaint.
+    const v1 = readJSON(V1);
+    const [, , d] = fixpoint(v1);
+    const base = readJSON(BASE), now = compute(v1);
+    ok('ACCEPTANCE: v1 file loads + computes UNCHANGED + round-trips',
+       d === null && now.kpi === base.kpi && now.walkdown === base.walkdown && now.cost === base.cost);
   }
 
   console.log(`\n${fail ? '✗' : '✓'} ${pass} passed, ${fail} failed\n`);

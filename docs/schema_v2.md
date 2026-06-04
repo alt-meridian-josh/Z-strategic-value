@@ -1,0 +1,57 @@
+# Engagement JSON — Schema v2 (implemented)
+
+Additive extension of v1 (`docs/schema.md`). **Every v2 key is optional**; a v1 file
+omits them and loads unchanged via the migration shim (`migrateEngagement`,
+`index.html`), which fills v1-equivalent defaults and is the first reader of `_version`.
+`gatherEngagement` now stamps `_version: 2`. Verified end-to-end by `test/phase1_verify.js`
+(51 checks) against `examples/sample_engagement.json` (v1) and
+`test/fixtures/v2_multitech_warehouse.json` (v2).
+
+## Envelope additions
+
+| Key | Type | Default (absent) | Notes |
+|---|---|---|---|
+| `_version` | `2` | treated as v1 | migration shim fills v2 fields |
+| `mode` | `"analyst"\|"customer"` | `"analyst"` | carried only in Phase 1; the mode *system* is Phase 3/4 |
+| `technologies` | `Technology[]` | `[]` → implicit RFID | drives cost-model + report copy |
+| `overlay` | `{ [leverId]: LeverMeta }` | `{}` | per-**library**-lever metadata (by id) |
+| `dedup` | `DedupGroup[]` | `[]` | shared loss pools; validated on load |
+| `_provenance` | `{ [scId]: { [inputKey]: Provenance } }` | `{}` | sibling map to `inputs` |
+| `annotations` | `{ engagement, levers, costRows }` | `{}` | analyst notes |
+| `nrvOverrides` | `{ [leverId]: {profile,access,h} }` | `{}` | **v1 defect fixed** — now serialized (was read-only) |
+
+## Blocks
+
+**Technology** — `{ id, label, captureLabel?, role? }`. `role ∈ {capture, platform, both}`.
+`techScopeLabel()` joins labels ("RFID" or "RFID, Machine Vision & Software Platform");
+falls back to `RFID` when none. Cost rows attribute to a technology via
+`costRows[].technologyId` (renders per-technology section headers); report subtitle names
+the stack.
+
+**Custom lever (full discipline)** — `customScenarios[]` gains `technologyIds: string[]`
+and `evidence: { confidence: "A"|"B"|"C", citation, evidenceIds, formulaSource }`. Enters
+`calcNRV`/`calcSc` through the identical ramp/tier/haircut/finance-credit gates; flagged
+`[user]`/"(user-generated)" in all exports.
+
+**LeverMeta (overlay)** — `{ technologyIds?, evidence? }` attached to library levers by id.
+`leverEvidence(sc)` resolves evidence from the custom-inline field or the overlay.
+
+**DedupGroup** — `{ poolId, label, rationale (required), members: [{ leverId, share }] }`.
+A member's `share` **replaces** its per-lever `(1 - haircut)` inside `overlapFactor(sc)`
+(override, **no stacking**); ungrouped levers keep their haircut. `validateDedup()` hard-errors
+(aborting load) when a `rationale` is missing, a group's shares sum to **> 100%**, or a lever
+appears in **more than one** group — so no-double-counting holds by construction. The Full
+Analysis walkdown renders each pool's rationale + share split and marks member rows `[pool NN%]`.
+
+**Provenance** — `{ confidence: "A"|"B"|"C", source, needs }` per input. Carried + exported;
+the data-status panel that surfaces it is Phase 5.
+
+**Annotations** — `engagement` (string), `levers` (`{ [leverId]: note }`), `costRows`
+(`{ [index]: note }`). Carried + exported; surfaced in the report in Phase 5.
+
+## Backward compatibility (verified)
+
+v1 `examples/sample_engagement.json` loads, computes **byte-identical** to the pre-edit
+baseline (kpi + walkdown + cost table), round-trips losslessly, and migrates to `_version 2`
+on save. The v2 fixture loads → computes → saves → reloads losslessly → exports a standalone
+that **opens offline** and reconstructs every v2 block.
