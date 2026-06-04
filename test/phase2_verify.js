@@ -51,6 +51,61 @@ const readJSON = p => JSON.parse(fs.readFileSync(p, 'utf8'));
     ok('embedded-engagement export auto-loads', /Acme Distribution/.test(val(window, 'i-customer') || ''), val(window,'i-customer'));
   }
 
+  console.log('\n── Phase 2 chunk 2: profile grid (manifest-driven) ──');
+  // jsdom has no fetch; serve local examples/ files (mirrors browser fetch on the hosted site).
+  const root = path.resolve(__dirname, '..');
+  const installFetch = (window) => {
+    window.fetch = (u) => {
+      try {
+        const full = path.resolve(root, String(u).replace(/^[./]+/, ''));
+        const body = fs.readFileSync(full, 'utf8');
+        return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(JSON.parse(body)), text: () => Promise.resolve(body) });
+      } catch (e) { return Promise.resolve({ ok: false, status: 404, json: () => Promise.reject(e), text: () => Promise.resolve('') }); }
+    };
+  };
+  {
+    const { window } = loadApp(); await ready(window);
+    installFetch(window);
+    window.chooseProfiles();
+    await new Promise(r => setTimeout(r, 50));
+    const grid = window.document.getElementById('entry-profiles');
+    ok('profiles door reveals the grid', grid.style.display === 'block');
+    ok('grid lists the sample profile with its _label', /Zebra Apparel Co\./.test(grid.innerHTML));
+    ok('grid shows the profile _notice (one-line description)', /Illustrative sample/.test(grid.innerHTML));
+    ok('grid groups by vertical (retail)', /retail/i.test(grid.innerHTML));
+  }
+  {
+    // Selecting a profile loads it through the normal path and enters the flow.
+    const { window } = loadApp(); await ready(window);
+    installFetch(window);
+    window.loadProfile('sample_engagement');
+    await new Promise(r => setTimeout(r, 50));
+    ok('selecting a profile hides the chooser', disp(window, 'entry-chooser') === 'none');
+    ok('selecting a profile loads the engagement', /Zebra Apparel Co\./.test(val(window, 'i-customer') || ''), val(window,'i-customer'));
+    window.ensureCosts(); window.renderROI();
+    ok('profile engagement computes (kpi-grid)', /\$/.test(window.document.getElementById('kpi-grid')?.textContent || ''));
+  }
+  {
+    // Graceful degrade when fetch is unavailable (e.g. file://): no blank grid.
+    const { window } = loadApp(); await ready(window);
+    try { delete window.fetch; } catch (e) {}
+    window.chooseProfiles();
+    await new Promise(r => setTimeout(r, 50));
+    const grid = window.document.getElementById('entry-profiles');
+    ok('no-fetch: grid degrades to an "Open a JSON" message (not blank)', /Open a JSON/.test(grid.innerHTML));
+  }
+  {
+    // ?example= bypasses the chooser and auto-loads (fetch installed before init).
+    const { window, errors } = loadApp({
+      url: 'file:///home/user/Z-strategic-value/index.html?example=sample_engagement',
+      beforeParse: installFetch,
+    });
+    await ready(window);
+    await new Promise(r => setTimeout(r, 50));
+    ok('?example bypasses the chooser', disp(window, 'entry-chooser') !== 'block', String(disp(window,'entry-chooser')));
+    ok('?example auto-loads the engagement', /Zebra Apparel Co\./.test(val(window, 'i-customer') || ''), val(window,'i-customer'));
+  }
+
   console.log(`\n${fail ? '✗' : '✓'} ${pass} passed, ${fail} failed\n`);
   process.exit(fail ? 1 : 0);
 })();

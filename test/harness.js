@@ -8,7 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const { JSDOM, VirtualConsole } = require('jsdom');
 
-function loadApp({ quiet = true, html = null } = {}) {
+function loadApp({ quiet = true, html = null, url = 'file:///home/user/Z-strategic-value/index.html', beforeParse = null } = {}) {
   const htmlPath = path.resolve(__dirname, '..', 'index.html');
   if (html == null) html = fs.readFileSync(htmlPath, 'utf8');
   const errors = [];
@@ -20,8 +20,9 @@ function loadApp({ quiet = true, html = null } = {}) {
     runScripts: 'dangerously',   // run inline scripts
     resources: undefined,        // do NOT fetch external <script src> -> offline
     pretendToBeVisual: true,
-    url: 'file:///home/user/Z-strategic-value/index.html',
+    url,
     virtualConsole: vc,
+    beforeParse(window) { if (typeof beforeParse === 'function') beforeParse(window); },
   });
   return { dom, window: dom.window, errors };
 }
