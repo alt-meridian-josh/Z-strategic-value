@@ -1189,7 +1189,7 @@ svg{max-width:100%;height:auto}
 <div class="panel" id="panel-4">
   <div class="step-eyebrow">Step 5 of 6</div>
   <div class="step-title">ROI & Value Case</div>
-  <div class="step-desc">Full financial model using the NRV (Net Realization Value) methodology. Every benefit is adjusted for adoption ramp, accessibility decay, and covariance haircut before discounting. Decay Avoided captures the growing cost of the status quo. MIRR replaces IRR &#8212; reinvesting at WACC, not at the internal rate. Scroll past the headline KPIs to the <strong>NRV Walk-Down</strong> for the full per-driver decomposition.</div>
+  <div class="step-desc">Full financial model using the NRV (Net Realization Value) methodology. Every benefit is adjusted for adoption ramp, accessibility decay, and covariance haircut before discounting. Decay Avoided captures the growing cost of the status quo. MIRR replaces IRR &#8212; reinvesting at WACC, not at the internal rate. Scroll past the headline KPIs to the <strong>NRV Walk-Down</strong> for the full per-driver decomposition.<br><span style="font-size:12px;color:var(--muted)">New to these terms? <a href="#" onclick="go(7);setTimeout(function(){document.getElementById('h-glossary').scrollIntoView({behavior:'smooth'});},80);return false;" style="color:var(--brand-blue,#003FBD);font-weight:600">Open the glossary &amp; math walkthrough →</a></span></div>
 
   <div class="alert a-strategy" style="margin-bottom:18px">
     <span>⬡</span>
@@ -1487,11 +1487,13 @@ svg{max-width:100%;height:auto}
     <div class="card-title">On This Page</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px 20px;font-size:12px">
       <a href="#h-workflow"   onclick="document.getElementById('h-workflow').scrollIntoView({behavior:'smooth'});return false;"   style="color:var(--brand-black);text-decoration:none">→ The 6-Step Workflow</a>
+      <a href="#h-glossary"   onclick="document.getElementById('h-glossary').scrollIntoView({behavior:'smooth'});return false;"   style="color:var(--brand-black);text-decoration:none">→ Acronym &amp; Term Glossary</a>
       <a href="#h-levers"     onclick="document.getElementById('h-levers').scrollIntoView({behavior:'smooth'});return false;"     style="color:var(--brand-black);text-decoration:none">→ Industry &amp; Value Levers</a>
       <a href="#h-inputs"     onclick="document.getElementById('h-inputs').scrollIntoView({behavior:'smooth'});return false;"     style="color:var(--brand-black);text-decoration:none">→ Discovery Inputs</a>
       <a href="#h-cost"       onclick="document.getElementById('h-cost').scrollIntoView({behavior:'smooth'});return false;"       style="color:var(--brand-black);text-decoration:none">→ Cost Model</a>
       <a href="#h-ramptypes"  onclick="document.getElementById('h-ramptypes').scrollIntoView({behavior:'smooth'});return false;"  style="color:var(--brand-black);text-decoration:none">→ Benefit Types &amp; Ramps</a>
       <a href="#h-roi"        onclick="document.getElementById('h-roi').scrollIntoView({behavior:'smooth'});return false;"        style="color:var(--brand-black);text-decoration:none">→ ROI &amp; Value Case</a>
+      <a href="#h-math"       onclick="document.getElementById('h-math').scrollIntoView({behavior:'smooth'});return false;"       style="color:var(--brand-black);text-decoration:none">→ The Math, Step by Step</a>
       <a href="#h-exports"    onclick="document.getElementById('h-exports').scrollIntoView({behavior:'smooth'});return false;"    style="color:var(--brand-black);text-decoration:none">→ Exports &amp; Outputs</a>
       <a href="#h-evidence"   onclick="document.getElementById('h-evidence').scrollIntoView({behavior:'smooth'});return false;"   style="color:var(--brand-black);text-decoration:none">→ Evidence Tiers</a>
       <a href="#h-badges"     onclick="document.getElementById('h-badges').scrollIntoView({behavior:'smooth'});return false;"     style="color:var(--brand-black);text-decoration:none">→ Badges &amp; Labels Decoded</a>
@@ -1528,6 +1530,71 @@ svg{max-width:100%;height:auto}
       <div style="background:var(--brand-black);color:var(--brand-green);font-family:var(--mono);font-size:10px;font-weight:700;padding:6px 12px;letter-spacing:1px">STEP 6 — FULL ANALYSIS</div>
       <div style="padding:10px 12px;font-size:12px;color:var(--gray-700);line-height:1.55">Customer-facing output. Export the 20+ page investment appraisal PDF, the 13-slide PPTX deck, or the one-page executive summary. JSON export saves state for handoffs.</div>
     </div>
+  </div>
+
+  <!-- ── GLOSSARY ───────────────────────────────────────────── -->
+  <div id="h-glossary" style="font-family:var(--head);font-size:18px;font-weight:700;color:var(--brand-black);margin:28px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--brand-black)">Acronym &amp; Term Glossary</div>
+  <div style="font-size:13px;color:var(--gray-700);margin-bottom:16px;line-height:1.6">Every acronym and term you'll meet on the ROI page, in plain language. If a label on Step 5 looks like alphabet soup, it's defined here. For <em>how</em> these pieces combine into the headline number, see <a href="#h-math" onclick="document.getElementById('h-math').scrollIntoView({behavior:'smooth'});return false;" style="color:var(--brand-blue,#003FBD);font-weight:600">The Math, Step by Step ↓</a></div>
+
+  <!-- A — Headline financial metrics -->
+  <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">A — Headline Financial Metrics (the KPI row on Step 5)</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:6px;margin-bottom:18px;font-size:12px">
+    <div style="padding:9px 11px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>NRV — Net Realization Value</strong><br><span style="color:var(--gray-700)">Two things share this name. (1) The <em>methodology</em> — the conservatism-first approach that risk-adjusts every benefit before discounting. (2) The <em>headline dollar number</em> it produces (the 5-yr NPV). "NRV Walk-Down" = the method; "NRV (5-Yr)" = the number.</span></div>
+    <div style="padding:9px 11px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>NPV — Net Present Value</strong><br><span style="color:var(--gray-700)">Today's value of all future net cash flows, discounted at WACC, minus the upfront cost. Positive = the project earns more than your cost of capital. This <em>is</em> the NRV headline number.</span></div>
+    <div style="padding:9px 11px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>WACC — Weighted Average Cost of Capital</strong><br><span style="color:var(--gray-700)">Your company's blended cost of money. Used as the discount rate for every year <em>and</em> as the MIRR reinvestment rate. Default 10%; customer-lite mode is bounded 8–12%.</span></div>
+    <div style="padding:9px 11px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>MIRR — Modified Internal Rate of Return</strong><br><span style="color:var(--gray-700)">The project's annualized return, assuming cash thrown off is reinvested at WACC. Used everywhere in this tool in place of IRR.</span></div>
+    <div style="padding:9px 11px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>IRR — Internal Rate of Return</strong><br><span style="color:var(--gray-700)">The classic return metric — deliberately <em>not</em> used here. IRR assumes you reinvest gains at the project's own (high) rate, which flatters the result. MIRR is the honest version.</span></div>
+    <div style="padding:9px 11px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>BCR — Benefit-to-Cost Ratio</strong><br><span style="color:var(--gray-700)">Total undiscounted 5-yr benefit ÷ total 5-yr cost. A quick sniff test. Above 10× trips a mandatory review gate — almost always a sign the cost side is thin.</span></div>
+    <div style="padding:9px 11px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>Payback Period</strong><br><span style="color:var(--gray-700)">The month cumulative <em>discounted</em> cash turns positive. Shown as a dashed line on the cash-position chart. Beyond 60 months shows as &gt;60 mo.</span></div>
+    <div style="padding:9px 11px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>ROI (5-yr)</strong><br><span style="color:var(--gray-700)">(Total benefit − total cost) ÷ total cost, as a percent. A blunt headline; NPV and MIRR are the metrics finance actually approves on.</span></div>
+    <div style="padding:9px 11px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>TCO — Total Cost of Ownership</strong><br><span style="color:var(--gray-700)">Year-0 capital + the recurring cost over the horizon. The all-in number finance compares against the benefit.</span></div>
+    <div style="padding:9px 11px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>NRC — Non-Recurring Cost</strong><br><span style="color:var(--gray-700)">One-time Year-0 capital: hardware, installation, initial tags, services, training (+ contingency).</span></div>
+  </div>
+
+  <!-- B — The conservatism chain -->
+  <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">B — The Conservatism Chain (what adjusts each benefit <em>before</em> discounting)</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:6px;margin-bottom:18px;font-size:12px">
+    <div style="padding:9px 11px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>Adoption Ramp</strong><br><span style="color:var(--gray-700)">Benefits don't arrive in full on day one. Each benefit type ramps over 5 years (e.g. Hard Labor 50% → 85% → 100%). Reflects process-change speed, not technical risk — RFID works on day one.</span></div>
+    <div style="padding:9px 11px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>Accessibility Decay (Accessibility Tier)</strong><br><span style="color:var(--gray-700)">A second downward adjustment by how readily the value is captured (commodity → configured → infrastructure), and it erodes over time as the easy wins are taken.</span></div>
+    <div style="padding:9px 11px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>Covariance Haircut (h) / Overlap Factor</strong><br><span style="color:var(--gray-700)">When two levers could claim the same dollar, each is trimmed by a haircut (default 10%, i.e. × 0.90) so overlapping benefits aren't double-counted.</span></div>
+    <div style="padding:9px 11px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>Finance Credit / Revenue Credit %</strong><br><span style="color:var(--gray-700)">Soft, revenue, and working-capital benefits are credited at a fraction (default 40%) of modeled value — they're harder to attribute and track (Forrester TEI discipline). Hard labor/cost count at 100%.</span></div>
+    <div style="padding:9px 11px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>Decay-Avoided</strong><br><span style="color:var(--gray-700)">An <em>optional</em> adder for the compounding cost of doing nothing — the status quo getting more expensive each year. <strong>Off by default</strong> (conservative); enable only when status-quo drift is defensible.</span></div>
+    <div style="padding:9px 11px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>Baseline g (growth rate)</strong><br><span style="color:var(--gray-700)">The annual rate at which the status-quo cost drifts upward — used only when Decay-Avoided is on. Default 3.5%.</span></div>
+  </div>
+
+  <!-- C — Evidence & review gates -->
+  <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">C — Evidence &amp; Review Gates</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:6px;margin-bottom:18px;font-size:12px">
+    <div style="padding:9px 11px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>Evidence Tier (1 / 2 / 3)</strong><br><span style="color:var(--gray-700)">Classifies each <em>source</em>. Tier 1 = academic/government; Tier 2 = industry benchmark/analyst; Tier 3 = practitioner/vendor. (Full table under Evidence Tiers below.)</span></div>
+    <div style="padding:9px 11px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>Evidence Grade (Proven / Supported / Emerging / Unregistered)</strong><br><span style="color:var(--gray-700)">Classifies each <em>lever</em>, computed from its sources. Proven = ≥2 sources incl. a Tier 1; Supported = a Tier 1 or ≥2 Tier 2; Emerging = single Tier 2 or vendor-only.</span></div>
+    <div style="padding:9px 11px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>BCR Review Gate (&gt; 10×)</strong><br><span style="color:var(--gray-700)">Advisory but mandatory: a checklist, not a block. A ratio this high almost always means costs are understated, not that the value is real. Clears automatically when BCR falls under 10×.</span></div>
+    <div style="padding:9px 11px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>Evidence-Concentration Flag (&gt; 40%)</strong><br><span style="color:var(--gray-700)">Advisory only — fires when more than 40% of Year-3 normalized benefit rides on Emerging-grade levers. Strengthen those with a second independent source. Does not block export.</span></div>
+  </div>
+
+  <!-- D — Cost terms -->
+  <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">D — Cost-Model Terms</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:6px;margin-bottom:18px;font-size:12px">
+    <div style="padding:9px 11px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>BOM — Bill of Materials</strong><br><span style="color:var(--gray-700)">The auto-built line-item cost estimate the sliders generate. Every row is editable.</span></div>
+    <div style="padding:9px 11px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>Cadence</strong><br><span style="color:var(--gray-700)">How a cost recurs — one-time (Yr 0), annual, monthly (×12), or per-site/yr. Drives which years a cost lands in.</span></div>
+    <div style="padding:9px 11px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>Contingency</strong><br><span style="color:var(--gray-700)">A buffer (default 7%) added to Year-0 capital to cover the unknowns of a first rollout.</span></div>
+    <div style="padding:9px 11px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>Attrition / Backfill</strong><br><span style="color:var(--gray-700)">The labor cost of turnover and coverage during rollout — modeled as a share (20%) of Year-0 capital, added to recurring opex.</span></div>
+  </div>
+
+  <!-- E — Industry acronyms -->
+  <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">E — Industry Acronyms (seen on lever cards)</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px;margin-bottom:20px;font-size:12px">
+    <div style="padding:7px 10px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>OSA</strong> — On-Shelf Availability</div>
+    <div style="padding:7px 10px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>BOPIS</strong> — Buy Online, Pick-up In Store</div>
+    <div style="padding:7px 10px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>FEFO</strong> — First-Expired, First-Out</div>
+    <div style="padding:7px 10px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>OS&amp;D</strong> — Over, Short &amp; Damaged</div>
+    <div style="padding:7px 10px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>MTTR</strong> — Mean Time To Repair</div>
+    <div style="padding:7px 10px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>CMDB</strong> — Configuration Management Database</div>
+    <div style="padding:7px 10px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>FOD</strong> — Foreign Object Debris / Damage</div>
+    <div style="padding:7px 10px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>MRO</strong> — Maintenance, Repair &amp; Operations</div>
+    <div style="padding:7px 10px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>NFR</strong> — Notice of Findings &amp; Recommendations (gov audit)</div>
+    <div style="padding:7px 10px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>CAP</strong> — Corrective Action Plan</div>
+    <div style="padding:7px 10px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>WIP</strong> — Work In Process</div>
+    <div style="padding:7px 10px;background:var(--gray-50);border-radius:5px;border:1px solid var(--gray-100)"><strong>ESG</strong> — Environmental, Social &amp; Governance</div>
   </div>
 
   <!-- ── LEVERS ─────────────────────────────────────────────── -->
@@ -1694,6 +1761,91 @@ svg{max-width:100%;height:auto}
       <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Yr 1 Ramped (in tables)</div>
       Not the full annual value — the Year 1 value after the benefit type ramp is applied. Always less than Full Annual. See ramp table above.
     </div>
+  </div>
+
+  <!-- ── THE MATH, STEP BY STEP ─────────────────────────────── -->
+  <div id="h-math" style="font-family:var(--head);font-size:18px;font-weight:700;color:var(--brand-black);margin:28px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--brand-black)">The Math, Step by Step</div>
+
+  <div style="font-size:13px;color:var(--gray-700);margin-bottom:16px;line-height:1.7"><strong>In plain English:</strong> every dollar of raw benefit passes through the same fixed pipeline before it reaches the headline number. Nothing skips a step and nothing is added at the end without going through the gates — that's what "conservatism by construction" means. The Step-5 header line ("ramp × accessibility × (1−h) + Decay-Avoided") is this pipeline in shorthand. Here it is unpacked.</div>
+
+  <!-- The pipeline -->
+  <div style="display:grid;gap:6px;margin-bottom:18px;font-size:12.5px">
+    <div style="display:grid;grid-template-columns:34px 1fr;border-radius:6px;overflow:hidden;border:1px solid var(--gray-200)">
+      <div style="background:var(--brand-black);color:var(--brand-green);font-family:var(--mono);font-weight:700;display:flex;align-items:center;justify-content:center">1</div>
+      <div style="padding:8px 11px;color:var(--gray-700)"><strong>Raw annual benefit.</strong> Each lever's formula is run on your inputs (e.g. <span style="font-family:var(--mono)">hours × rate</span>). Floored at $0 — a lever can never subtract value.</div>
+    </div>
+    <div style="display:grid;grid-template-columns:34px 1fr;border-radius:6px;overflow:hidden;border:1px solid var(--gray-200)">
+      <div style="background:var(--brand-black);color:var(--brand-green);font-family:var(--mono);font-weight:700;display:flex;align-items:center;justify-content:center">2</div>
+      <div style="padding:8px 11px;color:var(--gray-700)"><strong>× Adoption ramp</strong> for that year (Hard Labor: 50 / 85 / 100 / 97 / 90% across Yr 1–5). Value builds as the process changes.</div>
+    </div>
+    <div style="display:grid;grid-template-columns:34px 1fr;border-radius:6px;overflow:hidden;border:1px solid var(--gray-200)">
+      <div style="background:var(--brand-black);color:var(--brand-green);font-family:var(--mono);font-weight:700;display:flex;align-items:center;justify-content:center">3</div>
+      <div style="padding:8px 11px;color:var(--gray-700)"><strong>× Accessibility decay</strong> for that year (Configured tier: 95 / 90 / 82 / 78 / 75%). How readily the value is actually captured, eroding over time.</div>
+    </div>
+    <div style="display:grid;grid-template-columns:34px 1fr;border-radius:6px;overflow:hidden;border:1px solid var(--gray-200)">
+      <div style="background:var(--brand-black);color:var(--brand-green);font-family:var(--mono);font-weight:700;display:flex;align-items:center;justify-content:center">4</div>
+      <div style="padding:8px 11px;color:var(--gray-700)"><strong>× Covariance haircut</strong> (× (1 − h), default × 0.90) so overlapping levers don't claim the same dollar twice.</div>
+    </div>
+    <div style="display:grid;grid-template-columns:34px 1fr;border-radius:6px;overflow:hidden;border:1px solid var(--gray-200)">
+      <div style="background:var(--brand-black);color:var(--brand-green);font-family:var(--mono);font-weight:700;display:flex;align-items:center;justify-content:center">5</div>
+      <div style="padding:8px 11px;color:var(--gray-700)"><strong>× Finance credit</strong> (× 0.40 for soft / revenue / working-capital; × 1.00 for hard labor &amp; cost). &nbsp;<span style="font-family:var(--mono);font-size:11px;background:#E2FFB6;padding:1px 6px;border-radius:3px">= Normalized annual benefit</span></div>
+    </div>
+    <div style="display:grid;grid-template-columns:34px 1fr;border-radius:6px;overflow:hidden;border:1px solid var(--gray-200)">
+      <div style="background:#565656;color:#fff;font-family:var(--mono);font-weight:700;display:flex;align-items:center;justify-content:center">6</div>
+      <div style="padding:8px 11px;color:var(--gray-700)"><strong>+ Decay-Avoided</strong> <em>(optional, off by default)</em>: normalized benefit × ((1 + g)<sup>yr</sup> − 1) — the compounding cost of the status quo. &nbsp;<span style="font-family:var(--mono);font-size:11px;background:var(--gray-100);padding:1px 6px;border-radius:3px">= Net benefit for the year</span></div>
+    </div>
+    <div style="display:grid;grid-template-columns:34px 1fr;border-radius:6px;overflow:hidden;border:1px solid var(--gray-200)">
+      <div style="background:#565656;color:#fff;font-family:var(--mono);font-weight:700;display:flex;align-items:center;justify-content:center">7</div>
+      <div style="padding:8px 11px;color:var(--gray-700)"><strong>− Recurring costs</strong> (opex + backfill + training). Year 0 carries the up-front capital as a negative. &nbsp;<span style="font-family:var(--mono);font-size:11px;background:var(--gray-100);padding:1px 6px;border-radius:3px">= Net cash flow</span></div>
+    </div>
+    <div style="display:grid;grid-template-columns:34px 1fr;border-radius:6px;overflow:hidden;border:1px solid var(--gray-200)">
+      <div style="background:var(--brand-black);color:var(--brand-green);font-family:var(--mono);font-weight:700;display:flex;align-items:center;justify-content:center">8</div>
+      <div style="padding:8px 11px;color:var(--gray-700)"><strong>÷ (1 + WACC)<sup>yr</sup>, summed over 5 years, minus the up-front capital.</strong> &nbsp;<span style="font-family:var(--mono);font-size:11px;background:#E2FFB6;padding:1px 6px;border-radius:3px">= NRV (the 5-yr NPV headline)</span></div>
+    </div>
+    <div style="display:grid;grid-template-columns:34px 1fr;border-radius:6px;overflow:hidden;border:1px solid var(--gray-200)">
+      <div style="background:var(--brand-black);color:var(--brand-green);font-family:var(--mono);font-weight:700;display:flex;align-items:center;justify-content:center">9</div>
+      <div style="padding:8px 11px;color:var(--gray-700)"><strong>The other KPIs come from the same cash-flow stream</strong> — MIRR, discounted payback, BCR, and 5-yr ROI. No separate assumptions.</div>
+    </div>
+  </div>
+
+  <!-- Formula box -->
+  <div style="background:var(--brand-black);color:#e8e8e8;border-radius:8px;padding:14px 16px;margin-bottom:16px;font-family:var(--mono);font-size:12px;line-height:1.9;overflow-x:auto">
+    <div style="color:var(--brand-green);font-weight:700;margin-bottom:6px">// per lever, per year t (yr = t+1)</div>
+    norm&nbsp;&nbsp;&nbsp;= benefit × ramp[t] × access[t] × (1 − h) × financeCredit<br>
+    net&nbsp;&nbsp;&nbsp;&nbsp;= norm + (useDecay ? norm × ((1+g)<sup>yr</sup> − 1) : 0)<br>
+    ncf[t]&nbsp;= Σ&nbsp;net&nbsp;−&nbsp;recurringCost &nbsp;&nbsp;&nbsp;(ncf[0] = −capex)<br>
+    <span style="color:var(--brand-green)">NRV&nbsp;&nbsp;&nbsp;&nbsp;= −capex + Σ&nbsp;ncf[t] / (1 + WACC)<sup>yr</sup></span><br>
+    MIRR&nbsp;&nbsp;&nbsp;= (FV<sub>+</sub> at WACC / PV<sub>−</sub> at WACC)<sup>1/5</sup> − 1
+  </div>
+
+  <!-- Worked micro-example -->
+  <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Worked Example — One Hard-Labor Lever, Year 1</div>
+  <div style="border:1px solid var(--gray-200);border-radius:8px;overflow:hidden;margin-bottom:16px;font-size:12px">
+    <div style="display:grid;grid-template-columns:1fr 90px 110px;background:var(--brand-black);color:#fff;font-family:var(--mono);font-size:10px;font-weight:700">
+      <div style="padding:7px 11px">STEP</div><div style="padding:7px 11px;text-align:center">FACTOR</div><div style="padding:7px 11px;text-align:right">RUNNING $</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 90px 110px;border-top:1px solid var(--gray-100)"><div style="padding:7px 11px">Raw annual benefit</div><div style="padding:7px 11px;text-align:center;font-family:var(--mono)">—</div><div style="padding:7px 11px;text-align:right;font-family:var(--mono)">100,000</div></div>
+    <div style="display:grid;grid-template-columns:1fr 90px 110px;border-top:1px solid var(--gray-100)"><div style="padding:7px 11px">× Adoption ramp (Yr 1)</div><div style="padding:7px 11px;text-align:center;font-family:var(--mono)">0.50</div><div style="padding:7px 11px;text-align:right;font-family:var(--mono)">50,000</div></div>
+    <div style="display:grid;grid-template-columns:1fr 90px 110px;border-top:1px solid var(--gray-100)"><div style="padding:7px 11px">× Accessibility (Configured, Yr 1)</div><div style="padding:7px 11px;text-align:center;font-family:var(--mono)">0.95</div><div style="padding:7px 11px;text-align:right;font-family:var(--mono)">47,500</div></div>
+    <div style="display:grid;grid-template-columns:1fr 90px 110px;border-top:1px solid var(--gray-100)"><div style="padding:7px 11px">× Covariance haircut (1 − 0.10)</div><div style="padding:7px 11px;text-align:center;font-family:var(--mono)">0.90</div><div style="padding:7px 11px;text-align:right;font-family:var(--mono)">42,750</div></div>
+    <div style="display:grid;grid-template-columns:1fr 90px 110px;border-top:1px solid var(--gray-100)"><div style="padding:7px 11px">× Finance credit (hard labor → 100%)</div><div style="padding:7px 11px;text-align:center;font-family:var(--mono)">1.00</div><div style="padding:7px 11px;text-align:right;font-family:var(--mono)">42,750</div></div>
+    <div style="display:grid;grid-template-columns:1fr 90px 110px;border-top:1px solid var(--gray-100);background:#F0FFD8"><div style="padding:7px 11px;font-weight:700">= Normalized Year-1 benefit</div><div style="padding:7px 11px;text-align:center;font-family:var(--mono)"></div><div style="padding:7px 11px;text-align:right;font-family:var(--mono);font-weight:700">42,750</div></div>
+  </div>
+  <div style="font-size:12px;color:var(--gray-700);margin-bottom:16px;line-height:1.6">A $100k raw benefit contributes <strong>$42,750</strong> in Year 1 — and that's <em>before</em> it's discounted at WACC. Swap in a Revenue lever and step 5 would multiply by 0.40 instead of 1.00, landing at $17,100. That gap is exactly why the Framing Guide says to lead with Hard Labor and Hard Cost.</div>
+
+  <!-- The two gates -->
+  <div class="alert a-info" style="margin-bottom:10px">
+    <span>ℹ</span>
+    <div><strong>The BCR review gate (&gt; 10×)</strong> is a credibility check, not a verdict. Total undiscounted benefit ÷ total cost above 10× nearly always means the cost side is missing lines (annual tag replenishment at real volume, SaaS continuation, hardware maintenance, device attrition). Work the on-page checklist; the flag clears itself once BCR drops under 10×.</div>
+  </div>
+  <div class="alert a-info" style="margin-bottom:16px">
+    <span>ℹ</span>
+    <div><strong>The evidence-concentration flag (&gt; 40%)</strong> is advisory and never blocks export. It fires when more than 40% of Year-3 normalized benefit rides on Emerging-grade levers (single Tier 2 or vendor-only sources). The case can still be sound — the flag just tells you where to add a second independent source before it leaves your hands.</div>
+  </div>
+
+  <div class="alert a-strategy" style="margin-bottom:20px">
+    <span>⬡</span>
+    <div><strong>Why so many haircuts?</strong> Each one answers a finance objection before it's raised — "you won't get full value year one" (ramp), "you can't capture all of it" (accessibility), "these overlap" (covariance), "revenue is soft" (finance credit). By the time the number reaches a CFO, every easy challenge has already been priced in. That's the point of the NRV method: a smaller number you can defend beats a bigger one you can't.</div>
   </div>
 
   <!-- ── EXPORTS ─────────────────────────────────────────────── -->
@@ -4254,6 +4406,14 @@ function go(n) {
 
 function syncNav() {} // no-op — nav banner is static
 
+// Boot landing (customer-view UX): a customer opening the exported tool lands on
+// Discovery Inputs (Step 3 → panel index 2) so they can re-enter their own numbers
+// straight away, rather than the analyst-oriented Engagement Setup page. Analyst
+// boots are unchanged. Factored out so it's unit-testable.
+function applyBootLanding(embedded) {
+  if (embedded && appMode === 'customer') go(2);
+}
+
 // ── FILTERS ──
 function sliderVal(id) { return document.getElementById(id)?.value ?? 0; }
 
@@ -4611,6 +4771,10 @@ function selCount() {
 function renderDisc() {
   const active = SCENARIOS.filter(s=>state.selectedIds.has(s.id));
   const el = document.getElementById('disc-accordion');
+  // Customer view: suppress the seller-facing objection-handler ("Customer Challenge")
+  // and the discovery-question script. The customer keeps the input table to re-enter
+  // their own numbers; the sales coaching is analyst-only.
+  const cust = (appMode === 'customer');
   el.innerHTML = active.map((sc, idx) => `
     <div class="acc-item open" id="acc-${sc.id}">
       <div class="acc-head" onclick="toggleAcc('${sc.id}')">
@@ -4618,9 +4782,9 @@ function renderDisc() {
         <span class="acc-arrow">▼</span>
       </div>
       <div class="acc-body">
-        <div class="challenge-box"><strong>Customer Challenge</strong>${sc.challenge}</div>
+        ${cust ? '' : `<div class="challenge-box"><strong>Customer Challenge</strong>${sc.challenge}</div>
         ${sc.discoveryQuestions.map(q=>`<div class="dq">${q}</div>`).join('')}
-        <div class="divider"></div>
+        <div class="divider"></div>`}
         <div class="itbl-wrap">
         <table class="itbl">
           <thead><tr><th>Variable</th><th>Label</th><th>Benchmark Default</th><th>Your Value</th></tr></thead>
@@ -6305,7 +6469,7 @@ function renderROI() {
           <!-- RIGHT: evidence + one-liner -->
           <div class="sc-snapshot-right">
             <div class="sc-snap-oneliner">${r.sc.oneLiner||''}</div>
-            <div class="sc-snap-challenge">${r.sc.challenge||''}</div>
+            ${appMode === 'customer' ? '' : `<div class="sc-snap-challenge">${r.sc.challenge||''}</div>`}
           </div>
         </div>
       </td>
@@ -8344,7 +8508,8 @@ async function runPPTXDownload(callerBtn) {
       const inputText=sc.inputs?Object.values(sc.inputs).slice(0,2).map(v=>v.label+': '+v.value+' ('+v.hint+')').join('  ·  '):sc.oneLiner||'';
       [{label:'HOW IT WORKS',text:inputText,ac:rAc},
        {label:'EVIDENCE BASIS',text:evText||'See evidence registry',ac:rAc},
-       {label:'HANDLING OBJECTIONS',text:sc.challenge||'—',ac:Z.AMBER},
+       // Objection-handler coaching is seller-only — omit from customer-mode decks.
+       ...(appMode==='customer' ? [] : [{label:'HANDLING OBJECTIONS',text:sc.challenge||'—',ac:Z.AMBER}]),
       ].forEach((r,i)=>{
         const ry=2.04+i*1.36;
         s.addShape(pres.shapes.RECTANGLE,{x:0.5,y:ry,w:8.6,h:1.26,fill:{color:Z.CARD},line:{color:Z.BORDER,width:0.5}});
@@ -8651,6 +8816,13 @@ function exportLLMPrompt() {
       const y3 = row ? fmt(row.y3) : '—';
       const ann = row ? fmt(row.ann) : fmt(sc.annualBenefit);
       const evIds = (sc.evidenceIds||[]).join(', ');
+      // Seller coaching (discovery script + objection handler) is omitted in customer mode.
+      const coaching = (appMode === 'customer') ? '' :
+`Discovery Questions:
+${(sc.discoveryQuestions||[]).map(q=>`    • ${q}`).join('\n')}
+Objection Handler:
+    ${sc.challenge||'—'}
+`;
       return `## ${sc.name} [${sc.id}]
 Theme: ${sc.theme}  |  Evidence Grade: ${computeEvidenceGrade(sc).label}  |  Ramp Type: ${sc.rampType}
 Summary: ${sc.oneLiner||''}
@@ -8658,11 +8830,7 @@ Annual Benefit (steady-state): ${ann}
   Year 1: ${y1} | Year 2: ${y2} | Year 3: ${y3}
 Input Parameters Used:
 ${inputLines}
-Discovery Questions:
-${(sc.discoveryQuestions||[]).map(q=>`    • ${q}`).join('\n')}
-Objection Handler:
-    ${sc.challenge||'—'}
-Evidence IDs: ${evIds||'—'}`;
+${coaching}Evidence IDs: ${evIds||'—'}`;
     }).join('\n\n---\n\n');
 
     // Evidence registry block
@@ -8942,6 +9110,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updateModeBand();
   applyModeGuards();
   syncNav();
+  applyBootLanding(embedded);  // customer view lands on Discovery Inputs; analyst unchanged
 });
 
 // Register annotation plugin when Chart.js is ready
