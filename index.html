@@ -5215,6 +5215,32 @@ function calcDriverWalkdown(sc, result) {
   return rows;
 }
 
+// Render a lever's evidence detail (Chunk 6): confidence flag + citation +
+// formulaSource + resolved evidenceIds, for custom-inline OR overlay evidence.
+// evidenceIds resolve against the EVIDENCE registry exactly like library levers.
+// Returns '' when there is nothing to show. `as` picks the wrapper: a walkdown
+// table row (colspan) or an inline span for the Full Analysis detail column.
+function evidenceDetailHTML(sc, as) {
+  const ev = leverEvidence(sc);
+  if (!ev) return '';
+  const confColor = c => (c === 'A' ? '#2c5f2d' : c === 'B' ? '#7a5200' : '#842029');
+  const bits = [];
+  if (ev.confidence) bits.push(`<strong style="color:${confColor(ev.confidence)}">[${ev.confidence}]</strong>`);
+  if (ev.citation) bits.push(`<span>${ev.citation}</span>`);
+  if (ev.formulaSource) bits.push(`<span style="color:var(--muted)">Formula: ${ev.formulaSource}</span>`);
+  const ids = (ev.evidenceIds || []).map(id => {
+    const e = EVIDENCE.find(x => x.id === id);
+    return `<span class="ev-inline" title="${e ? e.claim : id}">${id}</span>`;
+  }).join(' ');
+  if (ids) bits.push(ids);
+  if (!bits.length) return '';
+  if (as === 'row') {
+    return `<tr style="background:var(--gray-50)"><td colspan="7" style="font-size:10px;color:#444;padding:5px 8px;line-height:1.5">`
+      + `<strong>${sc.id} evidence —</strong> ${bits.join(' · ')}</td></tr>`;
+  }
+  return `<div style="font-size:10px;color:#444;margin-top:3px;line-height:1.5">${bits.join(' · ')}</div>`;
+}
+
 // Registry metadata tag for a custom lever (Chunk 5; pure metadata, no behavior).
 // registered → [REG-xxx v2]; unregistered → [unregistered]. Sits next to [user].
 function registryTag(sc) {
@@ -5308,7 +5334,11 @@ function renderWalkdownTable(activeScenarios, result) {
       + `<strong>Dedup — ${g.label || g.poolId} (${split}):</strong> ${g.rationale}</td></tr>`;
   }).join('') : '';
 
-  el.innerHTML = rows + dedupNote + decayRow + netBenRow + tcoRow + ncfRow + nrvRow;
+  // Chunk 6: render each lever's evidence detail (citation + formula + ids) so
+  // stored citations are visible, not just the [B]/[C] confidence flag.
+  const evidenceNotes = activeScenarios.map(sc => evidenceDetailHTML(sc, 'row')).join('');
+
+  el.innerHTML = rows + dedupNote + decayRow + netBenRow + tcoRow + ncfRow + nrvRow + evidenceNotes;
 }
 
 // ── CUSTOM VALUE SCENARIO BUILDER ──
@@ -6235,11 +6265,11 @@ function renderExec() {
       <td><span class="ramp-tag" style="background:${rampColors[sc.rampType]?.bg||'#f0f0f0'};color:${rampColors[sc.rampType]?.fg||'#555'}">${rInfo?.label||sc.rampType}</span></td>
       <td class="r" style="font-family:var(--mono);color:var(--gray-700)">${fmt(y1)}</td>
       <td class="r" style="font-family:var(--mono);font-weight:700">${fmt(ann)}</td>
-      <td>${sc.evidenceIds.map(id=>`<span class="ev-inline" title="${EVIDENCE.find(e=>e.id===id)?.claim||id}">${id}</span>`).join(' ')}</td>
+      <td>${(sc.evidenceIds||[]).map(id=>`<span class="ev-inline" title="${EVIDENCE.find(e=>e.id===id)?.claim||id}">${id}</span>`).join(' ')}${evidenceDetailHTML(sc, 'inline')}</td>
     </tr>`;
   }).join('');
 
-  const usedEvIds = [...new Set(active.flatMap(s=>s.evidenceIds))];
+  const usedEvIds = [...new Set(active.flatMap(s=>s.evidenceIds||[]))];
   document.getElementById('exec-evidence').innerHTML = usedEvIds.map(id=>{
     const ev = EVIDENCE.find(e=>e.id===id);
     if(!ev) return '';

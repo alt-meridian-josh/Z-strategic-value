@@ -283,6 +283,30 @@ function compute(obj) {
     window.ensureCosts(); window.renderROI();
     ok('reopened engagement computes (kpi-grid rendered)', /\$/.test((window.document.getElementById('kpi-grid')?.textContent) || ''));
   }
+
+  console.log('\n── Chunk 6: evidence citation/formulaSource render + dead-field removal ──');
+  {
+    const w = applied(readJSON(V2)); w.renderROI(); w.renderExec();
+    const wd = w.document.getElementById('nrv-walkdown-body').textContent.replace(/\s+/g, ' ');
+    ok('walkdown renders custom-lever citation', /GS1 US receiving-accuracy benchmark/.test(wd));
+    ok('walkdown renders custom-lever formulaSource', /Formula: Labor-recovery/.test(wd));
+    ok('walkdown renders overlay-lever citation', /Auburn RFID Lab cycle-count study/.test(wd));
+    const exec = w.document.getElementById('exec-sc-body').textContent.replace(/\s+/g, ' ');
+    ok('Full Analysis exec detail renders overlay citation', /Auburn RFID Lab cycle-count study/.test(exec));
+    // evidenceIds on overlay/custom resolve against EVIDENCE just like library levers.
+    w.eval("engagementOverlay['WH-01'].evidence.evidenceIds=['EV-WH-LABOR-01']");
+    w.renderROI();
+    const wd2 = w.document.getElementById('nrv-walkdown-body').innerHTML;
+    ok('overlay evidenceIds resolve against EVIDENCE registry',
+       /class="ev-inline"[^>]*>EV-WH-LABOR-01</.test(wd2));
+    // D8: captureLabel/role removed from the fixture; loader still loads it.
+    const g = w.gatherEngagement();
+    ok('fixture technologies carry no captureLabel/role (D8)',
+       g.technologies.every(t => !('captureLabel' in t) && !('role' in t)));
+    // tolerance: a legacy JSON still carrying them loads without error.
+    const legacy = readJSON(V2); legacy.technologies[0].captureLabel = 'x'; legacy.technologies[0].role = 'capture';
+    ok('loader tolerates legacy captureLabel/role', applied(legacy).gatherEngagement()._version === 2);
+  }
   {
     // The whole point: v1 file from before this work still loads without complaint.
     const v1 = readJSON(V1);

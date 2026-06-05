@@ -25,11 +25,12 @@ omits them and loads unchanged via the migration shim (`migrateEngagement`,
 
 ## Blocks
 
-**Technology** — `{ id, label, captureLabel?, role? }`. `role ∈ {capture, platform, both}`.
-`techScopeLabel()` joins labels ("RFID" or "RFID, Machine Vision & Software Platform");
-falls back to `RFID` when none. Cost rows attribute to a technology via
-`costRows[].technologyId` (renders per-technology section headers); report subtitle names
-the stack.
+**Technology** — `{ id, label }`. **(Chunk 6 / D8)** the former `captureLabel` and `role`
+fields are removed — no code ever read them. The loader still tolerates unknown keys, so
+old JSONs carrying them load without error. `techScopeLabel()` joins labels ("RFID" or
+"RFID, Machine Vision & Software Platform"); falls back to `RFID` when none. Cost rows
+attribute to a technology via `costRows[].technologyId` (renders per-technology section
+headers); report subtitle names the stack.
 
 **Custom lever (full discipline)** — `customScenarios[]` gains `technologyIds: string[]`
 and `evidence: { confidence: "A"|"B"|"C", citation, evidenceIds, formulaSource }`. Enters

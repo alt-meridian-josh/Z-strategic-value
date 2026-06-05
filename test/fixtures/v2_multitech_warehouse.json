@@ -20,20 +20,15 @@
   "technologies": [
     {
       "id": "rfid",
-      "label": "RFID",
-      "captureLabel": "Readers & tags",
-      "role": "capture"
+      "label": "RFID"
     },
     {
       "id": "mv",
-      "label": "Machine Vision",
-      "captureLabel": "Cameras & edge units",
-      "role": "capture"
+      "label": "Machine Vision"
     },
     {
       "id": "platform",
-      "label": "Software Platform",
-      "role": "platform"
+      "label": "Software Platform"
     }
   ],
   "selectedIds": [
