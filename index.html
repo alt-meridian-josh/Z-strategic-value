@@ -1215,13 +1215,6 @@ svg{max-width:100%;height:auto}
         </select>
       </div>
       <div class="nrv-ctl">
-        <label>NRV layer</label>
-        <select id="nrv-on" onchange="renderROI()">
-          <option value="1" selected>On (normalized)</option>
-          <option value="0">Off (raw ramp)</option>
-        </select>
-      </div>
-      <div class="nrv-ctl">
         <label>Finance Credit</label>
         <select id="fin-credit-on" onchange="onFinanceCreditChange()">
           <option value="0">Off (full credit)</option>
@@ -1336,7 +1329,7 @@ svg{max-width:100%;height:auto}
 <div class="panel" id="panel-5">
   <div class="step-eyebrow">Step 6 of 6</div>
   <div class="step-title">Full Analysis</div>
-  <div class="step-desc">Customer-facing executive output. <strong>Export Full Appraisal</strong> generates a 20+ page investment appraisal PDF with NPV, IRR, DCF tables, payback chart and evidence. <strong>Export Deck</strong> produces the branded 13-slide PPTX.</div>
+  <div class="step-desc">Customer-facing executive output. <strong>Export Full Appraisal</strong> generates a 20+ page investment appraisal PDF with NPV, MIRR, DCF tables, payback chart and evidence. <strong>Export Deck</strong> produces the branded 13-slide PPTX.</div>
 
   <div class="exec-hero">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap;gap:12px">
@@ -1522,7 +1515,7 @@ svg{max-width:100%;height:auto}
     </div>
     <div style="border:1px solid var(--gray-200);border-radius:8px;overflow:hidden">
       <div style="background:var(--brand-black);color:var(--brand-green);font-family:var(--mono);font-size:10px;font-weight:700;padding:6px 12px;letter-spacing:1px">STEP 5 — ROI &amp; VALUE CASE</div>
-      <div style="padding:10px 12px;font-size:12px;color:var(--gray-700);line-height:1.55">Full financial model: 5-year NPV, IRR, payback chart, benefit ramp vs. cost curves, and the cost-of-delay slider. The per-scenario table shows Yr 1 ramped values — not full annual — reflecting the adoption ramp.</div>
+      <div style="padding:10px 12px;font-size:12px;color:var(--gray-700);line-height:1.55">Full financial model: 5-year NPV, MIRR, payback chart, benefit ramp vs. cost curves, and the cost-of-delay slider. The per-scenario table shows Yr 1 ramped values — not full annual — reflecting the adoption ramp.</div>
     </div>
     <div style="border:1px solid var(--gray-200);border-radius:8px;overflow:hidden">
       <div style="background:var(--brand-black);color:var(--brand-green);font-family:var(--mono);font-size:10px;font-weight:700;padding:6px 12px;letter-spacing:1px">STEP 6 — FULL ANALYSIS</div>
@@ -1702,7 +1695,7 @@ svg{max-width:100%;height:auto}
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;margin-bottom:16px;font-size:12px">
     <div style="padding:10px 12px;border-radius:6px;border:1px solid var(--gray-200);border-top:3px solid var(--brand-black)">
       <div style="font-weight:700;margin-bottom:5px">Export Full Appraisal (PDF)</div>
-      20+ page investment appraisal. Cover, per-scenario deep dives with donut chart and ramp bars, financial model, cash flow chart, NPV/IRR summary, evidence registry. Opens in a new window — use File → Save as PDF.
+      20+ page investment appraisal. Cover, per-scenario deep dives with donut chart and ramp bars, financial model, cash flow chart, NPV/MIRR summary, evidence registry. Opens in a new window — use File → Save as PDF.
     </div>
     <div style="padding:10px 12px;border-radius:6px;border:1px solid var(--gray-200);border-top:3px solid var(--brand-black)">
       <div style="font-weight:700;margin-bottom:5px">Export Deck (PPTX)</div>
@@ -1826,8 +1819,8 @@ svg{max-width:100%;height:auto}
       Strategic scenarios (data foundation, AI, digital twin) are real but slow. Including them in a headline ROI without prior alignment invites challenge and can undermine harder, faster scenarios.
     </div>
     <div style="padding:12px 14px;border-radius:6px;border:1px solid var(--gray-200);border-left:3px solid var(--brand-green)">
-      <div style="font-weight:700;margin-bottom:5px;font-size:12px">IRR is your insurance number</div>
-      If IRR exceeds the customer's hurdle rate, the investment passes finance review at the headline level. The scenario-by-scenario debate becomes secondary.
+      <div style="font-weight:700;margin-bottom:5px;font-size:12px">MIRR is your insurance number</div>
+      If MIRR exceeds the customer's hurdle rate, the investment passes finance review at the headline level. The scenario-by-scenario debate becomes secondary.
     </div>
     <div style="padding:12px 14px;border-radius:6px;border:1px solid var(--gray-200);border-left:3px solid var(--brand-green)">
       <div style="font-weight:700;margin-bottom:5px;font-size:12px">Scope revenue to the right unit</div>
@@ -2010,34 +2003,44 @@ const ACCESS_TIER = {
 // labor/cost benefits are directly measured and credited at 100%.
 //   IMPORTANT: the revenue credit RATE itself is a deliberately conservative
 //   ASSUMPTION, not a published constant — adjustable in the Step-5 toolbar.
-let financeCreditEnabled = true;             // global toggle (default on → conservative credit)
-let financeCreditRate    = 0.40;             // credit applied to revenue-recovery types
 const FINANCE_CREDIT_TYPES = { revenue:true, working_cap:true, soft:true }; // hard_*/strategic → full
+const FINANCE_CREDIT_DEFAULT = Object.freeze({ enabled: true, rate: 0.40 }); // conservative default; the toolbar controls are the live source of truth
 
-function financeCreditFactor(sc) {
-  if (!financeCreditEnabled) return 1;
-  return FINANCE_CREDIT_TYPES[sc.rampType] ? financeCreditRate : 1;
+// Pure (Chunk 10): the credit fraction for a lever given an EXPLICIT finance-credit
+// state. No module globals — the math path reads only what it is handed, so identical
+// opts → identical output regardless of any UI state. Omitting `fc` uses the
+// conservative default (matches the toolbar's shipped defaults: on @ 40%).
+function financeCreditFactor(sc, fc) {
+  fc = fc || FINANCE_CREDIT_DEFAULT;
+  if (!fc.enabled) return 1;
+  return FINANCE_CREDIT_TYPES[sc.rampType] ? fc.rate : 1;
 }
 
-// Toolbar handler — sync globals from the controls, then re-cost.
-function onFinanceCreditChange() {
-  financeCreditEnabled = document.getElementById('fin-credit-on')?.value === '1';
+// The single source of truth for finance-credit state is the toolbar; read it here.
+function getFinanceCreditState() {
+  const enabled = document.getElementById('fin-credit-on')?.value === '1';
   const r = parseFloat(document.getElementById('fin-credit-rate')?.value);
-  financeCreditRate = (isFinite(r) ? Math.min(100, Math.max(0, r)) : 40) / 100;
+  const rate = (isFinite(r) ? Math.min(100, Math.max(0, r)) : 40) / 100;
+  return { enabled, rate };
+}
+
+// Toolbar handler — clamp the rate field, refresh the note, re-cost. State lives in
+// the controls; nothing is mirrored into module globals (Chunk 10).
+function onFinanceCreditChange() {
+  const rateIn = document.getElementById('fin-credit-rate');
+  if (rateIn) { const r = parseFloat(rateIn.value); rateIn.value = isFinite(r) ? Math.min(100, Math.max(0, r)) : 40; }
+  updateFinanceCreditUI();
   renderROI();
 }
 
-// Keep the toolbar controls + citation note in sync with the globals.
+// Keep the citation note in sync with the live controls (the controls are the truth).
 function updateFinanceCreditUI() {
-  const onSel = document.getElementById('fin-credit-on');
-  const rateIn = document.getElementById('fin-credit-rate');
+  const fc = getFinanceCreditState();
   const note = document.getElementById('fin-credit-note');
-  if (onSel) onSel.value = financeCreditEnabled ? '1' : '0';
-  if (rateIn) rateIn.value = +(financeCreditRate * 100).toFixed(2);
   if (note) {
-    note.style.display = financeCreditEnabled ? 'block' : 'none';
+    note.style.display = fc.enabled ? 'block' : 'none';
     const rl = document.getElementById('fin-credit-note-rate');
-    if (rl) rl.textContent = +(financeCreditRate * 100).toFixed(2);
+    if (rl) rl.textContent = +(fc.rate * 100).toFixed(2);
   }
 }
 
@@ -3786,10 +3789,12 @@ function applyEngagement(p) {
     state.customScenarios = p.customScenarios.map(sc => Object.assign({}, sc, { inputs: Object.assign({}, sc.inputs) }));
   }
 
-  // 5c) Finance Credit
+  // 5c) Finance Credit — write straight to the controls (the source of truth); no globals.
   if(p.financeCredit) {
-    financeCreditEnabled = !!p.financeCredit.enabled;
-    if(p.financeCredit.rate != null) financeCreditRate = p.financeCredit.rate;
+    const finOn = document.getElementById('fin-credit-on');
+    const finRate = document.getElementById('fin-credit-rate');
+    if(finOn) finOn.value = p.financeCredit.enabled ? '1' : '0';
+    if(finRate && p.financeCredit.rate != null) finRate.value = +(p.financeCredit.rate * 100).toFixed(2);
     updateFinanceCreditUI();
   }
 
@@ -3855,7 +3860,7 @@ function gatherEngagement() {
     customScenarios: (state.customScenarios || []).map(s => Object.assign({}, s, { inputs: Object.assign({}, s.inputs) })),
     // nrvOverrides intentionally not emitted (Chunk 1): the secondary-NRV stack
     // that consumed it was removed; emitting a never-read key is dead weight.
-    financeCredit: { enabled: financeCreditEnabled, rate: financeCreditRate },
+    financeCredit: getFinanceCreditState(),
     wacc: +val('nrv-wacc') || 0.10,
     // Decay-Avoided state + schema-driven TCO opex params (Chunk 2; D3/D4).
     decay: { useDecay: (document.getElementById('nrv-decay')?.value ?? '0') === '1',
@@ -3941,7 +3946,7 @@ function applyCustomerLocks(customer) {
   });
   // Finance-credit toggle locked ON; rate bounded to its cited range (default 40%).
   const finOn = document.getElementById('fin-credit-on');
-  if(finOn) { if(customer) { finOn.value = '1'; financeCreditEnabled = true; } finOn.disabled = customer; }
+  if(finOn) { if(customer) { finOn.value = '1'; } finOn.disabled = customer; }
   const finRate = document.getElementById('fin-credit-rate');
   if(finRate) { if(customer) { finRate.min = 0; finRate.max = 60; if(+finRate.value > 60) finRate.value = 60; } }
   // WACC bounded 8–12% in customer mode; restored to the full range in analyst.
@@ -4922,13 +4927,18 @@ function ensureCosts() {
   }
 }
 // ── NRV ENGINE HELPERS ──
-function calcNRV(activeScenarios, costs, wacc, opts) {
-  wacc = wacc || 0.10;
+function calcNRV(activeScenarios, costs, opts) {
+  // One engine, one path (Chunk 10): every knob arrives through `opts` — wacc,
+  // decay, g, AND finance credit. No module globals feed the math, so identical
+  // opts → identical output (purity asserted in tests).
   opts = opts || {};
+  const wacc = (opts.wacc != null) ? opts.wacc : 0.10;
   // Decay-Avoided (Chunk 2; D3): OFF unless explicitly enabled. New engagements
   // default OFF; the migration shim enables it for v1/v2 files to hold numbers.
   const useDecay = opts.useDecay === true;
   const g = (opts.g != null) ? opts.g : 0.035;
+  // Finance credit flows through opts now, not globals (Chunk 10).
+  const fc = opts.financeCredit || FINANCE_CREDIT_DEFAULT;
   const capex = costs.yr0 || 0;
   const annOpex = costs.yr1 || 0;
   // Attrition/backfill + training are schema-driven (Chunk 2; D4). attritionRate
@@ -4952,15 +4962,19 @@ function calcNRV(activeScenarios, costs, wacc, opts) {
   for (let t = 0; t < 5; t++) {
     const yr = t + 1;
 
-    let netBenefit = activeScenarios.reduce((sum, sc) => {
+    const normBenefit = activeScenarios.reduce((sum, sc) => {
       const ann = Math.max(0, calcSc(sc));
       const ramp = RAMP[sc.rampType].y[t];
       const access = ACCESS_TIER[sc.accessibilityTier || 'configured'][t];
-      return sum + ann * ramp * access * overlapFactor(sc) * financeCreditFactor(sc);
+      return sum + ann * ramp * access * overlapFactor(sc) * financeCreditFactor(sc, fc);
     }, 0);
 
-    const decayAvoided = useDecay ? B0 * (Math.pow(1 + g, yr) - 1) : 0;
-    netBenefit += decayAvoided;
+    // Decay-Avoided inherits the full normalization chain (Chunk 10). Its base is the
+    // NORMALIZED annual benefit (post ramp × access × overlap × finance credit), not
+    // gross B0 — so no term bypasses the conservatism gates the toolbar header claims
+    // apply to "every number below". Same year-cumulative shape ((1+g)^yr − 1), new base.
+    const decayAvoided = useDecay ? normBenefit * (Math.pow(1 + g, yr) - 1) : 0;
+    const netBenefit = normBenefit + decayAvoided;
 
     const netCF = netBenefit - totalAnnOpex;
     cumCF += netCF;
@@ -4999,14 +5013,18 @@ function calcNRV(activeScenarios, costs, wacc, opts) {
   const totalCosts = capex + totalAnnOpex * 5;
   const bcr = totalCosts > 0 ? totalBenefits / totalCosts : null;
   const nrv = Math.round(npv);
-  const peakAnnual = Math.max(...yearlyData.map(y => y.netBenefit));
+  // Peak year is derived from the data, not assumed (Chunk 10): with decay/growth
+  // on, the true peak drifts later than Y3, and the label must follow the math.
+  const peakIdx = yearlyData.reduce((bi, y, i, arr) => y.netBenefit > arr[bi].netBenefit ? i : bi, 0);
+  const peakAnnual = yearlyData[peakIdx].netBenefit;
+  const peakYear = yearlyData[peakIdx].year;
   const roi5 = totalCosts > 0
     ? Math.round(((totalBenefits - totalCosts) / totalCosts) * 100)
     : 0;
 
   return {
-    nrv, mirr, paybackMo, bcr, peakAnnual, roi5,
-    yearlyData, B0, totalAnnOpex, capex, wacc,
+    nrv, mirr, paybackMo, bcr, peakAnnual, peakYear, roi5,
+    yearlyData, B0, totalAnnOpex, capex, wacc, financeCredit: fc,
     useDecay, g, attrition, training, annOpex   // surfaced for the unified walkdown (Chunk 3)
   };
 }
@@ -5024,7 +5042,7 @@ function calcDriverWalkdown(sc, result) {
     const access = ACCESS_TIER[sc.accessibilityTier || 'configured'][t];
     const afterRamp = ann * ramp;
     const afterAccess = afterRamp * access;
-    const afterHaircut = afterAccess * overlapFactor(sc) * financeCreditFactor(sc);
+    const afterHaircut = afterAccess * overlapFactor(sc) * financeCreditFactor(sc, result && result.financeCredit);
     rows.push({ year: t + 1, gross: ann, afterRamp, afterAccess, afterHaircut });
   }
   return rows;
@@ -5084,7 +5102,7 @@ function renderWalkdownTable(activeScenarios, result) {
     const afterRamp = ann * ramp;
     const afterAccess = afterRamp * access;
     const afterHaircut = afterAccess * overlapFactor(sc);          // dedup / overlap gate
-    const afterFinance = afterHaircut * financeCreditFactor(sc);   // finance credit gate
+    const afterFinance = afterHaircut * financeCreditFactor(sc, result.financeCredit);   // finance credit gate
     sumAfterFinance += afterFinance;
     const isCustom = sc.custom === true;
     const dShare = dedupShareFor(sc.id);
@@ -5375,17 +5393,18 @@ function renderROI() {
   const gRate   = +(document.getElementById('nrv-g')?.value ?? 0.035);
   // Decay-Avoided default OFF (Chunk 2; D3) — new engagements start without it.
   const useDecay = (document.getElementById('nrv-decay')?.value ?? '0') === '1';
-  const nrvOn    = (document.getElementById('nrv-on')?.value ?? '1') === '1';
   const _setSv = (id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
   _setSv('nrv-wacc-v', (wacc*100).toFixed(1)+'%');
   _setSv('nrv-g-v',    (gRate*100).toFixed(1)+'%');
 
   ensureCosts();
   const c = state.costs;
-  // WACC slider and decay controls now drive the live calc (Chunk 2); MIRR uses
-  // WACC for both legs (the old nrv-fin slider fed only the deleted dead stack).
-  const result = calcNRV(active, c, wacc, { useDecay, g: gRate });
-  const { nrv, mirr, paybackMo, bcr, peakAnnual, roi5, yearlyData } = result;
+  // One engine, one path (Chunk 10): every toolbar knob — WACC, decay, g, finance
+  // credit — is gathered here and handed to calcNRV in a single opts object. No
+  // hidden globals. MIRR uses WACC for both legs.
+  const result = calcNRV(active, c, { wacc, useDecay, g: gRate, financeCredit: getFinanceCreditState() });
+  const { nrv, mirr, paybackMo, bcr, peakAnnual, peakYear, roi5, yearlyData } = result;
+  const waccPctLbl = (wacc*100).toFixed(0);
 
   state.nrvResult = result;
   state.benefits = {
@@ -5416,7 +5435,6 @@ function renderROI() {
   const tcoBy = [result.capex, result.totalAnnOpex, result.totalAnnOpex, result.totalAnnOpex, result.totalAnnOpex, result.totalAnnOpex];
   const ncf = [-result.capex, ...yearlyData.map(y => y.netCF)];
   const npv5 = result.nrv;
-  const irr = typeof estimateIRR === 'function' ? estimateIRR(ncf) : '—';
   const bcrWarn = bcr !== null && bcr > 10;
 
   const bcrFlag = bcrWarn;
@@ -5425,22 +5443,22 @@ function renderROI() {
     <div class="kpi kgreen hero-kpi">
       <div class="kpi-label">NRV Peak Annual</div>
       <div class="kpi-val">${fmt(Math.round(peakAnnual))}</div>
-      <div class="kpi-sub">Peak NRV (Yr 3) · decay-adjusted</div>
+      <div class="kpi-sub">Peak NRV (Yr ${peakYear})${useDecay ? ' · decay-adjusted' : ' · normalized'}</div>
     </div>
     <div class="kpi kblue hero-kpi">
       <div class="kpi-label">Payback Period</div>
       <div class="kpi-val">${paybackMo !== null ? paybackMo : '—'}<span style="font-size:15px;font-weight:400"> mo</span></div>
-      <div class="kpi-sub">discounted at 10% WACC</div>
+      <div class="kpi-sub">discounted at ${waccPctLbl}% WACC</div>
     </div>
     <div class="kpi kamber hero-kpi">
       <div class="kpi-label">NRV (5-yr NPV)</div>
       <div class="kpi-val">${fmt(nrv)}</div>
-      <div class="kpi-sub">discounted at 10% · normalized</div>
+      <div class="kpi-sub">discounted at ${waccPctLbl}% · normalized</div>
     </div>
     <div class="kpi kgold hero-kpi">
       <div class="kpi-label">5-Year Net ROI</div>
       <div class="kpi-val">${roi5}<span style="font-size:15px">%</span></div>
-      <div class="kpi-sub">NRV-normalized · decay applied</div>
+      <div class="kpi-sub">undiscounted 5-yr totals</div>
     </div>`;
 
   document.getElementById('kpi-secondary').innerHTML = `
@@ -5687,27 +5705,26 @@ function renderROI() {
     </svg>`;
   })();
 
-  // Financial metrics grid — NRV-aware (MIRR primary, IRR shown for reference)
+  // Financial metrics grid — MIRR primary (Chunk 10: no IRR anywhere; the NRV layer
+  // is always on — raw vs normalized is the walkdown's gross column, never a mode).
   const mirrTxt = mirr === null ? '—' : (mirr*100).toFixed(1)+'%';
   document.getElementById('fin-grid').innerHTML = `
-    <div class="fin-card accent-green"><div class="fin-label">${nrvOn?'NRV (NPV @ '+(wacc*100).toFixed(0)+'%)':'NPV (5-Year @ '+(wacc*100).toFixed(0)+'%)'}</div><div class="fin-val">${fmt(npv5)}</div><div class="fin-sub">${nrvOn?'5-yr decay-adjusted · WACC sensitivity 8/10/12':'Net present value of cash flows'}</div></div>
-    <div class="fin-card accent-blue"><div class="fin-label">${nrvOn?'MIRR':'IRR'}</div><div class="fin-val">${nrvOn?mirrTxt:(irr+'%')}</div><div class="fin-sub">${nrvOn?'Reinvested at WACC · CFO-grade (IRR '+irr+'%)':'Modeled unlevered IRR (illustrative, pre-tax)'}</div></div>
+    <div class="fin-card accent-green"><div class="fin-label">NRV (NPV @ ${waccPctLbl}%)</div><div class="fin-val">${fmt(npv5)}</div><div class="fin-sub">5-yr${useDecay?' decay-adjusted':' normalized'} · WACC sensitivity 8/${waccPctLbl}/12</div></div>
+    <div class="fin-card accent-blue"><div class="fin-label">MIRR</div><div class="fin-val">${mirrTxt}</div><div class="fin-sub">Reinvested at WACC · modified rate of return (CFO-grade)</div></div>
     <div class="fin-card accent-amber ${bcrWarn?'warn':''}"><div class="fin-label">Benefit : Cost (5-yr)</div><div class="fin-val" style="${bcrWarn?'color:#c8330e':''}">${bcr===null?'—':bcr.toFixed(1)+'x'}</div><div class="fin-sub">${bcrWarn?'⚠ Above 10x — mandatory SOP review':'Undiscounted total benefit ÷ total cost'}</div></div>
     <div class="fin-card" style="border-top:3px solid var(--red)"><div class="fin-label">Monthly Value at Risk</div><div class="fin-val" style="color:var(--red)">${fmt(Math.round(totY1/12))}</div><div class="fin-sub">Foregone per month of delay (Yr 1 ramped)</div></div>`;
 
-  // WACC sensitivity — slim strip beneath the fin-grid
+  // WACC sensitivity — slim strip beneath the fin-grid (always shown; Chunk 10).
   const _sensCalc = (sw)=>{
     let n=0; ncf.forEach((v,t)=>{ n += v/Math.pow(1+sw,t); }); return Math.round(n);
   };
   const sensHost = document.getElementById('nrv-sens-host');
   if (sensHost) {
-    if (nrvOn) {
-      sensHost.innerHTML = `<div class="nrv-sens-row">
-        <div class="sens-cell"><div class="lbl">NPV @ 8%</div><div class="val">${fmt(_sensCalc(0.08))}</div></div>
-        <div class="sens-cell mid"><div class="lbl">NPV @ ${(wacc*100).toFixed(0)}% (base)</div><div class="val">${fmt(npv5)}</div></div>
-        <div class="sens-cell"><div class="lbl">NPV @ 12%</div><div class="val">${fmt(_sensCalc(0.12))}</div></div>
-      </div>`;
-    } else sensHost.innerHTML = '';
+    sensHost.innerHTML = `<div class="nrv-sens-row">
+      <div class="sens-cell"><div class="lbl">NPV @ 8%</div><div class="val">${fmt(_sensCalc(0.08))}</div></div>
+      <div class="sens-cell mid"><div class="lbl">NPV @ ${waccPctLbl}% (base)</div><div class="val">${fmt(npv5)}</div></div>
+      <div class="sens-cell"><div class="lbl">NPV @ 12%</div><div class="val">${fmt(_sensCalc(0.12))}</div></div>
+    </div>`;
   }
 
   // Detail table — expandable rows with mini analytics panel.
@@ -5780,7 +5797,7 @@ function renderROI() {
       </td>
     </tr>`;
   }).join('');
-  const decayFootRow = (nrvOn && useDecay)
+  const decayFootRow = (useDecay)
     ? `<tr><td colspan="2" style="font-style:italic;color:var(--muted);font-size:11px">+ Decay_Avoided (status-quo growth at ${(gRate*100).toFixed(1)}%/yr)</td>${decayAvoided.map(v=>`<td class="r mono" style="color:var(--muted);font-size:11px">${fmt(Math.round(v))}</td>`).join('')}<td></td></tr>`
     : '';
   document.getElementById('vtbl-foot').innerHTML =
@@ -5837,21 +5854,9 @@ function syncDelay() {
   }
 }
 
-function estimateIRR(cashflows) {
-  if(!cashflows || cashflows[0]>=0) return 'N/A'; // no investment
-  if(cashflows.slice(1).every(v=>v<=0)) return 'N/A'; // no positive returns
-  let r = 0.20;
-  for(let i=0;i<100;i++) {
-    let npv=0, dnpv=0;
-    cashflows.forEach((cf,t)=>{ npv+=cf/Math.pow(1+r,t); dnpv-=t*cf/Math.pow(1+r,t+1); });
-    if(Math.abs(dnpv)<1e-10) break;
-    const r2=r-npv/dnpv;
-    if(!isFinite(r2)) break;
-    if(Math.abs(r2-r)<1e-6){r=r2;break;}
-    r=r2;
-  }
-  return (r>0&&r<10&&isFinite(r))?Math.round(r*100):'N/A';
-}
+// estimateIRR removed (Chunk 10): MIRR is the only rate-of-return metric in the
+// tool. It is computed in calcNRV (reinvested at WACC) and displayed via
+// calcMIRRDisplay; no path computes or labels a plain IRR.
 
 // ── STEP 7: EXEC ──
 function renderExec() {
@@ -6163,7 +6168,7 @@ function exportFullPDF() {
   const invRatio = yr0>0 ? (ben3yr/yr0).toFixed(2) : '—';
   const yr0net=-(yr0), yr1net=totY1-yr1, yr2net=totY2-yr2, yr3net=totY3-yr2;
   const npv5 = _nrvRes ? _nrvRes.nrv : Math.round((yr1net/1.1)+(yr2net/1.21)+(yr3net/1.331)+(yr3net/1.464)+(yr3net/1.611));
-  const irrVal = _nrvRes ? calcMIRRDisplay(_nrvRes.mirr) : estimateIRR([yr0net,yr1net,yr2net,yr3net,yr3net]);
+  const irrVal = _nrvRes ? calcMIRRDisplay(_nrvRes.mirr) : '—';   // MIRR only (Chunk 10)
 
   // Monthly DCF table (60 months, 5 years)
   const discRateMo = Math.pow(1.10,1/12)-1;
@@ -7393,7 +7398,7 @@ async function runPPTXDownload(callerBtn) {
     const yr2net   = (b.totY2||0)-(c.yr2||0);
     const yr3net   = (b.totAnnual||0)-(c.yr2||0);
     const npv5     = _pptxNrv ? _pptxNrv.nrv : Math.round((yr1net/1.1)+(yr2net/1.21)+(yr3net/1.331)+(yr3net/1.464)+(yr3net/1.611));
-    const irr      = _pptxNrv ? calcMIRRDisplay(_pptxNrv.mirr) : (typeof estimateIRR==='function' ? estimateIRR([yr0net,yr1net,yr2net,yr3net,yr3net]) : '—');
+    const irr      = _pptxNrv ? calcMIRRDisplay(_pptxNrv.mirr) : '—';   // MIRR only (Chunk 10)
     const roi3     = _pptxNrv ? _pptxNrv.roi5 : (c.yr0>0 ? Math.round(((b.totY1+b.totY2+b.totAnnual-(c.yr0+c.yr1+c.yr2+c.yr2))/(c.yr0+c.yr1+c.yr2+c.yr2))*100) : 0);
     const bc3      = c.yr2>0 ? (b.totAnnual/c.yr2).toFixed(1)+'x' : '—';
     const groups   = {};

@@ -93,9 +93,11 @@ function compute(obj) {
     const w2 = applied(readJSON(V2)); w2.renderROI();
     const r2 = w2.eval('state.nrvResult');
     // v2 multitech: discounted payback. Chunk 8 added the MV recurring TCO line
-    // (+$16k/yr opex), which pushes the crossing from 12.0 → 12.5 mo (later, as a
-    // higher opex must). Still discounted, still ≥ the old undiscounted 11.
-    ok('discounted payback: v2 multitech = 12.5 mo (TCO-complete, Chunk 8)', r2.paybackMo === 12.5, String(r2.paybackMo));
+    // (+$16k/yr opex), pushing the crossing 12.0 → 12.5 mo. Chunk 10 then normalized
+    // the Decay-Avoided basis (off gross B0 → off the normalized annual benefit, the
+    // more conservative figure), which lowers early-year net benefit and pushes the
+    // crossing 12.5 → 13.2 mo. Still discounted; later because the adder shrank.
+    ok('discounted payback: v2 multitech = 13.2 mo (decay normalized, Chunk 10)', r2.paybackMo === 13.2, String(r2.paybackMo));
     // Independent check: recompute cumulative-discounted crossing and match calcNRV.
     let cum = -r2.capex, mo = null;
     for (let t = 0; t < r2.yearlyData.length; t++) {
