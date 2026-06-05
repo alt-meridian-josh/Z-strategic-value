@@ -92,9 +92,10 @@ function compute(obj) {
 
     const w2 = applied(readJSON(V2)); w2.renderROI();
     const r2 = w2.eval('state.nrvResult');
-    // v2 multitech: discounted crossing in yr1 (frac 0.9965) → 12.0 mo. The old
-    // undiscounted method returned 11; discounted must lag (>=) undiscounted.
-    ok('discounted payback: v2 multitech = 12.0 mo (was 11 undiscounted)', r2.paybackMo === 12, String(r2.paybackMo));
+    // v2 multitech: discounted payback. Chunk 8 added the MV recurring TCO line
+    // (+$16k/yr opex), which pushes the crossing from 12.0 → 12.5 mo (later, as a
+    // higher opex must). Still discounted, still ≥ the old undiscounted 11.
+    ok('discounted payback: v2 multitech = 12.5 mo (TCO-complete, Chunk 8)', r2.paybackMo === 12.5, String(r2.paybackMo));
     // Independent check: recompute cumulative-discounted crossing and match calcNRV.
     let cum = -r2.capex, mo = null;
     for (let t = 0; t < r2.yearlyData.length; t++) {
@@ -123,7 +124,16 @@ function compute(obj) {
   {
     const g = applied(readJSON(V2)).gatherEngagement();
     ok('technologies[] round-trips (3 techs)', g.technologies.map(t => t.id).join(',') === 'rfid,mv,platform', g.technologies.map(t=>t.id).join(','));
-    ok('costRows[].technologyId survives Save', g.costRows.filter(r => r.technologyId).length === 6);
+    // 7 tech-attributed rows after Chunk 8 (was 6): added the MV recurring
+    // maintenance/licensing line so the machine-vision stack carries full TCO.
+    ok('costRows[].technologyId survives Save', g.costRows.filter(r => r.technologyId).length === 7);
+    // Chunk 8: the machine-vision stack now carries a recurring TCO line (was
+    // cameras-only / zero opex), and BCR stays under the 10x review gate.
+    const mvRecurring = g.costRows.filter(r => r.technologyId === 'mv' && (r.cadence === 'annual' || (r.yr1||0) > 0));
+    ok('MV stack has a recurring TCO line (Chunk 8)', mvRecurring.length >= 1 && mvRecurring[0].yr1 === 16000, JSON.stringify(mvRecurring.map(r=>r.label)));
+    const w = applied(readJSON(V2)); w.renderROI();
+    const bcr = w.eval('state.nrvResult.bcr');
+    ok('BCR stays under 10x review gate', bcr < 10, String(+bcr.toFixed(3)));
   }
   {
     ok('techScopeLabel() falls back to "RFID" with no technologies', applied(readJSON(V1)).techScopeLabel() === 'RFID');

@@ -196,7 +196,8 @@
       "CUSTOM-01": "MV lever is directional pending pilot; confidence B."
     },
     "costRows": {
-      "0": "Reader/camera counts assume 8 capture points per DC."
+      "0": "Reader/camera counts assume 8 capture points per DC.",
+      "4": "Construction note: MV recurring TCO = edge-analytics software licensing + camera maintenance at $400/camera/yr x 40 cameras = $16,000/yr. Mid-range published figure for industrial machine-vision deployments; conservative vs. premium per-camera SaaS tiers. Closes the cameras-as-one-time-only gap so the MV stack carries full TCO."
     }
   },
   "financeCredit": {
@@ -245,6 +246,16 @@
       "yr2": 0,
       "cadence": "one-time",
       "technologyId": "mv"
+    },
+    {
+      "label": "Machine-vision maintenance & licensing",
+      "technologyId": "mv",
+      "cadence": "annual",
+      "qty": 40,
+      "unitCost": 400,
+      "yr0": 0,
+      "yr1": 16000,
+      "yr2": 16000
     },
     {
       "label": "Software platform license",
