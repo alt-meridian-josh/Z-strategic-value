@@ -59,23 +59,49 @@ function compute(obj) {
     ok('v1 cost table UNCHANGED vs pre-edit baseline', now.cost === base.cost, now.cost === base.cost ? '' : now.cost.slice(0,80));
   }
 
-  console.log('\n── Chunk 1: envelope v2 + migration shim + nrvOverrides fix ──');
+  console.log('\n── Chunk 1: envelope v2 + migration shim + nrvOverrides deprecated-ignored ──');
   {
     const w = loadApp().window;
     const m = w.migrateEngagement({ _type: 'strategic-value-engagement', _version: 1 });
-    ok('migration fills additive v2 defaults', Array.isArray(m.technologies) && Array.isArray(m.dedup)
-       && m.overlay && m._provenance && m.annotations && m.nrvOverrides && m.mode === 'analyst');
+    // Reason (Chunk 1): the dead secondary-NRV stack that read nrvOverrides was
+    // removed, so migration no longer fills the key — it must NOT be present.
+    ok('migration fills additive v2 defaults (no nrvOverrides)', Array.isArray(m.technologies) && Array.isArray(m.dedup)
+       && m.overlay && m._provenance && m.annotations && !('nrvOverrides' in m) && m.mode === 'analyst');
   }
   {
+    // Reason (Chunk 1): an old JSON carrying nrvOverrides must load without error
+    // (tolerated) but the key is never read, normalized, or re-emitted on Save.
     const v1 = readJSON(V1);
     v1.nrvOverrides = { 'RET-01': { profile: 'hardware', access: 'infra', h: 0.2 } };
     const g = applied(v1).gatherEngagement();
-    ok('nrvOverrides round-trips through Save', diff(g.nrvOverrides, v1.nrvOverrides) === null, JSON.stringify(g.nrvOverrides));
+    ok('nrvOverrides tolerated on load, dropped on Save', !('nrvOverrides' in g), JSON.stringify(g.nrvOverrides));
   }
   {
     ok('mode defaults to analyst', fixpoint(readJSON(V1))[0].mode === 'analyst');
     const cust = readJSON(V1); cust.mode = 'customer';
     ok('mode:"customer" round-trips', applied(cust).gatherEngagement().mode === 'customer');
+  }
+  {
+    // Payback correctness (Chunk 1): payback is DISCOUNTED — first month cumulative
+    // discounted NCF crosses zero — never investment ÷ first-year benefit.
+    const w1 = applied(readJSON(V1)); w1.renderROI();
+    const r1 = w1.eval('state.nrvResult');
+    // v1 sample: cumulative discounted NCF ends negative (NPV -452,391) → never
+    // crosses → payback is null (renders "—"), undiscounted method would too.
+    ok('discounted payback: v1 never crosses → null', r1.paybackMo === null, String(r1.paybackMo));
+
+    const w2 = applied(readJSON(V2)); w2.renderROI();
+    const r2 = w2.eval('state.nrvResult');
+    // v2 multitech: discounted crossing in yr1 (frac 0.9965) → 12.0 mo. The old
+    // undiscounted method returned 11; discounted must lag (>=) undiscounted.
+    ok('discounted payback: v2 multitech = 12.0 mo (was 11 undiscounted)', r2.paybackMo === 12, String(r2.paybackMo));
+    // Independent check: recompute cumulative-discounted crossing and match calcNRV.
+    let cum = -r2.capex, mo = null;
+    for (let t = 0; t < r2.yearlyData.length; t++) {
+      const prev = cum; cum += r2.yearlyData[t].discounted;
+      if (prev < 0 && cum >= 0) { mo = Math.round((t + (-prev/(cum-prev))) * 12 * 10)/10; break; }
+    }
+    ok('discounted payback matches independent recompute', mo === r2.paybackMo, `recompute=${mo} calcNRV=${r2.paybackMo}`);
   }
 
   console.log('\n── Chunk 2: technologies block + technology-driven copy ──');

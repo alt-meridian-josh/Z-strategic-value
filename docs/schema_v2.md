@@ -18,7 +18,7 @@ omits them and loads unchanged via the migration shim (`migrateEngagement`,
 | `dedup` | `DedupGroup[]` | `[]` | shared loss pools; validated on load |
 | `_provenance` | `{ [scId]: { [inputKey]: Provenance } }` | `{}` | sibling map to `inputs` |
 | `annotations` | `{ engagement, levers, costRows }` | `{}` | analyst notes |
-| `nrvOverrides` | `{ [leverId]: {profile,access,h} }` | `{}` | **v1 defect fixed** — now serialized (was read-only) |
+| `nrvOverrides` | `{ [leverId]: {profile,access,h} }` | — | **deprecated-ignored (Chunk 1)** — fed only the dead secondary-NRV stack (`computeNRV`), now removed. Tolerated in old JSONs (no error) but never read, normalized, or re-emitted. |
 
 ## Blocks
 
