@@ -4111,6 +4111,7 @@ async function exportStandaloneHTML() {
 // Customer-lite export: same single-file mechanism, but mode:"customer" and a
 // baseline snapshot so reload reverts in-session edits. UX guardrail, not security.
 async function exportCustomerHTML() {
+  if(!customerExportAllowed('Customer tool export')) return;   // named-constants gate (Chunk 12)
   try {
     ensureCosts();
     const data = gatherEngagement();
@@ -4792,9 +4793,116 @@ function addCostRow() {
   renderCost();
 }
 
+// ── SAFE FORMULA EVALUATOR (Chunk 12) ───────────────────────────────────────
+// A custom lever may carry a `formula` string evaluated over its named inputs.
+// This is our OWN recursive-descent parser/evaluator — deliberately NOT eval()
+// or Function(). Grammar: + - * / ( ), identifiers, numeric literals, unary ±.
+// No property access (`.`), no function calls (`id(`), no other characters.
+// The result is annual dollars and feeds calcSc → the full normalization chain.
+
+// Recognized unit-conversion constants — the ONLY bare literals allowed without a
+// lint finding (weeks/yr, months/yr, days/yr, hrs/day, mins/hr, %, thousand, million…).
+const FORMULA_UNIT_CONSTANTS = new Set([1, 7, 12, 24, 30, 52, 60, 100, 365, 1000, 1000000]);
+
+function tokenizeFormula(src) {
+  const s = String(src == null ? '' : src), toks = [];
+  let i = 0;
+  while (i < s.length) {
+    const c = s[i];
+    if (c === ' ' || c === '\t' || c === '\n' || c === '\r') { i++; continue; }
+    if ('+-*/()'.indexOf(c) >= 0) { toks.push({ t: c }); i++; continue; }
+    if (c >= '0' && c <= '9' || c === '.') {
+      let j = i; while (j < s.length && (s[j] >= '0' && s[j] <= '9' || s[j] === '.')) j++;
+      const lit = s.slice(i, j);
+      if ((lit.match(/\./g) || []).length > 1 || lit === '.') throw new Error('malformed number "' + lit + '"');
+      toks.push({ t: 'num', v: parseFloat(lit), lit }); i = j; continue;
+    }
+    if (/[A-Za-z_]/.test(c)) {
+      let j = i; while (j < s.length && /[A-Za-z0-9_]/.test(s[j])) j++;
+      toks.push({ t: 'id', name: s.slice(i, j) }); i = j; continue;
+    }
+    throw new Error('illegal character "' + c + '" in formula');
+  }
+  // No function calls: an identifier immediately followed by "(".
+  for (let k = 0; k < toks.length - 1; k++)
+    if (toks[k].t === 'id' && toks[k + 1].t === '(') throw new Error('function calls are not allowed (' + toks[k].name + ')');
+  return toks;
+}
+
+// Evaluate `src` over `vars` (a flat {name:number} map). Throws on unknown inputs
+// or malformed syntax; non-finite results (e.g. /0) collapse to 0.
+function evalFormula(src, vars) {
+  const toks = tokenizeFormula(src);
+  if (!toks.length) throw new Error('empty formula');
+  let pos = 0;
+  const peek = () => toks[pos];
+  const expr = () => { let v = term(); while (peek() && (peek().t === '+' || peek().t === '-')) { const op = toks[pos++].t; const r = term(); v = op === '+' ? v + r : v - r; } return v; };
+  const term = () => { let v = factor(); while (peek() && (peek().t === '*' || peek().t === '/')) { const op = toks[pos++].t; const r = factor(); v = op === '*' ? v * r : v / r; } return v; };
+  const factor = () => { if (peek() && peek().t === '-') { pos++; return -factor(); } if (peek() && peek().t === '+') { pos++; return factor(); } return primary(); };
+  const primary = () => {
+    const tk = peek();
+    if (!tk) throw new Error('unexpected end of formula');
+    if (tk.t === 'num') { pos++; return tk.v; }
+    if (tk.t === 'id') { pos++; const val = (vars || {})[tk.name]; if (val === undefined || val === null || isNaN(+val)) throw new Error('unknown input "' + tk.name + '"'); return +val; }
+    if (tk.t === '(') { pos++; const v = expr(); if (!peek() || peek().t !== ')') throw new Error('missing ")"'); pos++; return v; }
+    throw new Error('unexpected token in formula');
+  };
+  const result = expr();
+  if (pos !== toks.length) throw new Error('unexpected trailing tokens in formula');
+  return isFinite(result) ? result : 0;
+}
+
+// Distinct identifiers referenced by a formula, in first-seen order — these ARE the
+// lever's named inputs. Returns [] for an unparseable formula.
+function formulaIdentifiers(src) {
+  let toks; try { toks = tokenizeFormula(src); } catch (e) { return []; }
+  const seen = new Set(), ids = [];
+  toks.forEach(tk => { if (tk.t === 'id' && !seen.has(tk.name)) { seen.add(tk.name); ids.push(tk.name); } });
+  return ids;
+}
+
+// Lint: numeric literals that are NOT recognized unit conversions. Each is a magic
+// coefficient that should be a named, sourced input. Returns { ok, literals[], error? }.
+function lintFormula(src) {
+  let toks;
+  try { toks = tokenizeFormula(src); } catch (e) { return { ok: false, literals: [], error: e.message }; }
+  const lits = toks.filter(tk => tk.t === 'num' && !FORMULA_UNIT_CONSTANTS.has(tk.v)).map(tk => tk.lit);
+  return { ok: lits.length === 0, literals: lits };
+}
+
+// Engagement-wide gate: every ACTIVE custom lever carrying a formula must be free of
+// magic coefficients before a customer-facing artifact ships (same spirit as the BCR
+// gate). Returns a list of { leverId, name, literals } findings ([] = clear).
+function formulaExportFindings() {
+  return (state.customScenarios || [])
+    .filter(sc => sc.active && typeof sc.formula === 'string' && sc.formula.trim())
+    .map(sc => { const r = lintFormula(sc.formula); return r.ok ? null : { leverId: sc.id, name: sc.name, literals: r.error ? ['(syntax error: ' + r.error + ')'] : r.literals }; })
+    .filter(Boolean);
+}
+
+// Guard the customer-facing exports. Returns true to PROCEED, false to abort.
+function customerExportAllowed(kind) {
+  const findings = formulaExportFindings();
+  if (!findings.length) return true;
+  const lines = findings.map(f => `  • ${f.leverId} (${f.name}): un-named constant(s) ${f.literals.join(', ')}`).join('\n');
+  if (typeof alert === 'function') alert(
+    `${kind} blocked — custom-lever formulas contain magic numbers.\n\n` +
+    `Every coefficient must be a named, sourced input (per the named-constants rule). ` +
+    `Replace these literals with named inputs carrying {value, range?, source, confidence}, ` +
+    `then re-export:\n\n${lines}`);
+  return false;
+}
+
 // ── SCENARIO CALC ──
 function calcSc(sc) {
   if (sc.custom === true) {
+    // Formula-bearing custom levers (Chunk 12) evaluate their expression over named
+    // inputs; the result feeds the same normalization chain as any lever. Levers with
+    // no formula keep the legacy mechanism behavior exactly.
+    if (typeof sc.formula === 'string' && sc.formula.trim()) {
+      try { return Math.max(0, evalFormula(sc.formula, sc.inputs || {})); }
+      catch (e) { return 0; }
+    }
     const mech = CUSTOM_MECHANISMS.find(m => m.id === sc.mechanismId);
     if (!mech) return 0;
     return Math.max(0, mech.formula(sc.inputs));
@@ -5277,7 +5385,9 @@ function renderCustomScenarios() {
 
   el.innerHTML = state.customScenarios.map((sc, idx) => {
     const mech = CUSTOM_MECHANISMS.find(m => m.id === sc.mechanismId) || CUSTOM_MECHANISMS[0];
-    const val = mech.formula(sc.inputs);
+    const useFormula = typeof sc.formula === 'string' && sc.formula.trim().length > 0;
+    const val = calcSc(sc);   // formula-aware gross annual (Chunk 12)
+    const customerMode = (appMode === 'customer');
     const mechOptions = CUSTOM_MECHANISMS.map(m =>
       `<option value="${m.id}"${m.id === sc.mechanismId ? ' selected' : ''}>${m.label}</option>`
     ).join('');
@@ -5297,6 +5407,46 @@ function renderCustomScenarios() {
         ${ctl}
       </div>`;
     }).join('');
+
+    // ── Formula section (Chunk 12): the named inputs ARE the formula's identifiers.
+    // Each carries value, optional range, source + confidence (→ _provenance).
+    const lint = useFormula ? lintFormula(sc.formula) : { ok: true, literals: [] };
+    const ids = useFormula ? formulaIdentifiers(sc.formula) : [];
+    const prov = (engagementProvenance[sc.id] = engagementProvenance[sc.id] || {});
+    const formulaInputsHTML = ids.map(key => {
+      const cur = sc.inputs[key] !== undefined ? sc.inputs[key] : 0;
+      const rng = (sc.ranges && sc.ranges[key]) || null;
+      const pv = prov[key] || {};
+      const ctl = valueInputHTML(sc.id, key, cur, '', `oninput="updateCustomInput(${idx},'${key}',this.value)"`);
+      const confOpts = ['A','B','C'].map(c => `<option value="${c}"${pv.confidence===c?' selected':''}>${c}</option>`).join('');
+      return `
+      <div style="margin-bottom:10px;padding:8px;background:#fff;border:1px solid var(--gray-200);border-radius:6px">
+        <div style="font-size:11px;font-weight:600;color:var(--brand-black);margin-bottom:3px">${key}</div>
+        ${ctl}
+        ${customerMode ? '' : `<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+          <input type="number" placeholder="min" value="${rng?rng[0]:''}" style="width:64px;font-size:11px" title="range min"
+            onchange="updateCustomInputRange(${idx},'${key}',0,this.value)">
+          <input type="number" placeholder="max" value="${rng?rng[1]:''}" style="width:64px;font-size:11px" title="range max"
+            onchange="updateCustomInputRange(${idx},'${key}',1,this.value)">
+          <input type="text" placeholder="source" value="${(pv.source||'').replace(/"/g,'&quot;')}" style="flex:1;min-width:120px;font-size:11px" title="source / citation"
+            onchange="updateCustomInputProv(${idx},'${key}','source',this.value)">
+          <select style="font-size:11px" title="confidence" onchange="updateCustomInputProv(${idx},'${key}','confidence',this.value)">
+            <option value="">conf</option>${confOpts}
+          </select>
+        </div>`}
+      </div>`;
+    }).join('');
+    const formulaSection = `
+      <div style="margin-top:14px;border-top:1px dashed var(--gray-300);padding-top:10px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Custom formula (advanced) — overrides the mechanism above${useFormula?'':' · leave blank to use the mechanism'}</div>
+        <textarea rows="2" placeholder="e.g.  units * hours_saved * loaded_rate * 52"
+          style="width:100%;font-family:var(--mono);font-size:12px;box-sizing:border-box"
+          ${customerMode?'readonly':''} onchange="updateCustomFormula(${idx},this.value)">${(sc.formula||'').replace(/</g,'&lt;')}</textarea>
+        ${useFormula ? `<div style="margin-top:8px">${formulaInputsHTML}</div>` : ''}
+        ${useFormula && !lint.ok ? `<div style="margin-top:6px;font-size:11px;color:#9a6b00;background:rgba(154,107,0,.08);border:1px solid rgba(154,107,0,.25);border-radius:6px;padding:6px 8px">
+          ⚠ Magic number${lint.literals.length>1?'s':''}: <strong>${lint.error?lint.error:lint.literals.join(', ')}</strong> — every coefficient must be a named, sourced input. This blocks customer export until resolved.</div>` : ''}
+        ${useFormula && lint.ok ? `<div style="margin-top:6px;font-size:10px;color:#2c5f2d">✓ all coefficients are named inputs or unit conversions</div>` : ''}
+      </div>`;
 
     return `
       <div style="border:1px dashed var(--gray-300);border-radius:8px;padding:16px;margin-bottom:12px;background:var(--gray-50)">
@@ -5327,7 +5477,8 @@ function renderCustomScenarios() {
             <select style="font-size:12px;width:100%" onchange="updateCustomMechanism(${idx},this.value)">
               ${mechOptions}
             </select>
-            <div style="margin-top:12px">${varInputs}</div>
+            <div style="margin-top:12px">${useFormula ? '' : varInputs}</div>
+            ${formulaSection}
           </div>
           <div>
             <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Ramp profile</div>
@@ -5361,6 +5512,44 @@ function updateCustomInput(idx, key, val) {
   sc.inputs[key] = v;
   renderCustomScenarios();
   if (document.getElementById('kpi-grid')) renderROI();
+}
+
+// Formula edits (Chunk 12). Setting a formula derives its named inputs from the
+// expression's identifiers; new identifiers seed at 0 (or keep an existing value).
+function updateCustomFormula(idx, val) {
+  const sc = state.customScenarios[idx];
+  sc.formula = String(val || '');
+  if (sc.formula.trim()) {
+    sc.inputs = sc.inputs || {};
+    formulaIdentifiers(sc.formula).forEach(k => { if (sc.inputs[k] === undefined) sc.inputs[k] = 0; });
+  }
+  renderCustomScenarios();
+  if (document.getElementById('kpi-grid')) renderROI();
+}
+
+// Per-input range bounds for a custom formula input (feeds lookupInputRange → the
+// customer-mode bounded slider). slotIdx 0 = min, 1 = max; blank clears the range.
+function updateCustomInputRange(idx, key, slotIdx, val) {
+  const sc = state.customScenarios[idx];
+  sc.ranges = sc.ranges || {};
+  const cur = sc.ranges[key] ? sc.ranges[key].slice() : [null, null];
+  cur[slotIdx] = (val === '' || val == null) ? null : +val;
+  if (cur[0] == null && cur[1] == null) delete sc.ranges[key];
+  else if (cur[0] != null && cur[1] != null) sc.ranges[key] = [Math.min(cur[0], cur[1]), Math.max(cur[0], cur[1])];
+  else sc.ranges[key] = cur;   // partial; lookupInputRange only uses fully-specified pairs
+  renderCustomScenarios();
+  if (document.getElementById('kpi-grid')) renderROI();
+}
+
+// Per-input provenance (source / confidence) → engagementProvenance, round-tripped
+// in _provenance exactly like library-lever provenance.
+function updateCustomInputProv(idx, key, field, val) {
+  const sc = state.customScenarios[idx];
+  const prov = (engagementProvenance[sc.id] = engagementProvenance[sc.id] || {});
+  prov[key] = prov[key] || {};
+  if (val === '' || val == null) delete prov[key][field]; else prov[key][field] = val;
+  if (!Object.keys(prov[key]).length) delete prov[key];
+  if (typeof renderDataStatus === 'function') { try { renderDataStatus(); } catch (e) {} }
 }
 
 function updateCustomMechanism(idx, mechId) {
@@ -6192,6 +6381,7 @@ function exportExecSummary() {
 }
 
 function exportFullPDF() {
+  if(!customerExportAllowed('Full Appraisal export')) return;   // named-constants gate (Chunk 12)
   ensureCosts();
   if(!state.benefits || !state.benefits.totAnnual) renderROI();
 
@@ -7417,6 +7607,7 @@ async function exportPPTX() {
 // ── PPTX download — called directly from main button ─────────────────────
 async function runPPTXDownload(callerBtn) {
   // callerBtn is the main Export Deck button passed directly via onclick="runPPTXDownload(this)"
+  if(!customerExportAllowed('Deck (PPTX) export')) return;   // named-constants gate (Chunk 12)
   if(typeof PptxGenJS === 'undefined') {
     alert('PPTX library not found — please reload the app.');
     return;
