@@ -4406,6 +4406,14 @@ function go(n) {
 
 function syncNav() {} // no-op — nav banner is static
 
+// Boot landing (customer-view UX): a customer opening the exported tool lands on
+// Discovery Inputs (Step 3 → panel index 2) so they can re-enter their own numbers
+// straight away, rather than the analyst-oriented Engagement Setup page. Analyst
+// boots are unchanged. Factored out so it's unit-testable.
+function applyBootLanding(embedded) {
+  if (embedded && appMode === 'customer') go(2);
+}
+
 // ── FILTERS ──
 function sliderVal(id) { return document.getElementById(id)?.value ?? 0; }
 
@@ -9094,6 +9102,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updateModeBand();
   applyModeGuards();
   syncNav();
+  applyBootLanding(embedded);  // customer view lands on Discovery Inputs; analyst unchanged
 });
 
 // Register annotation plugin when Chart.js is ready
