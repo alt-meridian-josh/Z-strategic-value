@@ -3,20 +3,13 @@
   "packId": "rfid_retail",
   "version": "v1",
   "title": "RFID Retail — verified value levers",
-  "notice": "Verified-only registry levers. Each carries a sourced formula, named inputs with ranges + provenance, and a tiered evidence set. Reproduces the bundled RFID retail labor/cost levers exactly.",
+  "notice": "Verified-only registry levers. Each carries a sourced formula, named inputs with ranges + provenance, and a tiered evidence set. Reproduces the full bundled RFID retail lever set (RET-01…RET-11) byte-identically; see test/phase15_verify.js.",
   "technologyIds": ["rfid"],
   "levers": [
     {
-      "registryId": "REG-RET-CYCLECOUNT",
-      "version": "v1",
-      "name": "Inventory Accuracy — Cycle Count Labor",
-      "theme": "Labor & Human Capacity",
-      "verticalKey": "retail",
-      "rampType": "hard_labor",
-      "accessibilityTier": "configured",
-      "haircut": 0.10,
-      "technologyIds": ["rfid"],
-      "techKeys": ["RFID Core", "Handheld RFID", "Fixed RFID Infrastructure"],
+      "registryId": "REG-RET-CYCLECOUNT", "version": "v1", "name": "Inventory Accuracy — Cycle Count Labor",
+      "theme": "Labor & Human Capacity", "verticalKey": "retail", "rampType": "hard_labor", "accessibilityTier": "configured", "haircut": 0.10,
+      "technologyIds": ["rfid"], "reconcilesTo": "RET-01",
       "formula": "annual_count_cycles * total_sku_locations * (hours_per_sku_manual - hours_per_sku_rfid) * loaded_rate",
       "inputs": {
         "total_sku_locations": { "value": 50000, "range": [20000, 80000], "source": "GS1: typical apparel store 20K–80K", "confidence": "B" },
@@ -32,16 +25,25 @@
       "oneLiner": "Cut cycle-count labor 75–90% — from 3 min/item to 12 sec with handheld RFID"
     },
     {
-      "registryId": "REG-RET-SHRINK",
-      "version": "v1",
-      "name": "Shrink Reduction — Item Visibility",
-      "theme": "Direct Cost & Spend",
-      "verticalKey": "retail",
-      "rampType": "hard_cost",
-      "accessibilityTier": "configured",
-      "haircut": 0.10,
-      "technologyIds": ["rfid"],
-      "techKeys": ["RFID Core", "Fixed RFID Infrastructure"],
+      "registryId": "REG-RET-OSA", "version": "v1", "name": "On-Shelf Availability — Stockout Recovery",
+      "theme": "Revenue / Margin", "verticalKey": "retail", "rampType": "revenue", "accessibilityTier": "configured", "haircut": 0.10,
+      "technologyIds": ["rfid"], "reconcilesTo": "RET-02",
+      "formula": "annual_store_revenue * out_of_stock_baseline_pct * osa_improvement_pct * gross_margin_pct",
+      "inputs": {
+        "annual_store_revenue": { "value": 5000000, "source": "Total revenue for sites in scope", "confidence": "B" },
+        "out_of_stock_baseline_pct": { "value": 0.05, "source": "ECR: 4–8%; use 5% conservative", "confidence": "B" },
+        "osa_improvement_pct": { "value": 0.50, "range": [0.50, 0.80], "source": "ECR/GS1: 50–80%; use 50%", "confidence": "B" },
+        "gross_margin_pct": { "value": 0.40, "source": "Apparel: 40–60%; use 40%", "confidence": "B" }
+      },
+      "evidence": [
+        { "id": "EV-RET-OSA-01", "tier": "Tier 2", "title": "On-Shelf Availability Impact of RFID", "publisher": "ECR Community / GS1", "year": 2021, "claim": "Out-of-stocks cost 4–8% of sales globally; RFID reduces OOS events 50–80%." }
+      ],
+      "oneLiner": "Recover lost sales from out-of-stocks via automated replenishment alerts"
+    },
+    {
+      "registryId": "REG-RET-SHRINK", "version": "v1", "name": "Shrink Reduction — Loss Prevention",
+      "theme": "Direct Cost & Spend", "verticalKey": "retail", "rampType": "hard_cost", "accessibilityTier": "configured", "haircut": 0.10,
+      "technologyIds": ["rfid"], "reconcilesTo": "RET-03",
       "formula": "annual_store_revenue * shrink_pct_baseline * shrink_reduction_pct",
       "inputs": {
         "annual_store_revenue": { "value": 5000000, "source": "Customer P&L", "confidence": "B" },
@@ -54,16 +56,24 @@
       "oneLiner": "Item-level visibility reduces shrink 20–40% on a 1.4% baseline"
     },
     {
-      "registryId": "REG-RET-RECEIVING",
-      "version": "v1",
-      "name": "Receiving Labor — RFID Verification",
-      "theme": "Labor & Human Capacity",
-      "verticalKey": "retail",
-      "rampType": "hard_labor",
-      "accessibilityTier": "configured",
-      "haircut": 0.10,
-      "technologyIds": ["rfid"],
-      "techKeys": ["RFID Core"],
+      "registryId": "REG-RET-MARKDOWN", "version": "v1", "name": "Markdown Reduction — Better Sell-Through",
+      "theme": "Revenue / Margin", "verticalKey": "retail", "rampType": "revenue", "accessibilityTier": "configured", "haircut": 0.10,
+      "technologyIds": ["rfid"], "reconcilesTo": "RET-04",
+      "formula": "annual_markdown_spend * markdown_reduction_pct * gm_recovery_pct",
+      "inputs": {
+        "annual_markdown_spend": { "value": 750000, "source": "Typical apparel: 10–20% of revenue", "confidence": "B" },
+        "markdown_reduction_pct": { "value": 0.10, "range": [0.10, 0.20], "source": "Accenture 2022: 10–20%; use 10%", "confidence": "B" },
+        "gm_recovery_pct": { "value": 0.20, "range": [0.15, 0.25], "source": "Accenture: 15–25 pts; use 20%", "confidence": "B" }
+      },
+      "evidence": [
+        { "id": "EV-RET-MARKDOWN-01", "tier": "Tier 2", "title": "RFID and Markdown Reduction in Apparel", "publisher": "Accenture Retail Practice", "year": 2022, "claim": "RFID reduces markdowns 10–20% in apparel; study across 8 retailers." }
+      ],
+      "oneLiner": "Better size/color replenishment cuts markdowns 10–20%"
+    },
+    {
+      "registryId": "REG-RET-RECEIVING", "version": "v1", "name": "Receiving Accuracy & Labor",
+      "theme": "Labor & Human Capacity", "verticalKey": "retail", "rampType": "hard_labor", "accessibilityTier": "configured", "haircut": 0.10,
+      "technologyIds": ["rfid"], "reconcilesTo": "RET-05",
       "formula": "annual_receiving_labor_hours * labor_reduction_pct * loaded_rate",
       "inputs": {
         "annual_receiving_labor_hours": { "value": 8000, "source": "Customer staffing", "confidence": "B" },
@@ -74,6 +84,99 @@
         { "id": "EV-RET-RECV-01", "tier": "Tier 3", "title": "Receiving Accuracy Improvement with RFID", "publisher": "GS1 US", "year": 2022, "claim": "RFID receiving verification: accuracy 85–92% → 99%+; receiving labor reduced 40–60%." }
       ],
       "oneLiner": "RFID receiving verification cuts inbound labor 40–60%"
+    },
+    {
+      "registryId": "REG-RET-ASSOCIATE", "version": "v1", "name": "Associate Productivity — Recovered Hours",
+      "theme": "Labor & Human Capacity", "verticalKey": "retail", "rampType": "soft", "accessibilityTier": "configured", "haircut": 0.10,
+      "technologyIds": ["rfid"], "reconcilesTo": "RET-06",
+      "formula": "num_stores * associates_per_store * hours_recovered_per_week * weeks_per_year * loaded_rate",
+      "inputs": {
+        "num_stores": { "value": 50, "source": "From engagement setup — Step 1", "confidence": "A" },
+        "associates_per_store": { "value": 3, "source": "Conservative: 3 of typical 8–12", "confidence": "B" },
+        "hours_recovered_per_week": { "value": 2, "source": "GS1 lower bound: 2 hrs/wk", "confidence": "B" },
+        "weeks_per_year": { "value": 50, "source": "Standard 50-week retail year", "confidence": "A" },
+        "loaded_rate": { "value": 24, "source": "BLS retail median + 30%", "confidence": "A" }
+      },
+      "evidence": [
+        { "id": "EV-RET-LABOR-01", "tier": "Tier 3", "title": "Retail Labor Productivity with RFID Cycle Counting", "publisher": "GS1 US Retail Team", "year": 2023, "claim": "RFID frees associate hours from manual counts/searches; redeployable to selling." }
+      ],
+      "oneLiner": "Recover 2 hrs/associate/week from manual inventory tasks"
+    },
+    {
+      "registryId": "REG-RET-OMNI", "version": "v1", "name": "Omnichannel Fulfillment — BOPIS Accuracy",
+      "theme": "Revenue / Margin", "verticalKey": "retail", "rampType": "working_cap", "accessibilityTier": "configured", "haircut": 0.10,
+      "technologyIds": ["rfid"], "reconcilesTo": "RET-07",
+      "formula": "annual_omni_orders * cancellation_rate_baseline * cancellation_reduction_pct * avg_order_value * gm_pct",
+      "inputs": {
+        "annual_omni_orders": { "value": 180000, "source": "BOPIS + ship-from-store combined", "confidence": "B" },
+        "cancellation_rate_baseline": { "value": 0.09, "source": "Customer-specific: confirm from OMS data", "confidence": "C" },
+        "cancellation_reduction_pct": { "value": 0.60, "source": "Conservative: 60%", "confidence": "B" },
+        "avg_order_value": { "value": 75, "source": "Retailer to confirm", "confidence": "C" },
+        "gm_pct": { "value": 0.40, "source": "Apparel: 40% conservative", "confidence": "B" }
+      },
+      "evidence": [
+        { "id": "EV-RET-OMNI-01", "tier": "Tier 2", "title": "RFID Enabling Omnichannel Fulfillment", "publisher": "Kurt Salmon / Accenture", "year": 2022, "claim": "RFID reduces BOPIS fulfillment errors 60–80% and cuts average pick time materially." },
+        { "id": "EV-RET-ACC-01", "tier": "Tier 1", "title": "RFID: The Right Time for Retail", "publisher": "Auburn University RFID Lab", "year": 2022, "claim": "93–99% inventory accuracy underpins reliable store-level fulfillment promises." }
+      ],
+      "oneLiner": "Accurate store inventory cuts BOPIS cancellations 60%"
+    },
+    {
+      "registryId": "REG-RET-SAFETY", "version": "v1", "name": "Safety Stock Reduction — Carrying Cost",
+      "theme": "Working Capital", "verticalKey": "retail", "rampType": "working_cap", "accessibilityTier": "configured", "haircut": 0.10,
+      "technologyIds": ["rfid"], "reconcilesTo": "RET-08",
+      "formula": "total_inventory_value * safety_stock_reduction_pct * carrying_cost_pct",
+      "inputs": {
+        "total_inventory_value": { "value": 10000000, "source": "Across all sites in scope", "confidence": "B" },
+        "safety_stock_reduction_pct": { "value": 0.05, "range": [0.05, 0.35], "source": "Conservative: 5% (MIT: up to 20–35%)", "confidence": "B" },
+        "carrying_cost_pct": { "value": 0.20, "source": "Financing + insurance + obsolescence: 20%", "confidence": "A" }
+      },
+      "evidence": [
+        { "id": "EV-RET-SAFETY-01", "tier": "Tier 2", "title": "Inventory Safety Stock Optimization with RFID", "publisher": "MIT Center for Transportation & Logistics", "year": 2021, "claim": "Real-time accuracy enables safety stock reduction of 20–35% without raising stockout risk." },
+        { "id": "EV-RET-ACC-01", "tier": "Tier 1", "title": "RFID: The Right Time for Retail", "publisher": "Auburn University RFID Lab", "year": 2022, "claim": "93–99% inventory accuracy is the precondition for safety-stock release." }
+      ],
+      "oneLiner": "Release working capital by trimming safety stock on accurate counts"
+    },
+    {
+      "registryId": "REG-RET-DATAFND", "version": "v1", "name": "RFID Data Foundation for Retail AI & Analytics",
+      "theme": "Strategic / AI / Data", "verticalKey": "retail", "rampType": "strategic", "accessibilityTier": "infrastructure", "haircut": 0.10,
+      "technologyIds": ["rfid", "platform"], "reconcilesTo": "RET-09",
+      "formula": "annual_analytics_budget * data_quality_uplift_pct",
+      "inputs": {
+        "annual_analytics_budget": { "value": 500000, "source": "Data science + tools", "confidence": "B" },
+        "data_quality_uplift_pct": { "value": 0.15, "source": "Conservative: 15% improvement in model accuracy", "confidence": "C" }
+      },
+      "evidence": [
+        { "id": "EV-RET-AI-01", "tier": "Tier 2", "title": "RFID as a Data Foundation for Retail AI", "publisher": "Gartner Retail Technology", "year": 2023, "claim": "RFID-quality inventory data yields 2–4x demand-forecast accuracy vs. POS-only." }
+      ],
+      "oneLiner": "RFID-grade data lifts the return on existing analytics/AI spend"
+    },
+    {
+      "registryId": "REG-RET-CHARGEBACK", "version": "v1", "name": "Vendor Chargeback & Compliance",
+      "theme": "Direct Cost & Spend", "verticalKey": "retail", "rampType": "hard_cost", "accessibilityTier": "configured", "haircut": 0.10,
+      "technologyIds": ["rfid"], "reconcilesTo": "RET-10",
+      "formula": "annual_chargeback_exposure * chargeback_reduction_pct",
+      "inputs": {
+        "annual_chargeback_exposure": { "value": 600000, "source": "From AP / merchandising records", "confidence": "B" },
+        "chargeback_reduction_pct": { "value": 0.25, "range": [0.20, 0.40], "source": "Auburn Project Zipper: 20–40%; use 25%", "confidence": "B" }
+      },
+      "evidence": [
+        { "id": "EV-RET-CHARGEBACK-01", "tier": "Tier 1", "title": "Project Zipper — Item-Level Chain of Custody", "publisher": "Auburn University RFID Lab", "year": 2020, "claim": "Item-level RFID handoffs lift order accuracy from <70% toward ~100%, shrinking chargeback exposure." }
+      ],
+      "oneLiner": "Item-level chain of custody cuts vendor chargeback disputes"
+    },
+    {
+      "registryId": "REG-RET-AP", "version": "v1", "name": "Asset Protection — Investigation Labor",
+      "theme": "Labor & Human Capacity", "verticalKey": "retail", "rampType": "hard_labor", "accessibilityTier": "configured", "haircut": 0.10,
+      "technologyIds": ["rfid"], "reconcilesTo": "RET-11",
+      "formula": "annual_ap_investigation_cost * reduction_pct",
+      "inputs": {
+        "annual_ap_investigation_cost": { "value": 300000, "source": "Investigator hours × loaded rate", "confidence": "B" },
+        "reduction_pct": { "value": 0.30, "range": [0.25, 0.40], "source": "RFID + video integration: 25–40%; use 30%", "confidence": "B" }
+      },
+      "evidence": [
+        { "id": "EV-RET-AP-01", "tier": "Tier 2", "title": "RFID + Video Integration for Loss Prevention Investigations", "publisher": "National Retail Federation / Asset Protection practice", "year": 2022, "claim": "Correlating RFID exit events with video collapses case-building time; 25–40% labor reduction." }
+      ],
+      "oneLiner": "RFID-video correlation cuts shrink investigation labor 25–40%"
     }
   ]
 }

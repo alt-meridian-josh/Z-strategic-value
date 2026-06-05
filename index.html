@@ -2058,7 +2058,7 @@ const SCENARIOS = [
   { id:"RET-01", name:"Inventory Accuracy — Cycle Count Labor",
     theme:"Labor & Human Capacity", verticalKey:"retail",
     facilityKeys:["Store / Branch"], techKeys:["RFID Core","Handheld RFID","Fixed RFID Infrastructure"],
-    themeKeys:["Labor & Human Capacity"], evidence:"Strong", annualBenefit:312000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
+    themeKeys:["Labor & Human Capacity"], annualBenefit:312000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
     formula:"annual_count_cycles * total_sku_locations * (hours_per_sku_manual - hours_per_sku_rfid) * loaded_rate",  // Chunk 15: retired from the calcSc switch — now data
     oneLiner:"Cut cycle-count labor 75–90% — from 3 min/item to 12 sec with handheld RFID",
     evidenceIds:["EV-RET-LABOR-01","EV-RET-ACC-01"],
@@ -2075,8 +2075,9 @@ const SCENARIOS = [
   { id:"RET-02", name:"On-Shelf Availability — Stockout Recovery",
     theme:"Revenue / Margin", verticalKey:"retail",
     facilityKeys:["Store / Branch"], techKeys:["RFID Core","Fixed RFID Infrastructure"],
-    themeKeys:["Revenue / Margin","Operational Efficiency"], evidence:"Strong", annualBenefit:500000, rampType:"revenue", accessibilityTier:"configured", haircut:0.10,
+    themeKeys:["Revenue / Margin","Operational Efficiency"], annualBenefit:500000, rampType:"revenue", accessibilityTier:"configured", haircut:0.10,
     oneLiner:"Recover 50% of stockout losses through RFID-triggered automated replenishment alerts",
+    formula:"annual_store_revenue * out_of_stock_baseline_pct * osa_improvement_pct * gross_margin_pct",  // Chunk 15: retired from switch
     evidenceIds:["EV-RET-OSA-01"],
     challenge:"When revenue uplift is questioned: ECR benchmarks a 5% out-of-stock rate globally. We use the customer's own gross margin — the only variable we ask them to confirm is their current OOS frequency.",
     discoveryQuestions:["What % of sales do you estimate you lose to out-of-stocks?","What is your average gross margin across categories?","Do you have any item-level OOS data from your planning system?"],
@@ -2090,7 +2091,7 @@ const SCENARIOS = [
   { id:"RET-03", name:"Shrink Reduction — Loss Prevention",
     theme:"Direct Cost & Spend", verticalKey:"retail",
     facilityKeys:["Store / Branch"], techKeys:["RFID Core","Fixed RFID Infrastructure"],
-    themeKeys:["Direct Cost & Spend"], evidence:"Strong", annualBenefit:350000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
+    themeKeys:["Direct Cost & Spend"], annualBenefit:350000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
     formula:"annual_store_revenue * shrink_pct_baseline * shrink_reduction_pct",  // Chunk 15: retired from the calcSc switch — now data
     oneLiner:"Item-level visibility deters internal theft and sharpens LP exception reporting — 20–40% shrink reduction",
     evidenceIds:["EV-RET-SHRINK-01"],
@@ -2105,8 +2106,9 @@ const SCENARIOS = [
   { id:"RET-04", name:"Markdown Reduction — Better Sell-Through",
     theme:"Revenue / Margin", verticalKey:"retail",
     facilityKeys:["Store / Branch"], techKeys:["RFID Core"],
-    themeKeys:["Revenue / Margin","Operational Efficiency"], evidence:"Medium-Strong", annualBenefit:150000, rampType:"revenue", accessibilityTier:"configured", haircut:0.10,
+    themeKeys:["Revenue / Margin","Operational Efficiency"], annualBenefit:150000, rampType:"revenue", accessibilityTier:"configured", haircut:0.10,
     oneLiner:"Accurate inventory eliminates phantom overstock — 10% markdown reduction in apparel",
+    formula:"annual_markdown_spend * markdown_reduction_pct * gm_recovery_pct",  // Chunk 15: retired from switch
     evidenceIds:["EV-RET-MARKDOWN-01"],
     challenge:"When markdown savings are seen as aspirational: Accenture tracked this across 8 retailers. We model only 10% — their study showed up to 20%. Size and color accuracy is the mechanism, not demand forecasting.",
     discoveryQuestions:["What is your total annual markdown spend?","What fraction of markdowns are size/color-driven vs. seasonal?","Do you currently track phantom vs. actual inventory gaps?"],
@@ -2119,7 +2121,7 @@ const SCENARIOS = [
   { id:"RET-05", name:"Receiving Accuracy & Labor",
     theme:"Labor & Human Capacity", verticalKey:"retail",
     facilityKeys:["Store / Branch","Warehouse / DC"], techKeys:["RFID Core","Fixed RFID Infrastructure"],
-    themeKeys:["Labor & Human Capacity"], evidence:"Medium-Strong", annualBenefit:96000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
+    themeKeys:["Labor & Human Capacity"], annualBenefit:96000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
     formula:"annual_receiving_labor_hours * labor_reduction_pct * loaded_rate",  // Chunk 15: retired from the calcSc switch — now data
     oneLiner:"Inbound accuracy 85% → 99%+ — eliminate manual scan-each and cut receiving labor 40%",
     evidenceIds:["EV-RET-RECV-01"],
@@ -2134,8 +2136,9 @@ const SCENARIOS = [
   { id:"RET-06", name:"Associate Productivity — Recovered Hours",
     theme:"Labor & Human Capacity", verticalKey:"retail",
     facilityKeys:["Store / Branch"], techKeys:["RFID Core","Handheld RFID"],
-    themeKeys:["Labor & Human Capacity"], evidence:"Medium-Strong", annualBenefit:187200, rampType:"soft", accessibilityTier:"configured", haircut:0.10,
+    themeKeys:["Labor & Human Capacity"], annualBenefit:187200, rampType:"soft", accessibilityTier:"configured", haircut:0.10,
     oneLiner:"Recover 2–5 hrs/week per associate — redirect from inventory search to customer-facing work",
+    formula:"num_stores * associates_per_store * hours_recovered_per_week * weeks_per_year * loaded_rate",  // Chunk 15: retired from switch
     evidenceIds:["EV-RET-LABOR-01"],
     challenge:"When soft productivity savings are questioned: these hours are real but not automatically cashable. Position as capacity to absorb growth or improve NPS without adding headcount — not a direct cost reduction.",
     discoveryQuestions:["How many hours per week do associates spend on inventory tasks (counting, searching, resolving discrepancies)?","Is associate time currently the constraint on floor coverage or customer service?","How many associates per store are regularly involved in inventory work?"],
@@ -2150,8 +2153,9 @@ const SCENARIOS = [
   { id:"RET-07", name:"Omnichannel Fulfillment — BOPIS Accuracy",
     theme:"Revenue / Margin", verticalKey:"retail",
     facilityKeys:["Store / Branch"], techKeys:["RFID Core","Fixed RFID Infrastructure"],
-    themeKeys:["Revenue / Margin","Operational Efficiency"], evidence:"Strong", annualBenefit:162000, rampType:"working_cap", accessibilityTier:"configured", haircut:0.10,
+    themeKeys:["Revenue / Margin","Operational Efficiency"], annualBenefit:162000, rampType:"working_cap", accessibilityTier:"configured", haircut:0.10,
     oneLiner:"Reduce BOPIS cancellations 60% and improve pick accuracy to 99%+ — protect omnichannel margin",
+    formula:"annual_omni_orders * cancellation_rate_baseline * cancellation_reduction_pct * avg_order_value * gm_pct",  // Chunk 15: retired from switch
     evidenceIds:["EV-RET-OMNI-01","EV-RET-ACC-01"],
     challenge:"When omnichannel performance is seen as a systems issue: the root cause of order cancellation is inventory inaccuracy. RFID is the data layer that fixes the signal your OMS relies on — not an OMS replacement.",
     discoveryQuestions:["What % of BOPIS or ship-from-store orders are cancelled due to item unavailability?","What is your average omnichannel order value?","Do you track NPS or LTV impact from order cancellations?"],
@@ -2166,8 +2170,9 @@ const SCENARIOS = [
   { id:"RET-08", name:"Safety Stock Reduction — Carrying Cost",
     theme:"Working Capital", verticalKey:"retail",
     facilityKeys:["Store / Branch","Warehouse / DC"], techKeys:["RFID Core"],
-    themeKeys:["Working Capital","Operational Efficiency"], evidence:"Medium-Strong", annualBenefit:100000, rampType:"working_cap", accessibilityTier:"configured", haircut:0.10,
+    themeKeys:["Working Capital","Operational Efficiency"], annualBenefit:100000, rampType:"working_cap", accessibilityTier:"configured", haircut:0.10,
     oneLiner:"5–15% safety stock reduction without stockout risk — enabled by perpetual accurate inventory",
+    formula:"total_inventory_value * safety_stock_reduction_pct * carrying_cost_pct",  // Chunk 15: retired from switch
     evidenceIds:["EV-RET-SAFETY-01","EV-RET-ACC-01"],
     challenge:"When inventory reduction risks service levels: RFID accuracy is precisely why you can carry less — you always know exactly what is available. The reduction is driven by data confidence, not optimism.",
     discoveryQuestions:["What is your average total inventory value across sites in scope?","Do you calculate your inventory carrying cost rate?","Has your planning team previously attempted safety stock optimization?"],
@@ -2181,7 +2186,7 @@ const SCENARIOS = [
   { id:"WH-01", name:"Cycle Count Labor — Perpetual DC Accuracy",
     theme:"Labor & Human Capacity", verticalKey:"warehouse",
     facilityKeys:["Warehouse / DC"], techKeys:["RFID Core","Fixed RFID Infrastructure"],
-    themeKeys:["Labor & Human Capacity"], evidence:"Strong", annualBenefit:480000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
+    themeKeys:["Labor & Human Capacity"], annualBenefit:480000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
     oneLiner:"DC cycle-count labor down 75–85% — 3 min/position to 20 sec per pallet position",
     evidenceIds:["EV-WH-LABOR-01"],
     challenge:"When headcount reduction is the objection: hours recovered from manual counting redeploy to value-add tasks or absorb volume growth without additional FTE. Finance counts schedulable hours at 100%.",
@@ -2197,7 +2202,7 @@ const SCENARIOS = [
   { id:"WH-02", name:"Receiving Throughput & Dock-to-Stock",
     theme:"Labor & Human Capacity", verticalKey:"warehouse",
     facilityKeys:["Warehouse / DC"], techKeys:["RFID Core","Fixed RFID Infrastructure"],
-    themeKeys:["Labor & Human Capacity","Operational Efficiency"], evidence:"Strong", annualBenefit:210000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
+    themeKeys:["Labor & Human Capacity","Operational Efficiency"], annualBenefit:210000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
     oneLiner:"Inbound throughput up 30–50% — eliminate manual scan-each confirmation at dock doors",
     evidenceIds:["EV-WH-RECV-01"],
     challenge:"When receiving speed is dismissed: dock-to-stock time directly affects same-day SLA compliance. Missed SLAs convert directly to chargeback exposure — a verifiable P&L line.",
@@ -2212,7 +2217,7 @@ const SCENARIOS = [
   { id:"WH-03", name:"Pick Accuracy & Returns Reduction",
     theme:"Operational Efficiency", verticalKey:"warehouse",
     facilityKeys:["Warehouse / DC"], techKeys:["RFID Core","Handheld RFID"],
-    themeKeys:["Operational Efficiency","Direct Cost & Spend"], evidence:"Medium-Strong", annualBenefit:160000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
+    themeKeys:["Operational Efficiency","Direct Cost & Spend"], annualBenefit:160000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
     oneLiner:"Pick errors from 0.5% to under 0.1% — prevent thousands of costly re-picks and returns annually",
     evidenceIds:["EV-WH-PICK-01"],
     challenge:"When per-error costs seem small: at 2M annual orders and 0.5% error rate that is 10,000 errors at $20+ each — compounding with return shipping, customer service, and chargeback exposure.",
@@ -2228,7 +2233,7 @@ const SCENARIOS = [
   { id:"HC-01", name:"Equipment Rental Reduction & Asset Utilization",
     theme:"Direct Cost & Spend", verticalKey:"healthcare",
     facilityKeys:["Hospital / Clinic"], techKeys:["RFID Core","RTLS / Location"],
-    themeKeys:["Direct Cost & Spend","Labor & Human Capacity"], evidence:"Strong", annualBenefit:325000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
+    themeKeys:["Direct Cost & Spend","Labor & Human Capacity"], annualBenefit:325000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
     oneLiner:"15–25% equipment rental reduction + 40–70% nursing search time elimination",
     evidenceIds:["EV-HC-ASSET-01"],
     challenge:"When asset tracking is dismissed as a cost-reduction play: GE Healthcare and ECRI documented 15–25% rental reduction. The mechanism is visibility into owned assets sitting idle — not purchasing fewer assets.",
@@ -2245,7 +2250,7 @@ const SCENARIOS = [
   { id:"HC-02", name:"Surgical Instrument Tracking — OR Throughput",
     theme:"Operational Efficiency", verticalKey:"healthcare",
     facilityKeys:["Hospital / Clinic"], techKeys:["RFID Core"],
-    themeKeys:["Operational Efficiency","Regulatory & Compliance"], evidence:"Strong", annualBenefit:280000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
+    themeKeys:["Operational Efficiency","Regulatory & Compliance"], annualBenefit:280000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
     oneLiner:"25–35% reduction in lost/late instruments — protect OR throughput at $100–180/minute of delay",
     evidenceIds:["EV-HC-SURG-01"],
     challenge:"When OR delays are framed as a clinical management issue: Auburn University and AORN documented 25–35% instrument delay reduction with RFID tracking. The data separates the technology problem from the management problem.",
@@ -2262,7 +2267,7 @@ const SCENARIOS = [
   { id:"GOV-01", name:"Audit Readiness — Property NFR & CAP Reduction",
     theme:"Regulatory & Compliance", verticalKey:"government",
     facilityKeys:["Government Facility","Depot / MRO"], techKeys:["RFID Core","Fixed RFID Infrastructure"],
-    themeKeys:["Regulatory & Compliance"], evidence:"Strong", annualBenefit:1200000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
+    themeKeys:["Regulatory & Compliance"], annualBenefit:1200000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
     oneLiner:"7 consecutive audit disclaimers. RFID closes the asset existence-and-completeness gap — NDAA 2028 mandate.",
     evidenceIds:["EV-FED-AUDIT-01"],
     challenge:"When RFID's connection to audit findings is questioned: GAO-25-107427 names asset accountability as the primary driver of DoD's disclaimer opinion. NDAA 2028 mandates a clean opinion — RFID is the data foundation required to get there.",
@@ -2279,7 +2284,7 @@ const SCENARIOS = [
   { id:"MTL-01", name:"Tool & Asset Loss Reduction",
     theme:"Direct Cost & Spend", verticalKey:"manufacturing",
     facilityKeys:["Plant / Factory","Depot / MRO","Warehouse / DC"], techKeys:["RFID Core"],
-    themeKeys:["Direct Cost & Spend","Labor & Human Capacity"], evidence:"Medium-Strong", annualBenefit:220000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
+    themeKeys:["Direct Cost & Spend","Labor & Human Capacity"], annualBenefit:220000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
     oneLiner:"Manufacturing plants lose 15–20% of tool value annually — RFID cuts that loss 60–80% within the first year",
     evidenceIds:["EV-MTL-TOOL-01"],
     challenge:"When tool loss is accepted as a cost of doing business: Aberdeen Group documented 15–20% annual tool value loss across manufacturing. The first-year ROI on tracking is typically 6–12 months based on replacement cost alone.",
@@ -2294,7 +2299,7 @@ const SCENARIOS = [
   { id:"CAR-01", name:"Trailer Utilization & Yard Visibility",
     theme:"Operational Efficiency", verticalKey:"carriers",
     facilityKeys:["Terminal / Port","Warehouse / DC"], techKeys:["RFID Core","Fixed RFID Infrastructure"],
-    themeKeys:["Operational Efficiency","Revenue / Margin"], evidence:"Medium-Strong", annualBenefit:380000, rampType:"revenue", accessibilityTier:"configured", haircut:0.10,
+    themeKeys:["Operational Efficiency","Revenue / Margin"], annualBenefit:380000, rampType:"revenue", accessibilityTier:"configured", haircut:0.10,
     oneLiner:"10–20% trailer utilization improvement — eliminate manual yard checks and convert idle assets into revenue capacity",
     evidenceIds:["EV-TL-ASSET-01"],
     challenge:"When trailer utilization upside is questioned: ATA documents 10–20% improvement. We model 10%. The mechanism is eliminating ghost trailers — assets that appear available but can't be located in the yard.",
@@ -2310,7 +2315,7 @@ const SCENARIOS = [
   { id:"TL-01", name:"Detention & Dwell Cost Reduction",
     theme:"Direct Cost & Spend", verticalKey:"carriers",
     facilityKeys:["Terminal / Port","Warehouse / DC","Depot / MRO"], techKeys:["RFID Core"],
-    themeKeys:["Direct Cost & Spend","Operational Efficiency"], evidence:"Medium-Strong", annualBenefit:290000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
+    themeKeys:["Direct Cost & Spend","Operational Efficiency"], annualBenefit:290000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
     oneLiner:"Carriers experience detention on 20–35% of loads — RFID dock visibility cuts excess dwell 30–50%",
     evidenceIds:["EV-TL-DWELL-01"],
     challenge:"When detention costs seem like a shipper problem: detention directly erodes driver productivity and asset yield. Reducing it improves on-time performance which protects rate and relationship with shipper accounts.",
@@ -2919,6 +2924,7 @@ const SCENARIOS = [
     facilityKeys:["Store / Branch"], themeKeys:["Strategic / AI / Data","Operational Efficiency"],
     annualBenefit:120000, rampType:"strategic", accessibilityTier:"infrastructure", haircut:0.10,
     oneLiner:"Item-level RFID data enables demand forecasting, automated replenishment, planogram compliance, and customer analytics",
+    formula:"annual_analytics_budget * data_quality_uplift_pct",  // Chunk 15: retired from switch
     evidenceIds:["EV-RET-AI-01"],
     challenge:"Position as the data infrastructure investment that unlocks AI ROI — the sensor layer existing analytics platforms need but can't buy.",
     discoveryQuestions:["What AI or analytics investments are planned or stalled due to data quality?","What is your current replenishment trigger mechanism?","How is planogram compliance measured today?"],
@@ -2930,8 +2936,9 @@ const SCENARIOS = [
   { id:"RET-10", name:"Vendor Chargeback & Compliance",
     theme:"Direct Cost & Spend", verticalKey:"retail",
     facilityKeys:["Store / Branch","Warehouse / DC"], techKeys:["RFID Core","Fixed RFID Infrastructure"],
-    themeKeys:["Direct Cost & Spend"], evidence:"Medium-Strong", annualBenefit:90000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
+    themeKeys:["Direct Cost & Spend"], annualBenefit:90000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
     oneLiner:"Item-level chain of custody (inbound/outbound) resolves invoice disputes and recovers vendor chargeback exposure",
+    formula:"annual_chargeback_exposure * chargeback_reduction_pct",  // Chunk 15: retired from switch
     evidenceIds:["EV-RET-CHARGEBACK-01"],
     challenge:"Chargeback exposure is already a P&L line your AP team tracks. Auburn's Project Zipper showed item-level RFID handoffs cut shipment-claim discrepancies materially — we model only the conservative end of that reduction against your own exposure.",
     discoveryQuestions:["What is your annual vendor chargeback / invoice-dispute exposure?","What share of disputes trace to unverified inbound or outbound quantities?","Who owns chargeback resolution and how is it measured today?"],
@@ -2943,8 +2950,9 @@ const SCENARIOS = [
   { id:"RET-11", name:"Asset Protection — Investigation Labor",
     theme:"Labor & Human Capacity", verticalKey:"retail",
     facilityKeys:["Store / Branch"], techKeys:["RFID Core","Fixed RFID Infrastructure"],
-    themeKeys:["Labor & Human Capacity","Direct Cost & Spend"], evidence:"Medium", annualBenefit:60000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
+    themeKeys:["Labor & Human Capacity","Direct Cost & Spend"], annualBenefit:60000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
     oneLiner:"RFID exit events tied to video shrink investigation time — fewer manual case-building hours per incident",
+    formula:"annual_ap_investigation_cost * reduction_pct",  // Chunk 15: retired from switch
     evidenceIds:["EV-RET-AP-01"],
     challenge:"This is recovered investigator hours, not headcount cuts: item-level exit events auto-flag the clip and the SKU, collapsing case-building time. Credit only the schedulable hours your AP team confirms.",
     discoveryQuestions:["What does your asset-protection investigation labor cost annually?","How long does a typical shrink case take to build today?","Are exit events currently correlated to video manually?"],
@@ -3876,8 +3884,6 @@ function gatherEngagement() {
     verticals: [...activeIndustries],
     selectedIds: sel,
     inputs,
-    // Embedded resolved snapshots of selected pack levers (Chunk 14) → offline-complete.
-    packLevers: selectedPackLeverSnapshots(),
     customScenarios: (state.customScenarios || []).map(s => Object.assign({}, s, { inputs: Object.assign({}, s.inputs) })),
     // nrvOverrides intentionally not emitted (Chunk 1): the secondary-NRV stack
     // that consumed it was removed; emitting a never-read key is dead weight.
@@ -3890,6 +3896,10 @@ function gatherEngagement() {
     contingencyRate: contingencyRate,
     costRows: (costRows || []).map(r => Object.assign({}, r))
   };
+  // Embedded resolved snapshots of selected pack levers — offline-complete (Chunk 14).
+  // Emitted only when non-empty so baseline engagements stay clean.
+  const _packSnaps = selectedPackLeverSnapshots();
+  if (_packSnaps.length) out.packLevers = _packSnaps;
   // Carry the customer-lite revert snapshot when present (set on customer export).
   if (engagementBaseline) out.baseline = JSON.parse(JSON.stringify(engagementBaseline));
   return out;
@@ -4445,7 +4455,9 @@ const TECHNOLOGY_CATALOG = [
   { id: 'barcode',  label: 'Barcode / Scanning' },
   { id: 'mobile',   label: 'Mobile Computing' },
 ];
-// Map a library lever's free-text techKeys to catalog ids (bundled levers are RFID-family).
+// Transitional inference shim: maps library lever techKeys strings to TECHNOLOGY_CATALOG ids.
+// DELETE this map once all SCENARIOS levers are retired to formula-data (pack or inline formula)
+// carrying explicit technologyIds — at that point leverTechnologyIds() can drop the keys branch.
 const TECH_KEY_MAP = [
   { re: /rtls|location/i, id: 'rtls' },
   { re: /vision/i,        id: 'mv' },
@@ -5183,17 +5195,10 @@ function calcSc(sc) {
   try {
     switch(sc.id) {
       // ── RETAIL ──────────────────────────────────────────────────────────────
-      // RET-01 / RET-03 / RET-05 retired from the switch (Chunk 15): they now carry a
-      // `formula` and compute as data (reconciled to these exact expressions on both
-      // fixtures before deletion). RET-02 / RET-04 stay hardcoded — not yet pack-covered.
-      case"RET-02": return p.annual_store_revenue*p.out_of_stock_baseline_pct*p.osa_improvement_pct*p.gross_margin_pct;
-      case"RET-04": return p.annual_markdown_spend*p.markdown_reduction_pct*p.gm_recovery_pct;
-      case"RET-06": return p.num_stores*p.associates_per_store*p.hours_recovered_per_week*p.weeks_per_year*p.loaded_rate;
-      case"RET-07": return p.annual_omni_orders*p.cancellation_rate_baseline*p.cancellation_reduction_pct*p.avg_order_value*p.gm_pct;
-      case"RET-08": return p.total_inventory_value*p.safety_stock_reduction_pct*p.carrying_cost_pct;
-      case"RET-09": return p.annual_analytics_budget*p.data_quality_uplift_pct;
-      case"RET-10": return p.annual_chargeback_exposure*p.chargeback_reduction_pct;
-      case"RET-11": return p.annual_ap_investigation_cost*p.reduction_pct;
+      // ALL retail levers (RET-01…RET-11) retired from the switch (Chunk 15): each now
+      // carries a `formula` and computes as data, reconciled byte-identical to these
+      // exact expressions on both input sets before deletion (see test/phase15_verify.js).
+      // The rfid_retail pack is now the canonical source for the retail set.
 
       // ── WAREHOUSE / DC ───────────────────────────────────────────────────────
       case"WH-01":  return p.count_cycles_per_year*p.total_pallet_positions*((p.time_per_position_manual_min/60)-(p.time_per_position_rfid_sec/3600))*p.loaded_rate;
@@ -8647,7 +8652,7 @@ function exportLLMPrompt() {
       const ann = row ? fmt(row.ann) : fmt(sc.annualBenefit);
       const evIds = (sc.evidenceIds||[]).join(', ');
       return `## ${sc.name} [${sc.id}]
-Theme: ${sc.theme}  |  Evidence Tier: ${sc.evidence}  |  Ramp Type: ${sc.rampType}
+Theme: ${sc.theme}  |  Evidence Grade: ${computeEvidenceGrade(sc).label}  |  Ramp Type: ${sc.rampType}
 Summary: ${sc.oneLiner||''}
 Annual Benefit (steady-state): ${ann}
   Year 1: ${y1} | Year 2: ${y2} | Year 3: ${y3}
