@@ -37,14 +37,14 @@ const grabPrompt = (w, mode) => { w.eval(`appMode='${mode}'; window.__copied=''`
     ok('customer AI prompt still has the scenario + financials', cu.includes('Input Parameters Used:') && cu.includes('Evidence IDs:') && cu.includes('KEY FINANCIAL KPIs'));
   }
 
-  // ── 2) PPTX deck — source-level guard (PptxGenJS can't run headlessly).
+  // ── 2) PPTX deck — selling tips removed from ALL exports (source-level guard;
+  //    PptxGenJS can't run headlessly). The objection-handler row is gone entirely.
   {
     const src = fs.readFileSync(INDEX, 'utf8');
-    ok('PPTX HANDLING OBJECTIONS row is gated on customer mode',
-       /appMode==='customer' \? \[\] : \[\{label:'HANDLING OBJECTIONS'/.test(src));
-    // And there is no longer an UNCONDITIONAL objections row in the deck builder.
-    ok('PPTX has no unconditional HANDLING OBJECTIONS row',
-       !/\n\s*\{label:'HANDLING OBJECTIONS'/.test(src));
+    ok('PPTX deck no longer renders a HANDLING OBJECTIONS row in any mode',
+       !/HANDLING OBJECTIONS/.test(src));
+    ok('PPTX deck still renders HOW IT WORKS + EVIDENCE BASIS rows',
+       /label:'HOW IT WORKS'/.test(src) && /label:'EVIDENCE BASIS'/.test(src));
   }
 
   console.log(`\n${fail ? '✗' : '✓'} ${pass} passed, ${fail} failed\n`);
