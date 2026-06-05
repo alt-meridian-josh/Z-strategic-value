@@ -2059,6 +2059,7 @@ const SCENARIOS = [
     theme:"Labor & Human Capacity", verticalKey:"retail",
     facilityKeys:["Store / Branch"], techKeys:["RFID Core","Handheld RFID","Fixed RFID Infrastructure"],
     themeKeys:["Labor & Human Capacity"], evidence:"Strong", annualBenefit:312000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
+    formula:"annual_count_cycles * total_sku_locations * (hours_per_sku_manual - hours_per_sku_rfid) * loaded_rate",  // Chunk 15: retired from the calcSc switch — now data
     oneLiner:"Cut cycle-count labor 75–90% — from 3 min/item to 12 sec with handheld RFID",
     evidenceIds:["EV-RET-LABOR-01","EV-RET-ACC-01"],
     challenge:"When the customer questions headcount reduction: these are hours recovered and redirected to growth or higher-value tasks — not necessarily elimination. Finance counts schedulable labor hours at 100% credit.",
@@ -2090,6 +2091,7 @@ const SCENARIOS = [
     theme:"Direct Cost & Spend", verticalKey:"retail",
     facilityKeys:["Store / Branch"], techKeys:["RFID Core","Fixed RFID Infrastructure"],
     themeKeys:["Direct Cost & Spend"], evidence:"Strong", annualBenefit:350000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
+    formula:"annual_store_revenue * shrink_pct_baseline * shrink_reduction_pct",  // Chunk 15: retired from the calcSc switch — now data
     oneLiner:"Item-level visibility deters internal theft and sharpens LP exception reporting — 20–40% shrink reduction",
     evidenceIds:["EV-RET-SHRINK-01"],
     challenge:"When shrink attribution is challenged: NRF documents 1.4% average. The customer's actual shrink rate is already a line item in their P&L — we use their own number, not a benchmark.",
@@ -2118,6 +2120,7 @@ const SCENARIOS = [
     theme:"Labor & Human Capacity", verticalKey:"retail",
     facilityKeys:["Store / Branch","Warehouse / DC"], techKeys:["RFID Core","Fixed RFID Infrastructure"],
     themeKeys:["Labor & Human Capacity"], evidence:"Medium-Strong", annualBenefit:96000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
+    formula:"annual_receiving_labor_hours * labor_reduction_pct * loaded_rate",  // Chunk 15: retired from the calcSc switch — now data
     oneLiner:"Inbound accuracy 85% → 99%+ — eliminate manual scan-each and cut receiving labor 40%",
     evidenceIds:["EV-RET-RECV-01"],
     challenge:"When receiving labor seems minor: this is hard labor hours at a real rate, independently verifiable from your receiving timesheets. (Vendor chargeback avoidance is modeled separately as its own lever.)",
@@ -5130,6 +5133,25 @@ function loadLeverPack(pack) {
   return pack.levers.length;
 }
 
+// Reconciliation gate (Chunk 15): does a pack reproduce the in-app levers it maps to,
+// to the dollar, for a given input set? `mapping` is [{registryId, leverId}].
+// Returns per-lever { registryId, leverId, packValue, leverValue, reconciled }.
+// A lever that does NOT reconcile must stay hardcoded — the gap is reported, never
+// force-fit. Used by the regression gate before any hardcoded retirement.
+function reconcileLeverPack(pack, mapping, inputsByLever) {
+  return mapping.map(m => {
+    const lv = (pack.levers || []).find(l => l.registryId === m.registryId);
+    const inputs = (inputsByLever && inputsByLever[m.leverId]) || state.inputs[m.leverId] || {};
+    let packValue = null;
+    if (lv) { try { packValue = Math.max(0, evalFormula(lv.formula, inputs)); } catch (e) {} }
+    const leverSc = SCENARIOS.find(s => s.id === m.leverId);
+    let leverValue = null;
+    if (leverSc) { const saved = state.inputs[m.leverId]; state.inputs[m.leverId] = inputs; leverValue = calcSc(leverSc); state.inputs[m.leverId] = saved; }
+    const reconciled = packValue !== null && leverValue !== null && Math.abs(packValue - leverValue) < 1e-6;
+    return { registryId: m.registryId, leverId: m.leverId, packValue, leverValue, reconciled };
+  });
+}
+
 // Snapshots of SELECTED pack levers, pinned registryId@version, for embedding in a save.
 function selectedPackLeverSnapshots() {
   return SCENARIOS.filter(s => s.pack && state.selectedIds.has(s.id) && s._packSnapshot)
@@ -5138,12 +5160,6 @@ function selectedPackLeverSnapshots() {
 
 // ── SCENARIO CALC ──
 function calcSc(sc) {
-  // Pack levers (Chunk 14) compute via their formula over resolved inputs in
-  // state.inputs (so customer edits + round-trip work), feeding the normalization chain.
-  if (sc.pack === true && typeof sc.formula === 'string' && sc.formula.trim()) {
-    try { return Math.max(0, evalFormula(sc.formula, state.inputs[sc.id] || sc.inputs || {})); }
-    catch (e) { return 0; }
-  }
   if (sc.custom === true) {
     // Formula-bearing custom levers (Chunk 12) evaluate their expression over named
     // inputs; the result feeds the same normalization chain as any lever. Levers with
@@ -5156,15 +5172,22 @@ function calcSc(sc) {
     if (!mech) return 0;
     return Math.max(0, mech.formula(sc.inputs));
   }
+  // Library/pack levers expressed as DATA (Chunk 14/15): a formula over the lever's
+  // inputs in state.inputs replaces the hardcoded switch case. Pack levers always
+  // carry one; retired library levers (RET-01/03/05) now carry one too.
+  if (typeof sc.formula === 'string' && sc.formula.trim()) {
+    try { return Math.max(0, evalFormula(sc.formula, state.inputs[sc.id] || sc.inputs || {})); }
+    catch (e) { return 0; }
+  }
   const p = state.inputs[sc.id];
   try {
     switch(sc.id) {
       // ── RETAIL ──────────────────────────────────────────────────────────────
-      case"RET-01": return p.annual_count_cycles*p.total_sku_locations*(p.hours_per_sku_manual-p.hours_per_sku_rfid)*p.loaded_rate;
+      // RET-01 / RET-03 / RET-05 retired from the switch (Chunk 15): they now carry a
+      // `formula` and compute as data (reconciled to these exact expressions on both
+      // fixtures before deletion). RET-02 / RET-04 stay hardcoded — not yet pack-covered.
       case"RET-02": return p.annual_store_revenue*p.out_of_stock_baseline_pct*p.osa_improvement_pct*p.gross_margin_pct;
-      case"RET-03": return p.annual_store_revenue*p.shrink_pct_baseline*p.shrink_reduction_pct;
       case"RET-04": return p.annual_markdown_spend*p.markdown_reduction_pct*p.gm_recovery_pct;
-      case"RET-05": return p.annual_receiving_labor_hours*p.labor_reduction_pct*p.loaded_rate;
       case"RET-06": return p.num_stores*p.associates_per_store*p.hours_recovered_per_week*p.weeks_per_year*p.loaded_rate;
       case"RET-07": return p.annual_omni_orders*p.cancellation_rate_baseline*p.cancellation_reduction_pct*p.avg_order_value*p.gm_pct;
       case"RET-08": return p.total_inventory_value*p.safety_stock_reduction_pct*p.carrying_cost_pct;
