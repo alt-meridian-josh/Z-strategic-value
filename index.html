@@ -1211,15 +1211,10 @@ svg{max-width:100%;height:auto}
         <span class="nrv-ctl-v" id="nrv-g-v">3.5%</span>
       </div>
       <div class="nrv-ctl">
-        <label>Finance</label>
-        <input type="range" min="0.04" max="0.18" step="0.005" value="0.10" id="nrv-fin" oninput="renderROI()">
-        <span class="nrv-ctl-v" id="nrv-fin-v">10.0%</span>
-      </div>
-      <div class="nrv-ctl">
         <label>Decay_Avoided</label>
         <select id="nrv-decay" onchange="renderROI()">
-          <option value="1" selected>On</option>
-          <option value="0">Off</option>
+          <option value="1">On</option>
+          <option value="0" selected>Off</option>
         </select>
       </div>
       <div class="nrv-ctl">
@@ -3888,6 +3883,16 @@ function migrateEngagement(p) {
   if(!p.annotations || typeof p.annotations !== 'object') p.annotations = {};
   // nrvOverrides: deprecated-ignored (Chunk 1). Old JSONs may carry the key; it
   // is neither normalized nor read — left untouched so loading never errors.
+  // Decay-Avoided (Chunk 2; D3): any file lacking the key predates the toggle and
+  // was computed with decay ON — enable it so migrated v1/v2 numbers hold exactly.
+  if(!p.decay || typeof p.decay !== 'object') p.decay = {};
+  if(p.decay.useDecay == null) p.decay.useDecay = true;
+  if(p.decay.g == null)        p.decay.g = 0.035;
+  // Schema-driven TCO opex params (Chunk 2; D4): defaults match the old hardcoded
+  // values, so migrated numbers are unchanged.
+  if(!p.costs || typeof p.costs !== 'object') p.costs = {};
+  if(p.costs.attritionRate == null)  p.costs.attritionRate = 0.20;
+  if(p.costs.annualTraining == null) p.costs.annualTraining = 5000;
   if(p.mode !== 'customer' && p.mode !== 'analyst')    p.mode = 'analyst';
   return p;
 }
@@ -3963,6 +3968,18 @@ function applyEngagement(p) {
   // 6) WACC
   if(p.wacc != null) setVal('nrv-wacc', p.wacc);
 
+  // 6b) Decay-Avoided toggle + baseline g (Chunk 2; D3)
+  if(p.decay) {
+    setVal('nrv-decay', p.decay.useDecay ? '1' : '0');
+    if(p.decay.g != null) setVal('nrv-g', p.decay.g);
+  }
+  // 6c) Schema-driven TCO opex params (Chunk 2; D4) — set before cost rebuild so
+  //     state.costs carries them into calcNRV.
+  if(p.costs) {
+    if(p.costs.attritionRate != null)  attritionRate  = p.costs.attritionRate;
+    if(p.costs.annualTraining != null) annualTraining = p.costs.annualTraining;
+  }
+
   // 7) Cost model — explicit rows own the model verbatim (sliders won't overwrite)
   if(p.contingencyRate != null) contingencyRate = p.contingencyRate;
   if(Array.isArray(p.costRows)) {
@@ -4012,6 +4029,10 @@ function gatherEngagement() {
     // that consumed it was removed; emitting a never-read key is dead weight.
     financeCredit: { enabled: financeCreditEnabled, rate: financeCreditRate },
     wacc: +val('nrv-wacc') || 0.10,
+    // Decay-Avoided state + schema-driven TCO opex params (Chunk 2; D3/D4).
+    decay: { useDecay: (document.getElementById('nrv-decay')?.value ?? '0') === '1',
+             g: +(document.getElementById('nrv-g')?.value ?? 0.035) },
+    costs: { attritionRate: attritionRate, annualTraining: annualTraining },
     contingencyRate: contingencyRate,
     costRows: (costRows || []).map(r => Object.assign({}, r))
   };
@@ -4671,12 +4692,33 @@ function syncCostFromProfile() {
 let costRowsEdited = false; // track if user has manually edited rows
 let costRowsPreset = false; // an example preset supplied an explicit cost model — don't merge in slider defaults
 let contingencyRate = 0.07; // editable buffer on Yr-0 capital (0–25%); set inline on the contingency row
+// Schema-driven TCO opex parameters (Chunk 2; D4). Defaults preserve prior
+// hardcoded values. attritionRate is a share of Yr-0 capex (SOP basis: handheld
+// rollouts; refinement deferred). annualTraining is a flat annual opex ($).
+let attritionRate = 0.20;
+let annualTraining = 5000;
 
 // Update the contingency buffer rate from the inline % input, then re-cost.
 function setContingencyRate(pct) {
   let r = parseFloat(pct);
   if(!isFinite(r)) r = 0;
   contingencyRate = Math.min(0.25, Math.max(0, r/100));
+  rebuildCostState();
+  renderCost();
+}
+
+// Schema-driven TCO opex params, editable in the cost step (Chunk 2; D4).
+function setAttritionRate(pct) {
+  let r = parseFloat(pct);
+  if(!isFinite(r)) r = 0;
+  attritionRate = Math.min(1, Math.max(0, r/100));
+  rebuildCostState();
+  renderCost();
+}
+function setAnnualTraining(v) {
+  let n = parseFloat(String(v).replace(/[$,]/g,''));
+  if(!isFinite(n)) n = 0;
+  annualTraining = Math.max(0, n);
   rebuildCostState();
   renderCost();
 }
@@ -4739,7 +4781,7 @@ function renderCost() {
   const cont = Math.round(yr0Sub*contingencyRate);
   costRows.forEach(r=>{ if(r.contingency){ r.yr0=cont; }});
   const yr0t = yr0Sub+cont, yr1t = yr1Sub, yr2t = yr2Sub;
-  state.costs = {yr0:yr0t, yr1:yr1t, yr2:yr2t};
+  state.costs = {yr0:yr0t, yr1:yr1t, yr2:yr2t, attritionRate, annualTraining};
 
   const cadenceOpts = ['one-time','monthly','annual','per-site/yr','other'];
 
@@ -4796,6 +4838,18 @@ function renderCost() {
       <td class="r" style="font-size:14px;font-weight:700;font-family:var(--mono)">${fmt(yr1t)}<span style="font-size:9px;font-weight:400">/yr</span></td>
       <td></td>
     </tr>
+    <tr style="background:var(--gray-50);border-top:1px dashed var(--gray-300)" title="Attrition/backfill opex — schema-driven (SOP basis: handheld rollouts; refinement deferred)">
+      <td colspan="2" style="font-size:12px;color:var(--muted);font-style:italic">Attrition / backfill</td>
+      <td colspan="2" class="r" style="font-size:11px;color:var(--muted)"><input class="editable-input num-input" value="${+(attritionRate*100).toFixed(2)}" style="width:46px;text-align:right;margin:0 2px" oninput="setAttritionRate(this.value)" title="% of Yr 0 capex">% of Yr 0</td>
+      <td class="r" style="font-size:13px;font-weight:600;font-family:var(--mono);color:var(--muted)">${fmt(Math.round(yr0t*attritionRate))}<span style="font-size:9px;font-weight:400">/yr</span></td>
+      <td></td>
+    </tr>
+    <tr style="background:var(--gray-50)">
+      <td colspan="2" style="font-size:12px;color:var(--muted);font-style:italic">Annual training</td>
+      <td colspan="2" class="r" style="font-size:11px;color:var(--muted)"><input class="editable-input num-input" value="${annualTraining}" style="width:70px;text-align:right;margin:0 2px" oninput="setAnnualTraining(this.value)" title="flat annual training opex ($)">$/yr</td>
+      <td class="r" style="font-size:13px;font-weight:600;font-family:var(--mono);color:var(--muted)">${fmt(annualTraining)}<span style="font-size:9px;font-weight:400">/yr</span></td>
+      <td></td>
+    </tr>
     <tr style="border-top:2px solid var(--brand-black)">
       <td colspan="2"><strong>3-Year Total Cost</strong></td>
       <td colspan="2" style="font-size:10px;color:var(--muted);font-family:var(--mono);text-align:right">Yr0 + Yr1 + (Yr2 × 2)</td>
@@ -4836,7 +4890,7 @@ function rebuildCostState() {
   costRows.forEach(r=>{ if(!r.contingency){ yr0Sub+=r.yr0||0; yr1Sub+=r.yr1||0; yr2Sub+=r.yr2||0; }});
   const cont = Math.round(yr0Sub*contingencyRate);
   costRows.forEach(r=>{ if(r.contingency) r.yr0=cont; });
-  state.costs = {yr0: yr0Sub+cont, yr1: yr1Sub, yr2: yr2Sub};
+  state.costs = {yr0: yr0Sub+cont, yr1: yr1Sub, yr2: yr2Sub, attritionRate, annualTraining};
 }
 
 function updateCostRow(i, field, val) {
@@ -4998,12 +5052,20 @@ function ensureCosts() {
   }
 }
 // ── NRV ENGINE HELPERS ──
-function calcNRV(activeScenarios, costs, wacc) {
+function calcNRV(activeScenarios, costs, wacc, opts) {
   wacc = wacc || 0.10;
+  opts = opts || {};
+  // Decay-Avoided (Chunk 2; D3): OFF unless explicitly enabled. New engagements
+  // default OFF; the migration shim enables it for v1/v2 files to hold numbers.
+  const useDecay = opts.useDecay === true;
+  const g = (opts.g != null) ? opts.g : 0.035;
   const capex = costs.yr0 || 0;
   const annOpex = costs.yr1 || 0;
-  const attrition = capex * 0.20;
-  const training = 5000;
+  // Attrition/backfill + training are schema-driven (Chunk 2; D4). attritionRate
+  // is a share of Yr-0 capex (SOP basis: handheld rollouts; refinement deferred).
+  const attrRate = (costs.attritionRate != null) ? costs.attritionRate : 0.20;
+  const attrition = capex * attrRate;
+  const training = (costs.annualTraining != null) ? costs.annualTraining : 5000;
   const totalAnnOpex = annOpex + attrition + training;
 
   const B0 = activeScenarios.reduce((sum, sc) => {
@@ -5027,7 +5089,7 @@ function calcNRV(activeScenarios, costs, wacc) {
       return sum + ann * ramp * access * overlapFactor(sc) * financeCreditFactor(sc);
     }, 0);
 
-    const decayAvoided = B0 * (Math.pow(1.035, yr) - 1);
+    const decayAvoided = useDecay ? B0 * (Math.pow(1 + g, yr) - 1) : 0;
     netBenefit += decayAvoided;
 
     const netCF = netBenefit - totalAnnOpex;
@@ -5460,17 +5522,18 @@ function renderROI() {
   const _waccEl = document.getElementById('nrv-wacc');
   const wacc    = _waccEl ? +_waccEl.value : 0.10;
   const gRate   = +(document.getElementById('nrv-g')?.value ?? 0.035);
-  const finRate = +(document.getElementById('nrv-fin')?.value ?? 0.10);
-  const useDecay = (document.getElementById('nrv-decay')?.value ?? '1') === '1';
+  // Decay-Avoided default OFF (Chunk 2; D3) — new engagements start without it.
+  const useDecay = (document.getElementById('nrv-decay')?.value ?? '0') === '1';
   const nrvOn    = (document.getElementById('nrv-on')?.value ?? '1') === '1';
   const _setSv = (id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
   _setSv('nrv-wacc-v', (wacc*100).toFixed(1)+'%');
   _setSv('nrv-g-v',    (gRate*100).toFixed(1)+'%');
-  _setSv('nrv-fin-v',  (finRate*100).toFixed(1)+'%');
 
   ensureCosts();
   const c = state.costs;
-  const result = calcNRV(active, c, 0.10);
+  // WACC slider and decay controls now drive the live calc (Chunk 2); MIRR uses
+  // WACC for both legs (the old nrv-fin slider fed only the deleted dead stack).
+  const result = calcNRV(active, c, wacc, { useDecay, g: gRate });
   const { nrv, mirr, paybackMo, bcr, peakAnnual, roi5, yearlyData } = result;
 
   state.nrvResult = result;

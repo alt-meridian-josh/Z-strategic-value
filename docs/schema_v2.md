@@ -19,6 +19,9 @@ omits them and loads unchanged via the migration shim (`migrateEngagement`,
 | `_provenance` | `{ [scId]: { [inputKey]: Provenance } }` | `{}` | sibling map to `inputs` |
 | `annotations` | `{ engagement, levers, costRows }` | `{}` | analyst notes |
 | `nrvOverrides` | `{ [leverId]: {profile,access,h} }` | — | **deprecated-ignored (Chunk 1)** — fed only the dead secondary-NRV stack (`computeNRV`), now removed. Tolerated in old JSONs (no error) but never read, normalized, or re-emitted. |
+| `wacc` | `number` | `0.10` | **(Chunk 2)** discount rate; the Step-5 WACC slider now drives `calcNRV` live (customer-mode bounded 8–12%). |
+| `decay` | `{ useDecay:boolean, g:number }` | `{useDecay:true, g:0.035}` | **(Chunk 2; D3)** Decay-Avoided adder. New engagements default **OFF**; migration enables it (`useDecay:true`) for any file lacking the key so v1/v2 numbers hold. `g` = status-quo growth rate. |
+| `costs` | `{ attritionRate:number, annualTraining:number }` | `{attritionRate:0.20, annualTraining:5000}` | **(Chunk 2; D4)** schema-driven TCO opex. `attritionRate` applies to Yr-0 capex (SOP basis: handheld rollouts; refinement deferred). `annualTraining` is flat $/yr. Editable in the cost step. (Distinct from the derived in-memory `state.costs` yr0/yr1/yr2, which is not serialized — `costRows` is.) |
 
 ## Blocks
 
