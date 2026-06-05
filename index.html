@@ -1006,6 +1006,12 @@ svg{max-width:100%;height:auto}
   </div>
 
   <div class="card">
+    <div class="card-title">Technology Stack</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Select the technologies in scope. The value-lever picker filters to what this stack can deliver — a lever needing a technology you haven't selected won't appear, and deselecting a technology deactivates any active lever that depends on it.</div>
+    <div id="tech-select" style="display:flex;flex-wrap:wrap;gap:10px"></div>
+  </div>
+
+  <div class="card">
     <div class="card-title">Team & Partners</div>
     <div class="g2">
       <div class="fg">
@@ -1236,6 +1242,7 @@ svg{max-width:100%;height:auto}
   </div>
 
   <div id="bcr-banner" class="nrv-bcr-flag" style="display:none;margin:0 0 16px"></div>
+  <div id="evidence-conc-flag" style="display:none;margin:0 0 16px"></div>
       <div class="kpi-grid" id="kpi-grid"></div>
   <div class="kpi-secondary-row" id="kpi-secondary"></div>
   <details style="margin:20px 0" id="walkdown-details" open>
@@ -3824,6 +3831,7 @@ function applyEngagement(p) {
 
   // 8) Re-render anything already on screen
   if(p.engagement && p.engagement.sites != null) { setVal('sl-sites', p.engagement.sites); setVal('sv-sites', p.engagement.sites); }
+  try { renderTechSelect(); } catch(e){}
   try { renderLeverGrid(); } catch(e){}
   if(document.getElementById('panel-2')?.classList.contains('active')) { try { renderDisc(); renderCustomScenarios(); } catch(e){} }
   if(document.getElementById('panel-3')?.classList.contains('active')) { try { renderCost(); } catch(e){} }
@@ -3934,6 +3942,7 @@ function applyModeGuards() {
   document.body.classList.toggle('customer-mode', customer);
   const hint = document.getElementById('customer-save-hint'); if(hint) hint.style.display = customer ? 'inline' : 'none';
   applyCustomerLocks(customer);
+  try { renderTechSelect(); } catch(e){}   // lock/unlock the technology multi-select
   updateCustomerFooter();
 }
 
@@ -4234,6 +4243,53 @@ function matchScenarios() {
   return SCENARIOS.filter(sc => activeIndustries.has(sc.verticalKey));
 }
 
+// ── TECHNOLOGY MULTI-SELECT (Chunk 13) ───────────────────────────────────────
+// Checkboxes bound to engagementTechnologies[]; editable in analyst, locked in
+// customer. The catalog is fixed; the selection is the engagement's stack.
+function renderTechSelect() {
+  const host = document.getElementById('tech-select');
+  if (!host) return;
+  const customer = (appMode === 'customer');
+  const sel = new Set((engagementTechnologies || []).map(t => t.id));
+  host.innerHTML = TECHNOLOGY_CATALOG.map(t => `
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:6px 10px;border:1px solid ${sel.has(t.id) ? 'var(--brand-green)' : 'var(--gray-300)'};border-radius:6px;background:${sel.has(t.id) ? 'rgba(80,160,80,.08)' : '#fff'};cursor:${customer ? 'not-allowed' : 'pointer'}">
+      <input type="checkbox" ${sel.has(t.id) ? 'checked' : ''} ${customer ? 'disabled' : ''} onchange="toggleTechnology('${t.id}',this.checked)">
+      ${t.label}
+    </label>`).join('');
+}
+
+// Add/remove a technology. Removing one deactivates any ACTIVE lever that depends on
+// it (never leave a live benefit with no solution behind it) — with a warning.
+function toggleTechnology(id, on) {
+  if (appMode === 'customer') return;
+  const cat = TECHNOLOGY_CATALOG.find(t => t.id === id);
+  if (!cat) return;
+  if (on) {
+    if (!engagementTechnologies.find(t => t.id === id)) engagementTechnologies.push({ id, label: cat.label });
+  } else {
+    engagementTechnologies = engagementTechnologies.filter(t => t.id !== id);
+    const remaining = engagementTechnologies.map(t => t.id);
+    // Deactivate dependent active levers: any lever that needs `id` (and so can no
+    // longer be fully satisfied) is dropped from the selection / deactivated.
+    const dropped = [];
+    [...state.selectedIds].forEach(scId => {
+      const sc = SCENARIOS.find(s => s.id === scId); if (!sc) return;
+      const need = leverTechnologyIds(sc);
+      if (need.includes(id) && !need.every(t => remaining.includes(t))) { state.selectedIds.delete(scId); dropped.push(sc.id); }
+    });
+    (state.customScenarios || []).forEach(sc => {
+      const need = leverTechnologyIds(sc);
+      if (sc.active && need.includes(id) && !need.every(t => remaining.includes(t))) { sc.active = false; dropped.push(sc.id); }
+    });
+    if (dropped.length && typeof alert === 'function')
+      alert(`Deselecting "${cat.label}" deactivated ${dropped.length} lever${dropped.length > 1 ? 's' : ''} that depend on it:\n\n  ${dropped.join(', ')}\n\nA benefit can't be claimed without the technology behind it.`);
+  }
+  renderTechSelect();
+  if (document.getElementById('lever-grid')) renderLeverGrid();
+  if (typeof renderCustomScenarios === 'function') { try { renderCustomScenarios(); } catch (e) {} }
+  if (document.getElementById('kpi-grid')) renderROI();
+}
+
 // Toggle an industry button on/off — always keep at least one active
 function toggleIndustry(btn) {
   const v = btn.dataset.v;
@@ -4311,6 +4367,92 @@ const evLabel = {
   'Emerging':      'Emerging',
 };
 
+// ── COMPUTED EVIDENCE GRADE (Chunk 13) ───────────────────────────────────────
+// The grade is DERIVED from a lever's evidence set (EVIDENCE tiers), never hand-typed.
+// Tiers (methodology page): Tier 1 = peer-reviewed / multi-company; Tier 2 = industry
+// bodies / major analysts; Tier 3 = vendor / single-company.
+const EVIDENCE_GRADES = {
+  proven:       { glyph: '●●●', label: 'Proven' },
+  supported:    { glyph: '●●◐', label: 'Supported' },
+  emerging:     { glyph: '●○○', label: 'Emerging' },
+  unregistered: { glyph: '○○○', label: 'Unregistered' },
+};
+
+// Resolve the evidenceIds a lever points at, against the EVIDENCE registry.
+function leverEvidenceTiers(sc) {
+  const ev = leverEvidence(sc);
+  let ids = (ev && Array.isArray(ev.evidenceIds)) ? ev.evidenceIds : null;
+  if (!ids && sc && !sc.custom && Array.isArray(sc.evidenceIds)) ids = sc.evidenceIds;   // library levers
+  ids = ids || [];
+  const tiers = { 1: 0, 2: 0, 3: 0 };
+  let n = 0;
+  ids.forEach(id => {
+    const e = EVIDENCE.find(x => x.id === id);
+    if (!e) return;
+    const m = /Tier\s*([123])/.exec(e.tier || '');
+    if (m) { tiers[+m[1]]++; n++; }
+  });
+  return { tiers, n };
+}
+
+// Compute the grade. Custom levers without a registryId are Unregistered (pending
+// promotion, pairs with [user]); otherwise the rule set keys off tier counts.
+function computeEvidenceGrade(sc) {
+  if (sc && sc.custom === true && !sc.registryId) return Object.assign({ key: 'unregistered' }, EVIDENCE_GRADES.unregistered);
+  const { tiers, n } = leverEvidenceTiers(sc);
+  let key;
+  if (n === 0) key = 'unregistered';
+  else if (tiers[1] >= 1 && n >= 2) key = 'proven';        // ≥2 sources, ≥1 Tier 1
+  else if (tiers[1] >= 1 || tiers[2] >= 2) key = 'supported'; // one Tier 1, or ≥2 Tier 2
+  else key = 'emerging';                                    // single Tier 2, or Tier 3 only
+  return Object.assign({ key }, EVIDENCE_GRADES[key]);
+}
+
+// Share of Year-3 NORMALIZED benefit carried by Emerging-grade levers (advisory gate).
+function emergingConcentration(activeScenarios, result) {
+  if (!result || !result.yearlyData) return { share: 0, emergingY3: 0, totalY3: 0 };
+  const fc = result.financeCredit;
+  let total = 0, emerging = 0;
+  activeScenarios.forEach(sc => {
+    const ann = Math.max(0, calcSc(sc));
+    const ramp = RAMP[sc.rampType].y[2], access = ACCESS_TIER[sc.accessibilityTier || 'configured'][2];
+    const norm = ann * ramp * access * overlapFactor(sc) * financeCreditFactor(sc, fc);
+    total += norm;
+    if (computeEvidenceGrade(sc).key === 'emerging') emerging += norm;
+  });
+  return { share: total > 0 ? emerging / total : 0, emergingY3: emerging, totalY3: total };
+}
+
+// ── TECHNOLOGY CATALOG + lever↔technology mapping (Chunk 13) ─────────────────
+const TECHNOLOGY_CATALOG = [
+  { id: 'rfid',     label: 'RFID' },
+  { id: 'mv',       label: 'Machine Vision' },
+  { id: 'platform', label: 'Software Platform' },
+  { id: 'rtls',     label: 'RTLS / Location' },
+  { id: 'barcode',  label: 'Barcode / Scanning' },
+  { id: 'mobile',   label: 'Mobile Computing' },
+];
+// Map a library lever's free-text techKeys to catalog ids (bundled levers are RFID-family).
+const TECH_KEY_MAP = [
+  { re: /rtls|location/i, id: 'rtls' },
+  { re: /vision/i,        id: 'mv' },
+  { re: /platform|software|analytics/i, id: 'platform' },
+  { re: /barcode|scan/i,  id: 'barcode' },
+  { re: /mobile|handheld computer/i, id: 'mobile' },
+  { re: /rfid|handheld|fixed/i, id: 'rfid' },
+];
+// The technologies a lever depends on. Custom/overlay carry technologyIds explicitly;
+// library levers infer from techKeys.
+function leverTechnologyIds(sc) {
+  if (sc && sc.custom === true && Array.isArray(sc.technologyIds)) return sc.technologyIds.slice();
+  const ov = sc && engagementOverlay[sc.id];
+  if (ov && Array.isArray(ov.technologyIds) && ov.technologyIds.length) return ov.technologyIds.slice();
+  const keys = (sc && sc.techKeys) || [];
+  const ids = new Set();
+  keys.forEach(k => { const m = TECH_KEY_MAP.find(x => x.re.test(k)); if (m) ids.add(m.id); });
+  return [...ids];
+}
+
 function renderLeverGrid() {
   const grid = document.getElementById('lever-grid');
   const label = document.getElementById('lever-count-label');
@@ -4320,17 +4462,26 @@ function renderLeverGrid() {
   // Sync selectedIds: remove any stale ids that no longer match active industries
   [...state.selectedIds].forEach(id => { if(!matched.find(s=>s.id===id)) state.selectedIds.delete(id); });
 
-  if(label) label.textContent = '— ' + matched.length + ' levers, ' + state.selectedIds.size + ' selected';
+  // Technology filter (Chunk 13): when a stack is declared, show only levers whose
+  // technologies are ALL present in the selection (mixed-tech levers need every tech).
+  // Tech-agnostic levers (no mapping) always show. Filters DISPLAY only — never the
+  // selectedIds sync above, so a loaded engagement never silently loses levers.
+  const selTechs = (engagementTechnologies || []).map(t => t.id);
+  const display = selTechs.length
+    ? matched.filter(sc => { const need = leverTechnologyIds(sc); return need.length === 0 || need.every(t => selTechs.includes(t)); })
+    : matched;
+
+  if(label) label.textContent = '— ' + display.length + (selTechs.length && display.length !== matched.length ? '/' + matched.length : '') + ' levers, ' + state.selectedIds.size + ' selected';
 
   // Phase 5: never show a blank grid on click — badge instead.
-  if(!matched.length) {
+  if(!display.length) {
     grid.innerHTML = `<div style="padding:18px;text-align:center;color:var(--muted);font-size:12px;border:1px dashed var(--gray-300);border-radius:8px">No bundled levers for the selected industr${(activeIndustries && activeIndustries.size>1)?'ies':'y'} yet — <strong>custom levers / profile only</strong>. Add custom value levers below, or start from a profile.</div>`;
     return;
   }
 
   // Group by verticalKey
   const groups = {};
-  matched.forEach(sc => {
+  display.forEach(sc => {
     if(!groups[sc.verticalKey]) groups[sc.verticalKey] = [];
     groups[sc.verticalKey].push(sc);
   });
@@ -4352,7 +4503,7 @@ function renderLeverGrid() {
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0">
             <span style="font-family:var(--mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:2px 6px;border-radius:3px;background:${RAMP[sc.rampType]?rampColors[sc.rampType].bg:'#f0f0f0'};color:${RAMP[sc.rampType]?rampColors[sc.rampType].fg:'#555'}">${RAMP[sc.rampType]?.label||sc.rampType}</span>
-            <span style="font-family:var(--mono);font-size:9px;color:var(--gray-500)">${evDots[sc.evidence]||'●○○'} ${evLabel[sc.evidence]||'Emerging'}</span>
+            <span style="font-family:var(--mono);font-size:9px;color:var(--gray-500)" title="Evidence grade — computed from sourced evidence tiers">${(g=>g.glyph+' '+g.label)(computeEvidenceGrade(sc))}</span>
           </div>
         </div>`).join('')}
     </div>`).join('');
@@ -5236,8 +5387,11 @@ function renderWalkdownTable(activeScenarios, result) {
     const _ev = leverEvidence(sc);
     const confMark = (_ev && (_ev.confidence === 'B' || _ev.confidence === 'C'))
       ? ` <span title="estimated/benchmarked input" style="font-size:9px;font-weight:700;color:${_ev.confidence==='B'?'#7a5200':'#842029'}">[${_ev.confidence}]</span>` : '';
+    const grade = computeEvidenceGrade(sc);   // computed evidence grade badge (Chunk 13)
+    const gradeColor = { proven:'#2c5f2d', supported:'#3a6ea5', emerging:'#9a6b00', unregistered:'#842029' }[grade.key];
+    const gradeMark = ` <span title="Evidence grade — computed from sourced evidence tiers" style="font-size:9px;font-weight:700;color:${gradeColor}">${grade.glyph} ${grade.label}</span>`;
     return `<tr${isCustom ? ' style="font-style:italic;opacity:0.8"' : ''}>
-      <td>${sc.id}${isCustom ? ' <span style="font-size:9px;color:var(--muted)">[user]</span>' + registryTag(sc) : ''}${poolMark}${confMark}</td>
+      <td>${sc.id}${isCustom ? ' <span style="font-size:9px;color:var(--muted)">[user]</span>' + registryTag(sc) : ''}${poolMark}${gradeMark}${confMark}</td>
       <td style="text-align:right">${fmt(Math.round(ann))}</td>
       <td style="text-align:right">${fmt(Math.round(afterRamp))}</td>
       <td style="text-align:right">${fmt(Math.round(afterAccess))}</td>
@@ -5297,7 +5451,15 @@ function renderWalkdownTable(activeScenarios, result) {
   // stored citations are visible, not just the [B]/[C] confidence flag.
   const evidenceNotes = activeScenarios.map(sc => evidenceDetailHTML(sc, 'row')).join('');
 
-  el.innerHTML = rows + dedupNote + decayRow + netBenRow + tcoRow + ncfRow + nrvRow + evidenceNotes;
+  // Customer-lite footnote (Chunk 13): Emerging-grade levers stay selectable but
+  // carry an automatic, conservative caveat in customer-facing output.
+  const emergingLevers = activeScenarios.filter(sc => computeEvidenceGrade(sc).key === 'emerging');
+  const emergingFootnote = (appMode === 'customer' && emergingLevers.length)
+    ? `<tr><td colspan="7" style="font-size:10px;color:#7a5200;background:rgba(154,107,0,.06);padding:6px 8px;line-height:1.5">`
+      + `<strong>Emerging-grade levers (${emergingLevers.map(s => s.id).join(', ')}):</strong> single-source benchmark; conservative rate pending additional validation.</td></tr>`
+    : '';
+
+  el.innerHTML = rows + dedupNote + decayRow + netBenRow + tcoRow + ncfRow + nrvRow + evidenceNotes + emergingFootnote;
 }
 
 // ── CUSTOM VALUE SCENARIO BUILDER ──
@@ -5690,6 +5852,18 @@ function renderROI() {
   if (flagEl) flagEl.innerHTML = bcrWarn
     ? `<div class="nrv-bcr-flag"><strong>&#9888; BCR ${bcr.toFixed(1)}x &mdash; above the 10x cap.</strong> See the review-gate checklist at the top of this page before exporting.</div>`
     : '';
+
+  // Evidence-concentration flag (Chunk 13): advisory (not blocking) when more than
+  // 40% of Year-3 normalized benefit rides on Emerging-grade levers.
+  const concEl = document.getElementById('evidence-conc-flag');
+  if (concEl) {
+    const conc = emergingConcentration(active, result);
+    if (conc.share > 0.40) {
+      concEl.style.display = 'block';
+      concEl.className = 'nrv-bcr-flag';
+      concEl.innerHTML = `<strong>&#9888; Evidence concentration: ${Math.round(conc.share*100)}% of Year-3 normalized benefit rides on <em>Emerging</em>-grade levers (single Tier 2 or vendor-only sources).</strong> The case is sound but thinly sourced where it matters most — strengthen the top Emerging levers with a second independent source (ideally Tier 1) before it leaves your hands. Advisory only; does not block export.`;
+    } else { concEl.style.display = 'none'; concEl.innerHTML = ''; }
+  }
 
   renderWalkdownTable(active, result);
   syncDelay();
@@ -8629,6 +8803,7 @@ Keep it conversational. One paragraph, then the question.
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  renderTechSelect();
   renderLeverGrid();
   selCount(); // fire on load so warning shows if defaults exceed 6
   // Init cost state from slider defaults (sliders have value= attrs so this works)
