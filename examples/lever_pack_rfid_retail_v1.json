@@ -1,0 +1,79 @@
+{
+  "_type": "lever-pack",
+  "packId": "rfid_retail",
+  "version": "v1",
+  "title": "RFID Retail — verified value levers",
+  "notice": "Verified-only registry levers. Each carries a sourced formula, named inputs with ranges + provenance, and a tiered evidence set. Reproduces the bundled RFID retail labor/cost levers exactly.",
+  "technologyIds": ["rfid"],
+  "levers": [
+    {
+      "registryId": "REG-RET-CYCLECOUNT",
+      "version": "v1",
+      "name": "Inventory Accuracy — Cycle Count Labor",
+      "theme": "Labor & Human Capacity",
+      "verticalKey": "retail",
+      "rampType": "hard_labor",
+      "accessibilityTier": "configured",
+      "haircut": 0.10,
+      "technologyIds": ["rfid"],
+      "techKeys": ["RFID Core", "Handheld RFID", "Fixed RFID Infrastructure"],
+      "formula": "annual_count_cycles * total_sku_locations * (hours_per_sku_manual - hours_per_sku_rfid) * loaded_rate",
+      "inputs": {
+        "total_sku_locations": { "value": 50000, "range": [20000, 80000], "source": "GS1: typical apparel store 20K–80K", "confidence": "B" },
+        "hours_per_sku_manual": { "value": 0.05, "source": "GS1: 2–5 min; use 3 min = 0.05 hr", "confidence": "B" },
+        "hours_per_sku_rfid": { "value": 0.0033, "source": "GS1/Auburn: 10–15 sec; use 12 sec", "confidence": "B" },
+        "loaded_rate": { "value": 24, "source": "BLS retail median + 30% burden", "confidence": "A" },
+        "annual_count_cycles": { "value": 12, "source": "Monthly=12; Weekly=52", "confidence": "A" }
+      },
+      "evidence": [
+        { "id": "EV-RET-LABOR-01", "tier": "Tier 3", "title": "Retail Labor Productivity with RFID Cycle Counting", "publisher": "GS1 US Retail Team", "year": 2023, "claim": "RFID cycle counting reduces labor per count cycle by 75–90% vs. barcode." },
+        { "id": "EV-RET-ACC-01", "tier": "Tier 1", "title": "RFID: The Right Time for Retail", "publisher": "Auburn University RFID Lab", "year": 2022, "claim": "93–99% inventory accuracy vs. 65–75% without; 50+ deployments." }
+      ],
+      "oneLiner": "Cut cycle-count labor 75–90% — from 3 min/item to 12 sec with handheld RFID"
+    },
+    {
+      "registryId": "REG-RET-SHRINK",
+      "version": "v1",
+      "name": "Shrink Reduction — Item Visibility",
+      "theme": "Direct Cost & Spend",
+      "verticalKey": "retail",
+      "rampType": "hard_cost",
+      "accessibilityTier": "configured",
+      "haircut": 0.10,
+      "technologyIds": ["rfid"],
+      "techKeys": ["RFID Core", "Fixed RFID Infrastructure"],
+      "formula": "annual_store_revenue * shrink_pct_baseline * shrink_reduction_pct",
+      "inputs": {
+        "annual_store_revenue": { "value": 5000000, "source": "Customer P&L", "confidence": "B" },
+        "shrink_pct_baseline": { "value": 0.014, "range": [0.010, 0.016], "source": "NRF National Retail Security Survey", "confidence": "B" },
+        "shrink_reduction_pct": { "value": 0.20, "range": [0.20, 0.40], "source": "NRF: RFID reduces shrink 20–40%", "confidence": "B" }
+      },
+      "evidence": [
+        { "id": "EV-RET-SHRINK-01", "tier": "Tier 2", "title": "National Retail Security Survey", "publisher": "National Retail Federation", "year": 2023, "claim": "Average retail shrink 1.4–1.6% of sales; RFID reduces shrink 20–40%." }
+      ],
+      "oneLiner": "Item-level visibility reduces shrink 20–40% on a 1.4% baseline"
+    },
+    {
+      "registryId": "REG-RET-RECEIVING",
+      "version": "v1",
+      "name": "Receiving Labor — RFID Verification",
+      "theme": "Labor & Human Capacity",
+      "verticalKey": "retail",
+      "rampType": "hard_labor",
+      "accessibilityTier": "configured",
+      "haircut": 0.10,
+      "technologyIds": ["rfid"],
+      "techKeys": ["RFID Core"],
+      "formula": "annual_receiving_labor_hours * labor_reduction_pct * loaded_rate",
+      "inputs": {
+        "annual_receiving_labor_hours": { "value": 8000, "source": "Customer staffing", "confidence": "B" },
+        "labor_reduction_pct": { "value": 0.40, "range": [0.40, 0.60], "source": "GS1: receiving labor reduced 40–60%", "confidence": "B" },
+        "loaded_rate": { "value": 24, "source": "BLS retail median + 30% burden", "confidence": "A" }
+      },
+      "evidence": [
+        { "id": "EV-RET-RECV-01", "tier": "Tier 3", "title": "Receiving Accuracy Improvement with RFID", "publisher": "GS1 US", "year": 2022, "claim": "RFID receiving verification: accuracy 85–92% → 99%+; receiving labor reduced 40–60%." }
+      ],
+      "oneLiner": "RFID receiving verification cuts inbound labor 40–60%"
+    }
+  ]
+}

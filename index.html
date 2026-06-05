@@ -3788,6 +3788,14 @@ function applyEngagement(p) {
     Object.assign(state.inputs[scId], vals);
   });
 
+  // 4b) Embedded lever packs (Chunk 14): re-register resolved pack-lever snapshots so a
+  //     standalone export reproduces identically with no pack file present. Inputs were
+  //     merged above, so resolvePackLever preserves the loaded (edited) values.
+  if(Array.isArray(p.packLevers) && p.packLevers.length) {
+    try { loadLeverPack({ _type:'lever-pack', packId: p._packId || 'embedded', version: p._packVersion || 'embedded', levers: p.packLevers }); }
+    catch(e){ console.warn('embedded pack levers failed to load:', e.message); }
+  }
+
   // 5) Per-lever NRV overrides: deprecated-ignored (Chunk 1) — the dead
   //    secondary-NRV stack that read them was removed; key is tolerated, not read.
 
@@ -3865,6 +3873,8 @@ function gatherEngagement() {
     verticals: [...activeIndustries],
     selectedIds: sel,
     inputs,
+    // Embedded resolved snapshots of selected pack levers (Chunk 14) → offline-complete.
+    packLevers: selectedPackLeverSnapshots(),
     customScenarios: (state.customScenarios || []).map(s => Object.assign({}, s, { inputs: Object.assign({}, s.inputs) })),
     // nrvOverrides intentionally not emitted (Chunk 1): the secondary-NRV stack
     // that consumed it was removed; emitting a never-read key is dead weight.
@@ -5044,8 +5054,96 @@ function customerExportAllowed(kind) {
   return false;
 }
 
+// ── LEVER PACKS (Chunk 14) ───────────────────────────────────────────────────
+// A pack is a JSON bundle of VERIFIED registry levers. Loading one supplements the
+// hardcoded SCENARIOS; selected pack levers embed a resolved snapshot in the saved
+// engagement, so a standalone export reproduces identically with no pack present.
+let loadedLeverPacks = [];
+
+// Same validation discipline as engagement load — throw loudly on anything malformed.
+function validateLeverPack(pack) {
+  if (!pack || pack._type !== 'lever-pack') throw new Error('not a lever pack (_type !== "lever-pack")');
+  if (!pack.packId || !pack.version) throw new Error('lever pack missing packId/version');
+  if (!Array.isArray(pack.levers) || !pack.levers.length) throw new Error('lever pack has no levers');
+  const seen = new Set();
+  pack.levers.forEach((lv, i) => {
+    const where = `lever[${i}] (${(lv && lv.registryId) || '?'})`;
+    if (!lv.registryId || !lv.version) throw new Error(`${where}: missing registryId/version`);
+    if (seen.has(lv.registryId)) throw new Error(`${where}: duplicate registryId in pack`);
+    seen.add(lv.registryId);
+    if (typeof lv.formula !== 'string' || !lv.formula.trim()) throw new Error(`${where}: missing formula`);
+    const lr = lintFormula(lv.formula);
+    if (!lr.ok) throw new Error(`${where}: formula carries un-named constants ${lr.error || lr.literals.join(', ')} — packs are verified-only`);
+    if (!lv.inputs || typeof lv.inputs !== 'object') throw new Error(`${where}: missing inputs`);
+    formulaIdentifiers(lv.formula).forEach(k => { if (!(k in lv.inputs)) throw new Error(`${where}: formula input "${k}" not declared`); });
+    if (!Array.isArray(lv.evidence) || !lv.evidence.length) throw new Error(`${where}: verified levers require an evidence[] array`);
+    lv.evidence.forEach((e, j) => { if (!e.id || !/Tier\s*[123]/.test(e.tier || '')) throw new Error(`${where}.evidence[${j}]: id + "Tier 1|2|3" required`); });
+    if (!lv.rampType || !RAMP[lv.rampType]) throw new Error(`${where}: invalid rampType "${lv.rampType}"`);
+    if (lv.haircut == null || lv.haircut < 0 || lv.haircut > 1) throw new Error(`${where}: haircut must be 0..1`);
+  });
+  return true;
+}
+
+// Resolve one pack lever → a SCENARIOS-shaped object; register its evidence and seed
+// its inputs (without clobbering already-loaded edits).
+function resolvePackLever(lv) {
+  const evidenceIds = lv.evidence.map(e => {
+    if (!EVIDENCE.find(x => x.id === e.id)) EVIDENCE.push({ id: e.id, tier: e.tier, title: e.title || e.id, publisher: e.publisher || '', year: e.year || '', claim: e.claim || '' });
+    return e.id;
+  });
+  const flat = {}, ranges = {}, prov = {};
+  Object.entries(lv.inputs).forEach(([k, def]) => {
+    if (def && typeof def === 'object') {
+      flat[k] = +def.value || 0;
+      if (Array.isArray(def.range)) ranges[k] = def.range.slice();
+      if (def.source || def.confidence) prov[k] = { source: def.source, confidence: def.confidence };
+    } else flat[k] = +def || 0;
+  });
+  const id = lv.registryId;
+  state.inputs[id] = Object.assign({}, flat, state.inputs[id]);          // existing edits win
+  if (Object.keys(prov).length) engagementProvenance[id] = Object.assign({}, prov, engagementProvenance[id]);
+  return {
+    id, pack: true, registryId: lv.registryId, registryVersion: lv.version,
+    name: lv.name || lv.registryId, theme: lv.theme || 'Custom', verticalKey: lv.verticalKey || 'custom',
+    rampType: lv.rampType, accessibilityTier: lv.accessibilityTier || 'configured', haircut: lv.haircut,
+    technologyIds: Array.isArray(lv.technologyIds) ? lv.technologyIds.slice() : [],
+    techKeys: lv.techKeys || [], evidenceIds,
+    formula: lv.formula, ranges,
+    oneLiner: lv.oneLiner || '', challenge: lv.challenge || '', discoveryQuestions: lv.discoveryQuestions || [],
+    inputs: Object.assign({}, flat),
+    _packSnapshot: JSON.parse(JSON.stringify(lv)),                        // for re-embedding on save
+  };
+}
+
+// Load a pack: validate, then register every lever into SCENARIOS (replace in place on
+// re-load of the same registryId). Returns the count registered.
+function loadLeverPack(pack) {
+  validateLeverPack(pack);
+  pack.levers.forEach(lv => {
+    const sc = resolvePackLever(lv);
+    const ix = SCENARIOS.findIndex(s => s.id === sc.id);
+    if (ix >= 0) SCENARIOS[ix] = sc; else SCENARIOS.push(sc);
+  });
+  if (!loadedLeverPacks.find(p => p.packId === pack.packId && p.version === pack.version))
+    loadedLeverPacks.push({ packId: pack.packId, version: pack.version, count: pack.levers.length });
+  if (typeof renderLeverGrid === 'function') { try { renderLeverGrid(); } catch (e) {} }
+  return pack.levers.length;
+}
+
+// Snapshots of SELECTED pack levers, pinned registryId@version, for embedding in a save.
+function selectedPackLeverSnapshots() {
+  return SCENARIOS.filter(s => s.pack && state.selectedIds.has(s.id) && s._packSnapshot)
+    .map(s => JSON.parse(JSON.stringify(s._packSnapshot)));
+}
+
 // ── SCENARIO CALC ──
 function calcSc(sc) {
+  // Pack levers (Chunk 14) compute via their formula over resolved inputs in
+  // state.inputs (so customer edits + round-trip work), feeding the normalization chain.
+  if (sc.pack === true && typeof sc.formula === 'string' && sc.formula.trim()) {
+    try { return Math.max(0, evalFormula(sc.formula, state.inputs[sc.id] || sc.inputs || {})); }
+    catch (e) { return 0; }
+  }
   if (sc.custom === true) {
     // Formula-bearing custom levers (Chunk 12) evaluate their expression over named
     // inputs; the result feeds the same normalization chain as any lever. Levers with
