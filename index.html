@@ -8508,7 +8508,8 @@ async function runPPTXDownload(callerBtn) {
       const inputText=sc.inputs?Object.values(sc.inputs).slice(0,2).map(v=>v.label+': '+v.value+' ('+v.hint+')').join('  ·  '):sc.oneLiner||'';
       [{label:'HOW IT WORKS',text:inputText,ac:rAc},
        {label:'EVIDENCE BASIS',text:evText||'See evidence registry',ac:rAc},
-       {label:'HANDLING OBJECTIONS',text:sc.challenge||'—',ac:Z.AMBER},
+       // Objection-handler coaching is seller-only — omit from customer-mode decks.
+       ...(appMode==='customer' ? [] : [{label:'HANDLING OBJECTIONS',text:sc.challenge||'—',ac:Z.AMBER}]),
       ].forEach((r,i)=>{
         const ry=2.04+i*1.36;
         s.addShape(pres.shapes.RECTANGLE,{x:0.5,y:ry,w:8.6,h:1.26,fill:{color:Z.CARD},line:{color:Z.BORDER,width:0.5}});
@@ -8815,6 +8816,13 @@ function exportLLMPrompt() {
       const y3 = row ? fmt(row.y3) : '—';
       const ann = row ? fmt(row.ann) : fmt(sc.annualBenefit);
       const evIds = (sc.evidenceIds||[]).join(', ');
+      // Seller coaching (discovery script + objection handler) is omitted in customer mode.
+      const coaching = (appMode === 'customer') ? '' :
+`Discovery Questions:
+${(sc.discoveryQuestions||[]).map(q=>`    • ${q}`).join('\n')}
+Objection Handler:
+    ${sc.challenge||'—'}
+`;
       return `## ${sc.name} [${sc.id}]
 Theme: ${sc.theme}  |  Evidence Grade: ${computeEvidenceGrade(sc).label}  |  Ramp Type: ${sc.rampType}
 Summary: ${sc.oneLiner||''}
@@ -8822,11 +8830,7 @@ Annual Benefit (steady-state): ${ann}
   Year 1: ${y1} | Year 2: ${y2} | Year 3: ${y3}
 Input Parameters Used:
 ${inputLines}
-Discovery Questions:
-${(sc.discoveryQuestions||[]).map(q=>`    • ${q}`).join('\n')}
-Objection Handler:
-    ${sc.challenge||'—'}
-Evidence IDs: ${evIds||'—'}`;
+${coaching}Evidence IDs: ${evIds||'—'}`;
     }).join('\n\n---\n\n');
 
     // Evidence registry block
