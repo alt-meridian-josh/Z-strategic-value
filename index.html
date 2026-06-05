@@ -749,7 +749,7 @@ svg{max-width:100%;height:auto}
   /* ── Hide all chrome ── */
   .topbar,.sidebar,.btn-row,.add-row-btn,
   .step-eyebrow,.step-desc,
-  #print-hint,.delay-section,.kpi-secondary-row,
+  #output-tile,.delay-section,.kpi-secondary-row,
   #benefit-bars,#cf-chart,.fin-grid,
   #vtbl-body .sc-expand-panel{display:none!important}
 
@@ -1428,81 +1428,49 @@ svg{max-width:100%;height:auto}
   <div class="disclaimer">
   <strong>Scope:</strong> Only quantified direct benefits from the selected scenarios are included in this analysis. Strategic, soft, and indirect benefits are discussed separately and are not reflected in the financial totals.<br><br><strong>Modeling Disclaimer:</strong> Financial estimates are illustrative projections generated from benchmark data and the parameters you provided. Actual results depend on deployment scope, operational execution, system integration, and market conditions specific to your environment. Zebra Technologies makes no guarantee of specific outcomes. This model is intended to support internal business case development and pre-sale discovery &#8212; it is indicative and not a contractual commitment.
 </div>
-  <!-- Export actions -->
-  <div style="margin-top:24px;display:flex;flex-direction:column;gap:10px;">
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-      <button class="btn btn-outline" onclick="go(4)">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 1L3 7L9 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Back
-      </button>
-      <button class="btn btn-primary" onclick="exportFullPDF()">
-        <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="2" y="1" width="9" height="13" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5 5h5M5 7.5h5M5 10h3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M9 1v3.5H13" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Full Appraisal PDF
-      </button>
-      <button class="btn btn-success" onclick="runPPTXDownload(this)">
-        <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="1.5" y="2" width="12" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5 13.5h5M7.5 11v2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M4.5 8L6.5 5.5L8.5 7.5L10.5 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Export Deck (PPTX)
-      </button>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-      <button class="btn btn-outline" onclick="exportJSON()" style="height:34px;padding:0 16px;font-size:12.5px;border-radius:17px;">
-        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v8M3 6.5l3.5 3.5L10 6.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.5 11.5h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        Export JSON
-      </button>
-      <button class="btn btn-outline" onclick="exportLLMPrompt()" style="height:34px;padding:0 16px;font-size:12.5px;border-radius:17px;">
-        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="2" width="11" height="8" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M3.5 5h6M3.5 7.5h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-        Copy AI Prompt
-      </button>
-      <button class="btn btn-outline" onclick="saveEngagementFile()" style="height:34px;padding:0 16px;font-size:12.5px;border-radius:17px;">
-        Save analysis
-      </button>
-      <span id="customer-save-hint" style="display:none;font-size:11px;color:var(--muted);align-self:center">To share your scenario back, click Save and send us the file.</span>
-      <button class="btn btn-outline analyst-only" onclick="exportStandaloneHTML()" style="height:34px;padding:0 16px;font-size:12.5px;border-radius:17px;">
-        Export standalone tool
-      </button>
-      <button class="btn btn-outline analyst-only" onclick="exportCustomerHTML()" style="height:34px;padding:0 16px;font-size:12.5px;border-radius:17px;" title="Single-file export locked to bounded customer edits">
-        Export customer version
-      </button>
-    </div>
-  </div>
-  <!-- Output guide -->
-  <div id="print-hint" style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-    <div style="padding:12px 16px;background:#f7f8fa;border:1px solid #e2e6ea;border-radius:8px;border-left:3px solid #1a1a2e;">
-      <div style="font-size:11px;font-weight:700;color:#1a1a2e;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Full Appraisal PDF</div>
-      <div style="font-size:11px;color:#555;line-height:1.55;">Opens a print-ready investment appraisal — cover, NPV &amp; IRR summary, DCF payback chart, per-scenario breakdown with evidence, and basis of preparation. In the popup: <strong>File → Save as PDF</strong>.</div>
-    </div>
-    <div style="padding:12px 16px;background:#f7f8fa;border:1px solid #e2e6ea;border-radius:8px;border-left:3px solid #A8F931;">
-      <div style="font-size:11px;font-weight:700;color:#1a1a2e;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Deck (PPTX)</div>
-      <div style="font-size:11px;color:#555;line-height:1.55;">Downloads a branded PowerPoint deck — cover through closing, one slide per scenario, cash story, cost of delay, and appendix. Drop your logo into the placeholder on each slide to complete it.</div>
-    </div>
-    <div style="padding:12px 16px;background:#f7f8fa;border:1px solid #e2e6ea;border-radius:8px;border-left:3px solid #94a3b8;">
-      <div style="font-size:11px;font-weight:700;color:#1a1a2e;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Export JSON</div>
-      <div style="font-size:11px;color:#555;line-height:1.55;">Saves the full engagement payload as a <code style="font-size:10px;background:#eee;padding:1px 4px;border-radius:3px;">.json</code> file. Use with <code style="font-size:10px;background:#eee;padding:1px 4px;border-radius:3px;">generate_pdf.py</code> to produce the server-side PDF, or archive the case for later.</div>
-    </div>
-    <div style="padding:12px 16px;background:#f7f8fa;border:1px solid #e2e6ea;border-radius:8px;border-left:3px solid #94a3b8;">
-      <div style="font-size:11px;font-weight:700;color:#1a1a2e;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Copy AI Prompt</div>
-      <div style="font-size:11px;color:#555;line-height:1.55;">Copies the full engagement brief — scenarios, financials, pain signals, evidence — ready to paste into Gemini, Claude, ChatGPT, or any AI. Ask it to write an exec summary, prep objection handling, or draft the value story.</div>
-    </div>
-    <div style="padding:12px 16px;background:#f7f8fa;border:1px solid #e2e6ea;border-radius:8px;border-left:3px solid #94a3b8;">
-      <div style="font-size:11px;font-weight:700;color:#1a1a2e;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Save analysis</div>
-      <div style="font-size:11px;color:#555;line-height:1.55;">Downloads this engagement as a portable <code style="font-size:10px;background:#eee;padding:1px 4px;border-radius:3px;">.json</code> file. Reopen it anytime via <strong>Load analysis</strong> on the Engagement Setup page. Your private working copy — it lives only where you save it.</div>
-    </div>
-    <div style="padding:12px 16px;background:#f7f8fa;border:1px solid #e2e6ea;border-radius:8px;border-left:3px solid #A8F931;">
-      <div style="font-size:11px;font-weight:700;color:#1a1a2e;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Export standalone tool</div>
-      <div style="font-size:11px;color:#555;line-height:1.55;">Packages the entire tool plus this analysis into one self-contained <code style="font-size:10px;background:#eee;padding:1px 4px;border-radius:3px;">.html</code> file. The recipient opens it from local disk — runs offline, nothing phones home, fully editable. Hand it off only to whom you choose. (PPTX export still needs internet.)</div>
+  <!-- Output & export — ONE tile (Chunk 7): each action + its one-line note inline -->
+  <div id="output-tile" class="card" style="margin-top:24px">
+    <div class="card-title">Output &amp; Export</div>
+    <div style="margin:2px 0 14px"><button class="btn btn-outline" onclick="go(4)">← Back to ROI</button></div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+
+      <div style="display:flex;gap:14px;align-items:flex-start">
+        <button class="btn btn-primary" onclick="exportFullPDF()" style="flex:0 0 200px">Full Appraisal PDF</button>
+        <div style="font-size:11px;color:#555;line-height:1.55;flex:1">Print-ready investment appraisal — cover, NPV &amp; MIRR summary, DCF payback chart, per-scenario breakdown with evidence, basis of preparation. In the popup: <strong>File → Save as PDF</strong>.</div>
+      </div>
+
+      <div style="display:flex;gap:14px;align-items:flex-start">
+        <button class="btn btn-success" onclick="runPPTXDownload(this)" style="flex:0 0 200px">Export Deck (PPTX)</button>
+        <div style="font-size:11px;color:#555;line-height:1.55;flex:1">Branded PowerPoint — cover through closing, one slide per scenario, cash story, cost of delay, appendix. Drop your logo into the placeholder. (Needs internet at export time.)</div>
+      </div>
+
+      <div style="display:flex;gap:14px;align-items:flex-start">
+        <button class="btn btn-outline analyst-only" onclick="exportCustomerHTML()" style="flex:0 0 200px" title="Single-file export locked to bounded customer edits">Export customer tool</button>
+        <div class="analyst-only" style="font-size:11px;color:#555;line-height:1.55;flex:1">Self-contained <code style="font-size:10px;background:#eee;padding:1px 4px;border-radius:3px;">.html</code> locked to bounded customer edits — opens offline from disk, nothing phones home. Hand to the customer to explore within the cited ranges.</div>
+      </div>
+
+      <div style="display:flex;gap:14px;align-items:flex-start">
+        <button class="btn btn-outline" onclick="exportLLMPrompt()" style="flex:0 0 200px">Copy AI Prompt</button>
+        <div style="font-size:11px;color:#555;line-height:1.55;flex:1">Copies the full engagement brief — scenarios, financials, pain signals, evidence — ready to paste into any AI for an exec summary, objection handling, or the value story.</div>
+      </div>
+
+      <div style="display:flex;gap:14px;align-items:flex-start">
+        <div style="flex:0 0 200px;display:flex;flex-direction:column;gap:4px">
+          <button class="btn btn-outline" onclick="saveEngagementFile()">Save analysis (.json)</button>
+          <span id="customer-save-hint" style="display:none;font-size:10px;color:var(--muted)">To share your scenario back, click Save and send us the file.</span>
+        </div>
+        <div style="font-size:11px;color:#555;line-height:1.55;flex:1">The single JSON action — a portable, lossless <code style="font-size:10px;background:#eee;padding:1px 4px;border-radius:3px;">.json</code> of this engagement. Reopen anytime via <strong>Load analysis</strong> on the Engagement Setup page; it round-trips every field.</div>
+      </div>
+
+      <!-- analyst-only, de-emphasized (D2) -->
+      <div class="analyst-only" style="display:flex;gap:14px;align-items:flex-start;opacity:.65;border-top:1px dashed var(--gray-200);padding-top:12px">
+        <button class="btn btn-outline analyst-only" onclick="exportStandaloneHTML()" style="flex:0 0 200px;font-size:11px">Export analyst standalone</button>
+        <div class="analyst-only" style="font-size:10.5px;color:#777;line-height:1.5;flex:1">Analyst-only. The entire tool with <em>full</em> edit rights plus this analysis in one offline <code style="font-size:10px;background:#eee;padding:1px 4px;border-radius:3px;">.html</code>. Use for your own archive/hand-off between analysts — not the customer deliverable. (PPTX still needs internet.)</div>
+      </div>
+
     </div>
   </div>
 
-      <div class="card" id="solution-comparison-card" style="margin-top:18px">
-        <div class="card-title">Solution Tier Comparison</div>
-        <div style="font-size:11.5px;color:#555;line-height:1.6;margin-bottom:12px">
-          How the four deployment tiers rank on the same NRV engine &mdash; ramp, accessibility decay, and covariance haircut all applied. Computed at a representative single-store profile (construction note below), not this engagement's figures: use it to frame which tier fits the conversation, then model the chosen tier in the steps above.
-        </div>
-        <div id="sc-summary-host"></div>
-        <div style="font-size:10px;color:#777;margin-top:10px;line-height:1.5">
-          Construction note: representative profile &mdash; $10M annual store revenue, 72% inventory accuracy, 1.8% shrink, 80 search/count labor hrs/wk at $21.50/hr loaded &mdash; discounted at this engagement's WACC. Tier capex/opex are planning benchmarks, not quotes.
-        </div>
-      </div>
     </div>
 
 
@@ -1748,8 +1716,8 @@ svg{max-width:100%;height:auto}
     </div>
 
     <div style="padding:10px 12px;border-radius:6px;border:1px solid var(--gray-200);border-top:3px solid var(--brand-black)">
-      <div style="font-weight:700;margin-bottom:5px">Export JSON</div>
-      Complete model state snapshot. All inputs, selections, cost overrides, metadata. Re-importable for handoffs between team members or to resume a saved engagement.
+      <div style="font-weight:700;margin-bottom:5px">Save analysis (.json)</div>
+      Complete model state snapshot — all inputs, selections, cost overrides, metadata. The single JSON action; reopen via Load analysis on the Engagement Setup page to resume or hand off.
     </div>
     <div style="padding:10px 12px;border-radius:6px;border:1px solid var(--gray-200);border-top:3px solid #9333ea">
       <div style="font-weight:700;margin-bottom:5px">Copy AI Prompt</div>
@@ -2081,7 +2049,7 @@ const BRAND = {
   // FORMATS:
   //   white  = white-on-transparent  (for black nav bar + exec hero)
   //   color  = full-color version    (optional, for light backgrounds)
-  //   pdf    = white PNG 300dpi      (for generate_pdf.py header)
+  //   pdf    = white logo variant     (legacy appraisal-PDF header; currently unused)
   logos: {
     white:      "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iSG9yaXpvbnRhbF9Mb2dvIiBkYXRhLW5hbWU9Ikhvcml6b250YWwgTG9nbyIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2aWV3Qm94PSIwIDAgNTcyLjMxIDE3Ny4yNyI+CiAgPGRlZnM+CiAgICA8c3R5bGU+CiAgICAgIC5jbHMtMSB7CiAgICAgICAgZmlsbDogI2ZmZjsKICAgICAgfQogICAgPC9zdHlsZT4KICA8L2RlZnM+CiAgPHBvbHlnb24gY2xhc3M9ImNscy0xIiBwb2ludHM9IjEwMC40NCA1My44NSAxMDAuNDMgNTMuODUgMTAwLjQ0IDUzLjg2IDEwMC40NCA1My44NSIvPgogIDxwb2x5Z29uIGNsYXNzPSJjbHMtMSIgcG9pbnRzPSIwIDk0Ljc0IDgyLjgxIDE3Ny4yNyA4Mi44MSAxNTkuNjggMCA3Ny4xMyAwIDk0Ljc0Ii8+CiAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMTI2LjQsNzkuNzFoMHMtMTIuOTQtMTIuOTQtMTIuOTQtMTIuOTRoLTE3LjdzLTEyLjk2LTEyLjkyLTEyLjk2LTEyLjkyaDE3LjYybC0xMi44Mi0xMi45LTE3Ljc2LjAzTDM1LjI5LDYuNjJjLTIuNzMsMS4xNC04Ljk2LDUuMTgtMTAuNzYsNi43N2wzMi4zNiwzMi4yN3Y3MC40N2wyNS45MSwyNS44MnYtMTcuNjJsLTEyLjk3LTEyLjkydi01Ny41N2gxMi45N3Y1OS4xOGgxMi45NnYtNDYuMjZsMTIuOTMsMTIuOTN2MzMuMzNoMTIuOTZzMC0yMC40NCwwLTIwLjQ0bC0xMi45Ni0xMi44OWgxNy43MVoiLz4KICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik05MC40MSwyMC40OGMwLTExLjMyLTkuMTktMjAuNDgtMjAuNTUtMjAuNDh2NDAuOTdjMTEuMzUsMCwyMC41NS05LjE3LDIwLjU1LTIwLjQ4WiIvPgogIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTQzLjk1LDEwMy4yN3YtNTIuOTRTMTUuNDcsMjEuOTQsMTUuNDcsMjEuOTRjLTIuNjYsMy4wMS01LjQ1LDcuMDktNy4zLDEwLjM0bDIyLjgzLDIyLjc4djE3LjdMMi44MSw0NC42NkMxLjI3LDUwLC4zOCw1NC4zOS4xMSw1OS41N2w0My44Myw0My43aC4wMVoiLz4KICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0zOTQuMTgsODYuMjhjMTMuMTMtMy4yLDE1Ljk1LTE0LjU2LDE1Ljk1LTIwLjksMC04LjY1LTMuODgtMTYuMzItMTAuMjctMjAuMS01LTMuMTEtMTEuNzktNC4zMi0yMy41OS00LjMyaC4wMXMtMzEuNjMsMC0zMS42Mywwdjg5Ljk5aDM3Ljg4YzkuNDMsMCwxNC45OC0xLjI1LDE5LjU2LTQuMjIsNS45Ny0zLjkxLDkuNDMtMTEuMzIsOS40My0xOS42OCwwLTYuNjEtMi4wNy0xMS44Ny02LjI1LTE1LjY1LTIuOTEtMi43LTUuNDItMy45Mi0xMS4xLTUuMTNaTTM2Ny4xNCw1Ny4yOGg1LjI2YzEwLjUzLDAsMTQuODQsMi45NywxNC44NCwxMC4zOXMtNC4zLDEwLjUxLTE0LjU2LDEwLjUxaC01LjU0di0yMC45Wk0zNzUuMzEsMTE1LjI4aC04LjE5cy4wMS0yMS4xOC4wMS0yMS4xOGg1LjEyYzYuOCwwLDkuMDMuMjYsMTEuNTIsMS42MSwzLjMzLDEuNzYsNSw0Ljg1LDUsOS4xNywwLDcuMjgtNC4wMywxMC4zOS0xMy40NiwxMC4zOVoiLz4KICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik01NDMuMTMsNDAuOThoLTI3LjU0bC0yOC4zMiw4Ni44LTE5LjktMzMuNjdoLS4wMWMxMy41OC00LjIyLDE5LjUxLTE0LjI2LDE5LjUxLTI1LjczLDAtMjQuNDMtMjIuMTItMjcuNC0zNC4zMi0yNy40aC0zMi4xMnY4OS45OWgyMi40OXYtMzcuMzJsMjAuMjYsMzcuMzJoNDUuODZsNS40Ny0xNy43MWgyOC44MWw1LjQ3LDE3LjcxaDIzLjUybC0yOS4xOC04OS45OVpNNDQ5Ljc1LDc5Ljk4aC02Ljg2di0yMi42OWg2LjYxYzkuNTMsMCwxNS4zOCwyLjI2LDE1LjM4LDEwLjkzLDAsMTAuNS01Ljg1LDExLjc2LTE1LjEzLDExLjc2Wk01MTkuOTcsOTUuNDJsOC45NC0yOC42OSw4LjkzLDI4LjY5aC0xNy44N1oiLz4KICA8cG9seWdvbiBjbGFzcz0iY2xzLTEiIHBvaW50cz0iMjc3LjM0IDEzMC45NiAzMzMuNjUgMTMwLjk2IDMzMy42NSAxMTMuMjkgMjk5LjA0IDExMy4yOSAyOTkuMDQgOTQuNzEgMzI4LjM4IDk0LjcxIDMyOC4zOCA3Ny4wNSAyOTkuMDQgNzcuMDUgMjk5LjA0IDU4LjY1IDMzMy42NSA1OC42NSAzMzMuNjUgNDAuOTggMjc3LjM0IDQwLjk4IDI3Ny4zNCAxMzAuOTYiLz4KICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xMzQuNiw5OC44bC0uMDYsMTQuMjJoLTEyLjg5YzAsMTEuMzIsOS4xOSwyMC40OCwyMC41NSwyMC40OHMyMC41NS05LjE3LDIwLjU1LTIwLjQ4aDB2LS4wM2wtMTQuMjUtMTQuMmgtMTMuODlaIi8+CiAgPHBvbHlnb24gY2xhc3M9ImNscy0xIiBwb2ludHM9IjIwOS44OSA0MC45OCAyMDAuMzQgNTguNjUgMjM0LjYzIDU4LjY1IDE5NS44OSAxMzAuOTYgMjU1LjQ3IDEzMC45NiAyNjUuMDMgMTEzLjMgMjMwLjc0IDExMy4zIDI2OS40NyA0MC45OCAyMDkuODkgNDAuOTgiLz4KPC9zdmc+",
     black:      "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iSG9yaXpvbnRhbF9Mb2dvIiBkYXRhLW5hbWU9Ikhvcml6b250YWwgTG9nbyIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2aWV3Qm94PSIwIDAgNTcyLjMxIDE3Ny4yNyI+CiAgPGRlZnM+CiAgICA8c3R5bGU+LmNscy0xIHsgZmlsbDogIzFBMUEyRTsgfTwvc3R5bGU+CiAgPC9kZWZzPgogIDxwb2x5Z29uIGNsYXNzPSJjbHMtMSIgcG9pbnRzPSIxMDAuNDQgNTMuODUgMTAwLjQzIDUzLjg1IDEwMC40NCA1My44NiAxMDAuNDQgNTMuODUiLz4KICA8cG9seWdvbiBjbGFzcz0iY2xzLTEiIHBvaW50cz0iMCA5NC43NCA4Mi44MSAxNzcuMjcgODIuODEgMTU5LjY4IDAgNzcuMTMgMCA5NC43NCIvPgogIDxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTEyNi40LDc5LjcxaDBzLTEyLjk0LTEyLjk0LTEyLjk0LTEyLjk0aC0xNy43cy0xMi45Ni0xMi45Mi0xMi45Ni0xMi45MmgxNy42MmwtMTIuODItMTIuOS0xNy43Ni4wM0wzNS4yOSw2LjYyYy0yLjczLDEuMTQtOC45Niw1LjE4LTEwLjc2LDYuNzdsMzIuMzYsMzIuMjd2NzAuNDdsMjUuOTEsMjUuODJ2LTE3LjYybC0xMi45Ny0xMi45MnYtNTcuNTdoMTIuOTd2NTkuMThoMTIuOTZ2LTQ2LjI2bDEyLjkzLDEyLjkzdjMzLjMzaDEyLjk2czAtMjAuNDQsMC0yMC40NGwtMTIuOTYtMTIuODloMTcuNzFaIi8+CiAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNOTAuNDEsMjAuNDhjMC0xMS4zMi05LjE5LTIwLjQ4LTIwLjU1LTIwLjQ4djQwLjk3YzExLjM1LDAsMjAuNTUtOS4xNywyMC41NS0yMC40OFoiLz4KICA8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik00My45NSwxMDMuMjd2LTUyLjk0UzE1LjQ3LDIxLjk0LDE1LjQ3LDIxLjk0Yy0yLjY2LDMuMDEtNS40NSw3LjA5LTcuMywxMC4zNGwyMi44MywyMi43OHYxNy43TDIuODEsNDQuNjZDMS4yNyw1MCwuMzgsNTQuMzkuMTEsNTkuNTdsNDMuODMsNDMuN2guMDFaIi8+CiAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMzk0LjE4LDg2LjI4YzEzLjEzLTMuMiwxNS45NS0xNC41NiwxNS45NS0yMC45LDAtOC42NS0zLjg4LTE2LjMyLTEwLjI3LTIwLjEtNS0zLjExLTExLjc5LTQuMzItMjMuNTktNC4zMmguMDFzLTMxLjYzLDAtMzEuNjMsMHY4OS45OWgzNy44OGM5LjQzLDAsMTQuOTgtMS4yNSwxOS41Ni00LjIyLDUuOTctMy45MSw5LjQzLTExLjMyLDkuNDMtMTkuNjgsMC02LjYxLTIuMDctMTEuODctNi4yNS0xNS42NS0yLjkxLTIuNy01LjQyLTMuOTItMTEuMS01LjEzWk0zNjcuMTQsNTcuMjhoNS4yNmMxMC41MywwLDE0Ljg0LDIuOTcsMTQuODQsMTAuMzlzLTQuMywxMC41MS0xNC41NiwxMC41MWgtNS41NHYtMjAuOVpNMzc1LjMxLDExNS4yOGgtOC4xOXMuMDEtMjEuMTguMDEtMjEuMThoNS4xMmM2LjgsMCw5LjAzLjI2LDExLjUyLDEuNjEsMy4zMywxLjc2LDUsNC44NSw1LDkuMTcsMCw3LjI4LTQuMDMsMTAuMzktMTMuNDYsMTAuMzlaIi8+CiAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNNTQzLjEzLDQwLjk4aC0yNy41NGwtMjguMzIsODYuOC0xOS45LTMzLjY3aC0uMDFjMTMuNTgtNC4yMiwxOS41MS0xNC4yNiwxOS41MS0yNS43MywwLTI0LjQzLTIyLjEyLTI3LjQtMzQuMzItMjcuNGgtMzIuMTJ2ODkuOTloMjIuNDl2LTM3LjMybDIwLjI2LDM3LjMyaDQ1Ljg2bDUuNDctMTcuNzFoMjguODFsNS40NywxNy43MWgyMy41MmwtMjkuMTgtODkuOTlaTTQ0OS43NSw3OS45OGgtNi44NnYtMjIuNjloNi42MWM5LjUzLDAsMTUuMzgsMi4yNiwxNS4zOCwxMC45MywwLDEwLjUtNS44NSwxMS43Ni0xNS4xMywxMS43NlpNNTE5Ljk3LDk1LjQybDguOTQtMjguNjksOC45MywyOC42OWgtMTcuODdaIi8+CiAgPHBvbHlnb24gY2xhc3M9ImNscy0xIiBwb2ludHM9IjI3Ny4zNCAxMzAuOTYgMzMzLjY1IDEzMC45NiAzMzMuNjUgMTEzLjI5IDI5OS4wNCAxMTMuMjkgMjk5LjA0IDk0LjcxIDMyOC4zOCA5NC43MSAzMjguMzggNzcuMDUgMjk5LjA0IDc3LjA1IDI5OS4wNCA1OC42NSAzMzMuNjUgNTguNjUgMzMzLjY1IDQwLjk4IDI3Ny4zNCA0MC45OCAyNzcuMzQgMTMwLjk2Ii8+CiAgPHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMTM0LjYsOTguOGwtLjA2LDE0LjIyaC0xMi44OWMwLDExLjMyLDkuMTksMjAuNDgsMjAuNTUsMjAuNDhzMjAuNTUtOS4xNywyMC41NS0yMC40OGgwdi0uMDNsLTE0LjI1LTE0LjJoLTEzLjg5WiIvPgogIDxwb2x5Z29uIGNsYXNzPSJjbHMtMSIgcG9pbnRzPSIyMDkuODkgNDAuOTggMjAwLjM0IDU4LjY1IDIzNC42MyA1OC42NSAxOTUuODkgMTMwLjk2IDI1NS40NyAxMzAuOTYgMjY1LjAzIDExMy4zIDIzMC43NCAxMTMuMyAyNjkuNDcgNDAuOTggMjA5Ljg5IDQwLjk4Ii8+Cjwvc3ZnPg==",
@@ -4268,7 +4236,8 @@ function loadProfile(key) {
   Promise.resolve(loadExample(key)).then(res => { if(res !== false) { hideChooser(); go(0); } });
 }
 
-// If this file was produced by "Export standalone tool", an engagement is baked in
+// If this file was produced by a standalone export (analyst standalone or customer
+// tool), an engagement is baked in
 // as a JSON script block (id "embedded-engagement") — read and apply it.
 function checkEmbeddedEngagement() {
   try {
@@ -4392,7 +4361,7 @@ function go(n) {
   if(n===2) { renderDisc(); renderCustomScenarios(); }
   if(n===3) { syncCost(); }                   // Cost — rebuild from sliders
   if(n===4) { ensureCosts(); renderROI(); }   // ROI
-  if(n===5) { ensureCosts(); if(!state.benefits || !state.benefits.totAnnual) renderROI(); renderExec(); renderSolutionComparison(); renderDataStatus(); }  // Full Analysis
+  if(n===5) { ensureCosts(); if(!state.benefits || !state.benefits.totAnnual) renderROI(); renderExec(); renderDataStatus(); }  // Full Analysis
   if(n===6) renderEvidence();
   if(n===8) initForecastSignal();
   document.querySelector('.main').scrollTop = 0;
@@ -5542,101 +5511,6 @@ function removeCustomScenario(idx) {
   state.customScenarios.splice(idx, 1);
   renderCustomScenarios();
   if (document.getElementById('kpi-grid')) renderROI();
-}
-
-// ── SOLUTION TIER COMPARISON (rendered at the end of Full Analysis) ──
-const SC_SOLUTIONS = [
-  { name:'Handheld only', short:'HH',      color:'#EB5757',
-    accessTier:'commodity',     capex:18000,  opex:4500,
-    capexScale:0.003, opexScale:0.0005,
-    laborMult:0.20, availMult:0.10, shrinkMult:0.00, omniMult:0.000 },
-  { name:'CP + Handheld', short:'CP+HH',   color:'#F2994A',
-    accessTier:'configured',    capex:60000,  opex:12000,
-    capexScale:0.010, opexScale:0.001,
-    laborMult:0.30, availMult:0.18, shrinkMult:0.20, omniMult:0.000 },
-  { name:'CP + Robot',    short:'CP+Bot',  color:'#2F80ED',
-    accessTier:'configured',    capex:90000,  opex:18000,
-    capexScale:0.015, opexScale:0.0015,
-    laborMult:0.35, availMult:0.22, shrinkMult:0.25, omniMult:0.004 },
-  { name:'Full RTLS',     short:'RTLS',    color:'#6FCF97',
-    accessTier:'infrastructure',capex:185000, opex:32000,
-    capexScale:0.030, opexScale:0.003,
-    laborMult:0.40, availMult:0.28, shrinkMult:0.32, omniMult:0.008 },
-];
-
-const SC_LEVERS = [
-  { name:'Labor — cycle count',     act:['on','on','on','on']   },
-  { name:'Labor — search/locate',   act:['on','on','on','on']   },
-  { name:'Availability / stockout', act:['p','on','on','on']    },
-  { name:'Safety stock reduction',  act:['p','on','on','on']    },
-  { name:'Shrink — exit / POS',     act:['off','on','on','on']  },
-  { name:'Receiving accuracy',      act:['off','on','on','on']  },
-  { name:'Fitting room visibility', act:['off','off','p','on']  },
-  { name:'Zone / area loss',        act:['off','off','p','on']  },
-  { name:'OMS / ATP signal',        act:['off','off','p','on']  },
-  { name:'Real-time alerting',      act:['off','off','off','on']},
-  { name:'Strategic data asset',    act:['off','off','off','on']},
-];
-
-const SC_TIER_DESC = {
-  'HH':    'Periodic handheld RFID counts. Labor savings and a first availability lift; no exit coverage, no shrink lever.',
-  'CP+HH': 'Ceiling/portal readers at exits plus handhelds. Adds the shrink (exit/POS) and receiving-accuracy levers.',
-  'CP+Bot':'Portals plus an autonomous scanning robot. Deeper availability, partial fitting-room/zone visibility, early omni signal.',
-  'RTLS':  'Always-on real-time location infrastructure. Full lever set, including real-time alerting and the strategic data asset.',
-};
-
-function renderSolutionComparison() {
-  const host = document.getElementById('sc-summary-host');
-  if (!host) return;
-  const wacc = (typeof state !== 'undefined' && state.wacc) ? state.wacc : 0.10;
-  const rev = 10000000, acc = 0.72, shrink = 0.018, labor = 80, laborRate = 21.50;
-  const results = SC_SOLUTIONS.map(sol => {
-    const grossBen = labor*52*laborRate*sol.laborMult + rev*(1-acc)*sol.availMult + rev*shrink*sol.shrinkMult + rev*sol.omniMult;
-    const capex = sol.capex + rev*sol.capexScale;
-    const opex  = sol.opex  + rev*sol.opexScale;
-    const r = calcNRV([{
-      id: sol.short, name: sol.name, custom: true,
-      mechanismId: 'custom_formula', rampType: 'hard_labor',
-      accessibilityTier: sol.accessTier, haircut: 0.10,
-      inputs: { annual_value: grossBen },
-    }], { yr0: capex, yr1: opex }, wacc);
-    return { sol, capex, opex, nrv: r.nrv };
-  });
-  const best = results.reduce((a,b) => b.nrv > a.nrv ? b : a, results[0]);
-  const th = 'padding:4px 10px;font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px';
-  const defRows = results.map(r => `
-    <tr style="border-top:1px solid #e2e6ea">
-      <td style="padding:7px 10px;font-size:12px;white-space:nowrap"><strong>${r.sol.short===best.sol.short?'★ ':''}${r.sol.name}</strong><div style="font-size:10px;color:#888;text-transform:capitalize">${r.sol.accessTier}</div></td>
-      <td style="padding:7px 10px;font-size:11.5px;color:#555;line-height:1.5">${SC_TIER_DESC[r.sol.short]||''}</td>
-      <td style="padding:7px 10px;font-size:12px;text-align:right">${fmt(Math.round(r.capex))}</td>
-      <td style="padding:7px 10px;font-size:12px;text-align:right">${fmt(Math.round(r.opex))}/yr</td>
-      <td style="padding:7px 10px;font-size:12px;text-align:right;font-weight:700;${r.nrv<0?'color:#c8330e':''}">${fmt(Math.round(r.nrv))}</td>
-    </tr>`).join('');
-  const glyph = a => a==='on' ? '&#9679;' : (a==='p' ? '&#9684;' : '&#9675;');
-  const levRows = SC_LEVERS.map(lev => `
-    <tr style="border-top:1px solid #eef0f3">
-      <td style="padding:4px 10px;font-size:11px;color:#444">${lev.name}</td>
-      ${lev.act.map(a => `<td style="padding:4px 10px;text-align:center;font-size:12px;color:${a==='off'?'#c4cad2':'#1a1a2e'}">${glyph(a)}</td>`).join('')}
-    </tr>`).join('');
-  host.innerHTML = `
-    <table style="width:100%;border-collapse:collapse;margin-bottom:14px">
-      <thead><tr>
-        <th style="text-align:left;${th}">Tier</th>
-        <th style="text-align:left;${th}">What it is</th>
-        <th style="text-align:right;${th}">Yr-0 capex</th>
-        <th style="text-align:right;${th}">Annual opex</th>
-        <th style="text-align:right;${th}">5-yr NRV</th>
-      </tr></thead>
-      <tbody>${defRows}</tbody>
-    </table>
-    <table style="width:100%;border-collapse:collapse">
-      <thead><tr>
-        <th style="text-align:left;${th}">Value lever activation</th>
-        ${SC_SOLUTIONS.map(s => `<th style="text-align:center;${th}">${s.short}</th>`).join('')}
-      </tr></thead>
-      <tbody>${levRows}</tbody>
-    </table>
-    <div style="font-size:10px;color:#888;margin-top:8px">&#9679; included &nbsp;&middot;&nbsp; &#9684; partial &nbsp;&middot;&nbsp; &#9675; not activated &nbsp;&middot;&nbsp; &#9733; highest 5-yr NRV at the representative profile</div>`;
 }
 
 // ── STEP 5: ROI & VALUE CASE ──
@@ -8334,88 +8208,6 @@ async function runPPTXDownload(callerBtn) {
 
 
 // ── INIT ──
-
-// ── JSON EXPORT — serializes full state payload for generate_pdf.py ──
-async function exportJSON() {
-  const btn = document.querySelector('[onclick="exportJSON()"]');
-  if(btn){ btn.textContent = '⏳ Exporting...'; btn.disabled = true; }
-
-  try {
-    // Ensure benefits and costs are computed
-    ensureCosts();
-    if(!state.benefits || !state.benefits.totAnnual) renderROI();
-    const b = state.benefits;
-    const c = state.costs;
-    const active = SCENARIOS.filter(s=>state.selectedIds.has(s.id));
-
-    // Build JSON payload matching generate_pdf.py schema
-    const payload = {
-      company:  document.getElementById('i-customer')?.value || 'Your Customer',
-      vendor:   document.getElementById('i-company')?.value  || 'Zebra Technologies',
-      title:    document.getElementById('i-title')?.value    || 'RFID Strategic Value Analysis',
-      seller:   document.getElementById('i-seller')?.value || '—',
-      partners: document.getElementById('i-partners')?.value || '—',
-      pain:     document.getElementById('i-pain')?.value || '—',
-      date:     new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}),
-      benefits: {
-        totAnnual: b.totAnnual||0,
-        totY1: b.totY1||0,
-        totY2: b.totY2||0,
-        totY3: b.totY3||0,
-        rows: (b.rows||[]).map(r=>({
-          id: r.sc.id, name: r.sc.name, rampType: r.sc.rampType,
-          ann: r.ann, y1: r.y1, y2: r.y2, y3: r.y3
-        }))
-      },
-      costs: {
-        yr0: c.yr0||0, yr1: c.yr1||0, yr2: c.yr2||0,
-        rows: (costRows||[]).map(r=>({
-          label: r.label, cadence: r.cadence||'One-time',
-          total: typeof r.total==='number' ? r.total : (r.qty||0)*(r.unit||0)
-        }))
-      },
-      scenarios: active.map(sc => {
-        const row = (b.rows||[]).find(r=>r.sc.id===sc.id);
-        const ann = row ? row.ann : sc.annualBenefit;
-        const inp = state.inputs[sc.id] || {};
-        const inputValues = {};
-        Object.entries(sc.inputs||{}).slice(0,6).forEach(([k,v])=>{
-          inputValues[v.label||k] = inp[k]!==undefined ? inp[k] : v.value;
-        });
-        return {
-          id: sc.id, name: sc.name, theme: sc.theme,
-          rampType: sc.rampType, ann,
-          evidenceIds: sc.evidenceIds||[],
-          oneLiner: sc.oneLiner||'',
-          inputValues
-        };
-      }),
-      evidence: [...new Set(active.flatMap(s=>s.evidenceIds||[]))]
-        .map(id=>EVIDENCE.find(e=>e.id===id)).filter(Boolean)
-        .map(ev=>({id:ev.id,tier:ev.tier,title:ev.title,
-                   publisher:ev.publisher,year:ev.year,claim:ev.claim}))
-    };
-
-    // Call Anthropic API to generate PDF-ready JSON (validated/enriched)
-    // Then trigger download of the serialized payload as .json for now
-    // In production this would POST to a server running generate_pdf.py
-    const jsonStr = JSON.stringify(payload, null, 2);
-    const blob = new Blob([jsonStr], {type:'application/json'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    const co = (payload.company||'Company').replace(/[^a-zA-Z0-9]/g,'-');
-    a.href = url;
-    a.download = `Zebra-RFID-Value-Analysis-${co}-${new Date().toISOString().slice(0,10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-
-  } catch(e) {
-    console.error('JSON export error:', e);
-    alert('Export error: ' + e.message);
-  } finally {
-    if(btn){ btn.textContent = 'Export JSON'; btn.disabled = false; }
-  }
-}
 
 // ── LLM PROMPT EXPORT — builds a rich, copy-pasteable brief for AI analysis ──
 function exportLLMPrompt() {
