@@ -4771,6 +4771,10 @@ function selCount() {
 function renderDisc() {
   const active = SCENARIOS.filter(s=>state.selectedIds.has(s.id));
   const el = document.getElementById('disc-accordion');
+  // Customer view: suppress the seller-facing objection-handler ("Customer Challenge")
+  // and the discovery-question script. The customer keeps the input table to re-enter
+  // their own numbers; the sales coaching is analyst-only.
+  const cust = (appMode === 'customer');
   el.innerHTML = active.map((sc, idx) => `
     <div class="acc-item open" id="acc-${sc.id}">
       <div class="acc-head" onclick="toggleAcc('${sc.id}')">
@@ -4778,9 +4782,9 @@ function renderDisc() {
         <span class="acc-arrow">▼</span>
       </div>
       <div class="acc-body">
-        <div class="challenge-box"><strong>Customer Challenge</strong>${sc.challenge}</div>
+        ${cust ? '' : `<div class="challenge-box"><strong>Customer Challenge</strong>${sc.challenge}</div>
         ${sc.discoveryQuestions.map(q=>`<div class="dq">${q}</div>`).join('')}
-        <div class="divider"></div>
+        <div class="divider"></div>`}
         <div class="itbl-wrap">
         <table class="itbl">
           <thead><tr><th>Variable</th><th>Label</th><th>Benchmark Default</th><th>Your Value</th></tr></thead>
@@ -6465,7 +6469,7 @@ function renderROI() {
           <!-- RIGHT: evidence + one-liner -->
           <div class="sc-snapshot-right">
             <div class="sc-snap-oneliner">${r.sc.oneLiner||''}</div>
-            <div class="sc-snap-challenge">${r.sc.challenge||''}</div>
+            ${appMode === 'customer' ? '' : `<div class="sc-snap-challenge">${r.sc.challenge||''}</div>`}
           </div>
         </div>
       </td>
