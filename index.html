@@ -1271,7 +1271,7 @@ svg{max-width:100%;height:auto}
   <div class="delay-section">
     <div class="delay-card">
       <div class="card-title">Cost of Delay</div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Slide to see how delay compounds foregone value</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">The whole project shifts out by the delay and is re-discounted — ΔNPV and the new payback, not a flat monthly tally</div>
       <div class="delay-slider-wrap">
         <div class="srow">
           <input type="range" min="1" max="24" step="1" value="6" id="sl-delay" oninput="syncDelay()">
@@ -1282,7 +1282,7 @@ svg{max-width:100%;height:auto}
     </div>
     <div class="delay-card">
       <div class="card-title">Cost of Doing Nothing</div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Value leaking per scenario &#8212; slider shows cumulative loss at that delay milestone</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Value leaking per scenario (undiscounted, Year-1 normalized) &#8212; items sum to the headline</div>
       <div id="missed-items"></div>
     </div>
   </div>
@@ -5029,6 +5029,24 @@ function calcNRV(activeScenarios, costs, opts) {
   };
 }
 
+// Delay shifts the model (Chunk 11). N months of delay pushes the ENTIRE cashflow
+// stream — Year-0 capex and the benefit ramp/opex alike — out by τ = N/12 years, then
+// the engine re-discounts from the (unchanged) decision point. ΔNPV is the difference
+// between the two discounted scenarios; discounted payback moves out by the delay.
+// Pure: depends only on the passed result + months.
+function delayImpact(result, months) {
+  const w = result.wacc, tau = months / 12;
+  const ncf = [-result.capex, ...result.yearlyData.map(y => y.netCF)];   // t = 0..5
+  let npvDelayed = 0;
+  ncf.forEach((cf, t) => { npvDelayed += cf / Math.pow(1 + w, t + tau); });
+  const dNPV = npvDelayed - result.nrv;   // ≤ 0 for a positive-NPV project; 0 at months=0
+  // The discounted-payback crossing translates in time with the stream, so from the
+  // decision point it lands `months` later than the baseline (or never, if baseline never).
+  const paybackDelayed = (result.paybackMo === null) ? null : Math.round((result.paybackMo + months) * 10) / 10;
+  return { months, npvDelayed: Math.round(npvDelayed), dNPV: Math.round(dNPV),
+           paybackDelayed, valueForegone: Math.round(-dNPV) };
+}
+
 function calcMIRRDisplay(mirr) {
   if (mirr === null || isNaN(mirr) || !isFinite(mirr)) return 'N/A';
   return (mirr * 100).toFixed(1) + '%';
@@ -5414,13 +5432,20 @@ function renderROI() {
     totY3: yearlyData[2].netBenefit,
     rows: active.map(sc => {
       const ann = Math.max(0, calcSc(sc));
+      const acc = ACCESS_TIER[sc.accessibilityTier || 'configured'];
+      const ov = overlapFactor(sc), fcf = financeCreditFactor(sc, result.financeCredit);
       return {
         sc, ann,
+        // y1..y5: gross ramped (the "Yr N ramped" detail table shows these by design).
         y1: ann * RAMP[sc.rampType].y[0],
         y2: ann * RAMP[sc.rampType].y[1],
         y3: ann * RAMP[sc.rampType].y[2],
         y4: ann * RAMP[sc.rampType].y[3],
         y5: ann * RAMP[sc.rampType].y[4],
+        // ny1: NORMALIZED Year-1 benefit (ramp × access × overlap × finance credit) —
+        // the basis the cost-of-delay itemization reconciles on (Chunk 11). Σ ny1 ==
+        // yearlyData[0].netBenefit − decayAvoided[0] (the normalized Y1 total).
+        ny1: ann * RAMP[sc.rampType].y[0] * acc[0] * ov * fcf,
       };
     })
   };
@@ -5814,43 +5839,68 @@ function syncDelay() {
   const r = state.nrvResult;
   const b = state.benefits;
 
-  const monthly = Math.round(r.yearlyData[0].netBenefit / 12);
-  const delayed = monthly * months;
+  // ── LEFT card: the DISCOUNTED model (Chunk 11). Shift the whole stream out by the
+  // delay, re-discount, and report the impact a CFO can sign: new payback, ΔNPV, and
+  // the NPV value foregone — not a standalone monthly × months scare-number.
+  const di = delayImpact(r, months);
+  const waccPct = (r.wacc * 100).toFixed(0);
+  const pbBase = r.paybackMo === null ? '—' : r.paybackMo + ' mo';
+  const pbNew  = di.paybackDelayed === null ? '—' : di.paybackDelayed + ' mo';
 
   const el = document.getElementById('delay-output');
   if (el) el.innerHTML = `
     <div style="text-align:center;padding:12px;background:rgba(235,87,87,.07);border-radius:8px;border:1px solid rgba(235,87,87,.2)">
-      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:4px">VALUE FOREGONE — ${months} MONTH DELAY</div>
-      <div style="font-family:var(--head);font-size:28px;font-weight:800;color:var(--red)">${fmt(delayed)}</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:4px">${fmt(monthly)}/mo at Year 1 NRV ramp</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:4px">VALUE FOREGONE (NPV) — ${months} MONTH DELAY</div>
+      <div style="font-family:var(--head);font-size:28px;font-weight:800;color:var(--red)">${fmt(di.valueForegone)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">discounted at ${waccPct}% WACC · the whole project shifts ${months} mo and is re-discounted</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <div style="flex:1;text-align:center;padding:8px;background:var(--gray-50);border-radius:6px">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted)">ΔNPV</div>
+        <div style="font-size:15px;font-weight:700;color:var(--red)">${fmt(di.dNPV)}</div>
+        <div style="font-size:9px;color:var(--muted)">${fmt(r.nrv)} → ${fmt(di.npvDelayed)}</div>
+      </div>
+      <div style="flex:1;text-align:center;padding:8px;background:var(--gray-50);border-radius:6px">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted)">PAYBACK</div>
+        <div style="font-size:15px;font-weight:700;color:var(--brand-black)">${pbNew}</div>
+        <div style="font-size:9px;color:var(--muted)">from ${pbBase} (decision point)</div>
+      </div>
     </div>`;
 
+  // ── RIGHT card: per-scenario value leak, on the SAME normalized basis as the
+  // headline (Chunk 11). Items are computed first; the headline is their sum, so they
+  // reconcile to the dollar. When Decay-Avoided is on, it appears as its own line (it
+  // is not lever-attributable) so the total still reconciles to Year-1 normalized value.
   const missed = document.getElementById('missed-items');
   if (missed && b && b.rows) {
-    const totalMissed = b.rows.reduce((sum, row) => {
-      return sum + Math.round(row.y1 / 12) * months;
-    }, 0);
+    const items = b.rows.map(row => {
+      const monthlyLoss = Math.round((row.ny1 || 0) / 12);
+      return { id: row.sc.id, name: row.sc.name, loss: monthlyLoss * months };
+    });
+    if (r.useDecay && r.yearlyData[0].decayAvoided > 0) {
+      items.push({ id: 'Decay-Avoided', name: `status-quo growth @ ${(r.g*100).toFixed(1)}%/yr`,
+                   loss: Math.round(r.yearlyData[0].decayAvoided / 12) * months });
+    }
+    const totalMissed = items.reduce((s, it) => s + it.loss, 0);   // headline == Σ items, to the dollar
     const summaryHeader = `
       <div style="text-align:center;padding:12px;background:rgba(235,87,87,.07);border-radius:8px;border:1px solid rgba(235,87,87,.2);margin-bottom:10px">
         <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:4px">TOTAL VALUE LOST — ${months} MONTH DELAY</div>
         <div style="font-family:var(--head);font-size:28px;font-weight:800;color:var(--red)">-${fmt(totalMissed)}</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:4px">across ${b.rows.length} scenario${b.rows.length !== 1 ? 's' : ''}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">undiscounted · Year-1 normalized value across ${b.rows.length} scenario${b.rows.length !== 1 ? 's' : ''}</div>
       </div>`;
-    const rows = b.rows.map(row => {
-      const monthlyLoss = Math.round(row.y1 / 12);
-      const totalLoss = monthlyLoss * months;
-      const pct = totalMissed > 0 ? Math.round((totalLoss / totalMissed) * 100) : 0;
+    const rowsHtml = items.map(it => {
+      const pct = totalMissed > 0 ? Math.round((it.loss / totalMissed) * 100) : 0;
       return `<div class="missed-item" style="flex-direction:column;align-items:flex-start;gap:3px;padding:8px 12px">
         <div style="display:flex;justify-content:space-between;width:100%">
-          <div class="mi-label" style="font-size:11px">${row.sc.id} — ${row.sc.name.length > 24 ? row.sc.name.substring(0,22) + '…' : row.sc.name}</div>
-          <div class="mi-val" style="font-size:11px;color:var(--red)">-${fmt(totalLoss)}</div>
+          <div class="mi-label" style="font-size:11px">${it.id} — ${it.name.length > 24 ? it.name.substring(0,22) + '…' : it.name}</div>
+          <div class="mi-val" style="font-size:11px;color:var(--red)">-${fmt(it.loss)}</div>
         </div>
         <div style="width:100%;height:3px;background:rgba(235,87,87,.15);border-radius:2px">
           <div style="width:${pct}%;height:100%;background:var(--red);border-radius:2px;opacity:.6"></div>
         </div>
       </div>`;
     }).join('');
-    missed.innerHTML = summaryHeader + rows;
+    missed.innerHTML = summaryHeader + rowsHtml;
   }
 }
 
