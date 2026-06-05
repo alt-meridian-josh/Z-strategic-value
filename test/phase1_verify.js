@@ -103,6 +103,21 @@ function compute(obj) {
     }
     ok('discounted payback matches independent recompute', mo === r2.paybackMo, `recompute=${mo} calcNRV=${r2.paybackMo}`);
   }
+  {
+    // Unified discounting surface (Chunk 3): the Y3 walkdown chain must reconcile
+    // to calcNRV's Y3 netBenefit to the dollar — Σ(after finance credit) + decay.
+    const recon = id => {
+      const w = applied(readJSON(id)); w.renderROI();
+      return w.eval(`(function(){
+        const active = SCENARIOS.filter(s=>state.selectedIds.has(s.id)).concat((state.customScenarios||[]).filter(s=>s.active));
+        let sum=0; active.forEach(sc=>{const ann=Math.max(0,calcSc(sc)),tier=sc.accessibilityTier||'configured';
+          sum+=ann*RAMP[sc.rampType].y[2]*ACCESS_TIER[tier][2]*overlapFactor(sc)*financeCreditFactor(sc);});
+        const r=state.nrvResult; return Math.abs((sum+r.yearlyData[2].decayAvoided)-r.yearlyData[2].netBenefit);
+      })()`);
+    };
+    ok('Y3 walkdown reconciles to calcNRV netBenefit — v1', recon(V1) < 1e-6, String(recon(V1)));
+    ok('Y3 walkdown reconciles to calcNRV netBenefit — v2', recon(V2) < 1e-6, String(recon(V2)));
+  }
 
   console.log('\n── Chunk 2: technologies block + technology-driven copy ──');
   {

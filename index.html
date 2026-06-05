@@ -1237,6 +1237,10 @@ svg{max-width:100%;height:auto}
       </div>
     </div>
   </div>
+  <div style="font-size:10px;line-height:1.5;color:var(--muted);margin:-6px 0 8px;padding:8px 12px;background:var(--gray-50);border-left:3px solid var(--gray-300)">
+    <strong>WACC</strong> — discount rate applied to every year and the reinvestment rate for both MIRR legs (MIRR replaces IRR; reinvests at the cost of capital, not the project's internal rate). Set to your finance team's standard; customer-lite is bounded 8–12%.
+    &nbsp;·&nbsp; <strong>Decay-Avoided</strong> — optional adder capturing the compounding cost of the status quo at growth rate <em>g</em>. Off by default (conservative by construction); enable only when status-quo drift is defensible.
+  </div>
   <div id="fin-credit-note" style="display:none;font-size:10px;line-height:1.5;color:var(--muted);margin:-6px 0 14px;padding:8px 12px;background:var(--gray-50);border-left:3px solid var(--brand-green)">
     <strong>Finance Credit on.</strong> Revenue-recovery benefit types (revenue, working-capital, soft) are credited at <span id="fin-credit-note-rate">40</span>% of modeled value; hard labor/cost benefits at 100%. Rationale: benefit estimates are risk-adjusted downward by likelihood-of-realization and trackability (Forrester <em>Total Economic Impact</em> methodology), and RFID sales uplift — though real at 1.5–5.5% — is the hardest benefit to attribute (Beck/ECR, <em>Measuring the Impact of RFID in Retailing</em>, 2018). The credit rate is a deliberately conservative assumption, not a published constant — adjust it to your finance team's standard.
   </div>
@@ -1244,11 +1248,16 @@ svg{max-width:100%;height:auto}
   <div id="bcr-banner" class="nrv-bcr-flag" style="display:none;margin:0 0 16px"></div>
       <div class="kpi-grid" id="kpi-grid"></div>
   <div class="kpi-secondary-row" id="kpi-secondary"></div>
-  <details style="margin:20px 0" id="walkdown-details">
+  <details style="margin:20px 0" id="walkdown-details" open>
     <summary style="cursor:pointer;font-size:12px;font-family:var(--mono);color:var(--muted);
       text-transform:uppercase;letter-spacing:.06em;padding:8px 0;border-bottom:1px solid var(--gray-200)">
-      NRV Walk-Down — how each adjustment is applied (Y3 peak)
+      NRV Discounting Walk-Down — gross → ramp → A(t) → dedup/haircut → finance credit → +Decay → −TCO → NCF → NPV (Y3 peak)
     </summary>
+    <div style="font-size:11px;color:var(--muted);line-height:1.5;margin:10px 0 4px">
+      Every conservatism gate is applied here, in order, and reconciles to the model to the dollar. The adjustable
+      knobs above (WACC, Finance Credit, Decay-Avoided) are the <em>only</em> place these levers are set; each carries
+      its rationale and citation. Customer-lite edits draw from this same panel, bounded.
+    </div>
     <div style="overflow-x:auto;margin-top:12px">
       <table style="width:100%;font-size:12px;border-collapse:collapse">
         <thead>
@@ -1257,7 +1266,8 @@ svg{max-width:100%;height:auto}
             <th style="text-align:right;padding:4px 8px">Gross annual</th>
             <th style="text-align:right;padding:4px 8px">After ramp</th>
             <th style="text-align:right;padding:4px 8px">After A(t)</th>
-            <th style="text-align:right;padding:4px 8px">After haircut</th>
+            <th style="text-align:right;padding:4px 8px">After dedup/haircut</th>
+            <th style="text-align:right;padding:4px 8px">After finance credit</th>
             <th style="text-align:center;padding:4px 8px">Tier</th>
           </tr>
         </thead>
@@ -5136,7 +5146,8 @@ function calcNRV(activeScenarios, costs, wacc, opts) {
 
   return {
     nrv, mirr, paybackMo, bcr, peakAnnual, roi5,
-    yearlyData, B0, totalAnnOpex, capex, wacc
+    yearlyData, B0, totalAnnOpex, capex, wacc,
+    useDecay, g, attrition, training, annOpex   // surfaced for the unified walkdown (Chunk 3)
   };
 }
 
@@ -5163,6 +5174,10 @@ function renderWalkdownTable(activeScenarios, result) {
   const el = document.getElementById('nrv-walkdown-body');
   if (!el) return;
 
+  // Y3 (peak) decomposition. Each per-scenario value below is exactly the factor
+  // chain calcNRV applies at t=2 — summed, plus Decay-Avoided, it reconciles to
+  // result.yearlyData[2].netBenefit to the dollar (asserted in tests).
+  let sumAfterFinance = 0;
   const rows = activeScenarios.map(sc => {
     const ann = Math.max(0, calcSc(sc));
     const tier = sc.accessibilityTier || 'configured';
@@ -5171,7 +5186,9 @@ function renderWalkdownTable(activeScenarios, result) {
     const access = ACCESS_TIER[tier][peakT];
     const afterRamp = ann * ramp;
     const afterAccess = afterRamp * access;
-    const afterHaircut = afterAccess * overlapFactor(sc) * financeCreditFactor(sc);
+    const afterHaircut = afterAccess * overlapFactor(sc);          // dedup / overlap gate
+    const afterFinance = afterHaircut * financeCreditFactor(sc);   // finance credit gate
+    sumAfterFinance += afterFinance;
     const isCustom = sc.custom === true;
     const dShare = dedupShareFor(sc.id);
     const poolMark = (dShare !== null) ? ` <span style="font-size:9px;color:var(--muted)">[pool ${Math.round(dShare*100)}%]</span>` : '';
@@ -5184,24 +5201,46 @@ function renderWalkdownTable(activeScenarios, result) {
       <td style="text-align:right">${fmt(Math.round(afterRamp))}</td>
       <td style="text-align:right">${fmt(Math.round(afterAccess))}</td>
       <td style="text-align:right">${fmt(Math.round(afterHaircut))}</td>
+      <td style="text-align:right">${fmt(Math.round(afterFinance))}</td>
       <td style="text-align:center;font-size:10px;color:var(--muted)">${tier}</td>
     </tr>`;
   }).join('');
 
-  const decayRow = `<tr style="border-top:1px solid var(--gray-300)">
-    <td colspan="4" style="color:var(--muted);font-size:11px">+ Decay Avoided (status quo growth @ 3.5%/yr)</td>
-    <td style="text-align:right">${fmt(Math.round(result.yearlyData[2].decayAvoided))}</td>
+  const y3 = result.yearlyData[2];
+  const gPct = ((result.g != null ? result.g : 0.035) * 100).toFixed(1);
+  const waccPct = ((result.wacc != null ? result.wacc : 0.10) * 100).toFixed(1);
+
+  // + Decay-Avoided — only when the toggle is on (Chunk 2/3); dynamic g.
+  const decayRow = result.useDecay ? `<tr style="border-top:1px solid var(--gray-300)">
+    <td colspan="5" style="color:var(--muted);font-size:11px">+ Decay-Avoided (status-quo growth @ ${gPct}%/yr)</td>
+    <td style="text-align:right">${fmt(Math.round(y3.decayAvoided))}</td>
+    <td></td>
+  </tr>` : `<tr style="border-top:1px solid var(--gray-300)">
+    <td colspan="6" style="color:var(--muted);font-size:11px;font-style:italic">Decay-Avoided off — adder excluded</td>
+    <td></td>
+  </tr>`;
+
+  // = Gross Net Benefit (Y3) — reconciles to calcNRV's Y3 netBenefit to the dollar.
+  const netBenRow = `<tr style="border-top:1px solid var(--gray-300);font-weight:600">
+    <td colspan="5">= Net Benefit (Y3)</td>
+    <td style="text-align:right">${fmt(Math.round(y3.netBenefit))}</td>
     <td></td>
   </tr>`;
 
   const tcoRow = `<tr>
-    <td colspan="4" style="color:var(--muted);font-size:11px">− Annual TCO (opex + attrition + training)</td>
+    <td colspan="5" style="color:var(--muted);font-size:11px">− Annual TCO (opex ${fmt(Math.round(result.annOpex||0))} + attrition ${fmt(Math.round(result.attrition||0))} + training ${fmt(Math.round(result.training||0))})</td>
     <td style="text-align:right;color:var(--red)">-${fmt(Math.round(result.totalAnnOpex))}</td>
     <td></td>
   </tr>`;
 
+  const ncfRow = `<tr style="font-weight:600">
+    <td colspan="5">= Net Cash Flow (Y3)</td>
+    <td style="text-align:right">${fmt(Math.round(y3.netCF))}</td>
+    <td></td>
+  </tr>`;
+
   const nrvRow = `<tr style="border-top:2px solid var(--brand-black);font-weight:700">
-    <td colspan="4">NRV (5-yr discounted @ 10% WACC)</td>
+    <td colspan="5">NRV (5-yr NPV, discounted @ ${waccPct}% WACC)</td>
     <td style="text-align:right;color:var(--brand-green)">${fmt(result.nrv)}</td>
     <td></td>
   </tr>`;
@@ -5209,11 +5248,11 @@ function renderWalkdownTable(activeScenarios, result) {
   // v2 (req 4): make every applied dedup auditable — rationale + share split.
   const dedupNote = engagementDedup.length ? engagementDedup.map(g => {
     const split = (g.members || []).map(m => `${m.leverId} ${Math.round((+m.share||0)*100)}%`).join(' / ');
-    return `<tr style="background:var(--gray-50)"><td colspan="6" style="font-size:10px;color:var(--muted);padding:6px 8px;line-height:1.5">`
+    return `<tr style="background:var(--gray-50)"><td colspan="7" style="font-size:10px;color:var(--muted);padding:6px 8px;line-height:1.5">`
       + `<strong>Dedup — ${g.label || g.poolId} (${split}):</strong> ${g.rationale}</td></tr>`;
   }).join('') : '';
 
-  el.innerHTML = rows + dedupNote + decayRow + tcoRow + nrvRow;
+  el.innerHTML = rows + dedupNote + decayRow + netBenRow + tcoRow + ncfRow + nrvRow;
 }
 
 // ── CUSTOM VALUE SCENARIO BUILDER ──
