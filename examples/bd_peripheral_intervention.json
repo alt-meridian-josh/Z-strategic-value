@@ -1,0 +1,170 @@
+{
+  "_type": "strategic-value-engagement",
+  "_version": 2,
+  "_label": "BD Peripheral Intervention — RFID + MOVE MEDICAL Value Assessment — saved 2026-06-05",
+  "_notice": "First-pass strategic value analysis built from BD's PI RFID value-assessment one-pager and June 2026 GDC operating figures. Inputs are BD example estimates (B) or industry-standard placeholders (C), not audited. Open cost item: receiving dock-door portal quote (24 doors).",
+  "mode": "analyst",
+  "technologies": [
+    { "id": "rfid", "label": "RFID" },
+    { "id": "platform", "label": "Software Platform" }
+  ],
+  "overlay": {},
+  "dedup": [],
+  "_provenance": {
+    "BD-01": {
+      "loss_pool": { "confidence": "B", "source": "BD one-pager: 2,100 accounts × 1.5 hr back-office reconciliation × $40 loaded", "needs": "Confirm reconciliation hours/account and loaded back-office rate" },
+      "recovery_rate": { "confidence": "B", "source": "Springer 2019 [2]: 58% supervisory logistics time reduction; modeled conservatively at 50%" }
+    },
+    "BD-02": {
+      "loss_pool": { "confidence": "B", "source": "BD one-pager: 2,100 accounts × ~20 min on-site audit (45 min multi-site) × $55 loaded" },
+      "recovery_rate": { "confidence": "B", "source": "Conservative redeploy assumption [2]" }
+    },
+    "BD-03": {
+      "loss_pool": { "confidence": "B", "source": "BD reported $1.5M annual lost-product write-offs (VENOVO, COVERA, LIFESTENT)" },
+      "recovery_rate": { "confidence": "B", "source": "Auburn [8]; applied at 18%, below cited range" }
+    },
+    "BD-04": {
+      "loss_pool": { "confidence": "B", "source": "BD reported $5.9M annual expired-product scrap", "needs": "Highest-sensitivity input — confirm scrap pool and FEFO opportunity" },
+      "recovery_rate": { "confidence": "B", "source": "Cath-lab/CYBRA [3,7]: ~25% waste cut documented; modeled at 15%" }
+    },
+    "BD-05": {
+      "loss_pool": { "confidence": "B", "source": "BD June 2026 GDC: 500 pallets/day × 252 days ÷ 6 pallets/labor-hr × 85% single-SKU × $55,000 FTE basis ≈ $471,995", "needs": "Time study of verify-touch share of putaway" },
+      "recovery_rate": { "confidence": "B", "source": "Project Zipper [1]; conservative 40% (verify touch only, not physical move)" }
+    },
+    "BD-06": {
+      "loss_pool": { "confidence": "B", "source": "BD June 2026 GDC: 800 locations × 10 min × 4 quarterly counts at GDC labor rate" },
+      "recovery_rate": { "confidence": "B", "source": "Auburn [8]: RFID handhelds cut count time 90%+; labor credited at 75%" }
+    },
+    "BD-07": {
+      "loss_pool": { "confidence": "B", "source": "BD June 2026 GDC: 2 dedicated FTE on non-standard box handling ≈ $110,000", "needs": "Area flagged by BD as needing more analysis" },
+      "recovery_rate": { "confidence": "B", "source": "Conservative redeploy assumption; 25% credited" }
+    },
+    "BD-08": {
+      "loss_pool": { "confidence": "B", "source": "BD June 2026 GDC: 0.3% claim rate × 9,000 parcels/day × ~$25 shipping/claim ≈ $170,100" },
+      "recovery_rate": { "confidence": "B", "source": "Project Zipper [1]; 50% claim reduction (reaching the 0.05% goal would imply 83%)" }
+    },
+    "BD-09": {
+      "loss_pool": { "confidence": "C", "source": "BD one-pager: 2,600 investigated discrepancies × 3 labor-hr placeholder × $40", "needs": "Confirm relationship of 2,600 discrepancies to ~6,800 annual claims, and hours/investigation" },
+      "recovery_rate": { "confidence": "C", "source": "Placeholder 35% pending discrepancy/claim mapping" }
+    },
+    "BD-10": {
+      "loss_pool": { "confidence": "B", "source": "BD one-pager: ~1,200 audits/yr × 20 prep hr × $65 loaded ≈ $1.56M", "needs": "Confirm audit count and prep hours — high weight" },
+      "recovery_rate": { "confidence": "B", "source": "AssetPulse/MSM [6,8]: audit-time reductions up to 90%; modeled at 50%" }
+    },
+    "BD-11": {
+      "loss_pool": { "confidence": "B", "source": "BD one-pager: 80 hr/mo QA/RA product-history work × 12 × $65 loaded" },
+      "recovery_rate": { "confidence": "B", "source": "HID [4]: UDI auto-capture; 50% credited" }
+    },
+    "BD-12": {
+      "loss_pool": { "confidence": "B", "source": "BD: 2–3 recall-like events over 3–5 yrs at ~$750k each → ~$250k/yr annualized exposure" },
+      "recovery_rate": { "confidence": "B", "source": "Sanbor/HID [4,5]: lot-level scope narrowing; 35% scope reduction, probabilistic (capped at 50% peak ramp)" }
+    }
+  },
+  "annotations": {
+    "engagement": "First-pass model from BD's PI RFID value-assessment one-pager; GDC operating figures provided by BD June 2026 at B confidence. Recovery rates use the conservative end of published healthcare RFID evidence. Open items: receiving dock-door portal quote (24 doors), verify-touch share of putaway, and how the 2,600 investigated discrepancies relate to ~6,800 annual claims."
+  },
+  "engagement": {
+    "company": "Zebra Technologies",
+    "customer": "BD Peripheral Intervention",
+    "title": "RFID + MOVE MEDICAL Value Assessment",
+    "sites": 2100,
+    "seller": "Zebra Value Engineering",
+    "email": "",
+    "partners": "MOVE MEDICAL",
+    "pain": "BD Peripheral Intervention loses item-level visibility of lot-controlled, expiry-dated product once it leaves the line — driving field expiry scrap, consignment write-offs, audit and reconciliation labor across 2,100 accounts, GDC claims and discrepancies, and recall scope. RFID item-level visibility with MOVE MEDICAL as the software layer addresses all five from one data foundation."
+  },
+  "verticals": ["healthcare"],
+  "selectedIds": [],
+  "inputs": {},
+  "customScenarios": [
+    { "id": "BD-01", "name": "Consignment audit reconciliation labor", "custom": true, "active": true,
+      "theme": "Labor & Human Capacity", "rampType": "hard_labor", "accessibilityTier": "configured", "haircut": 0.10,
+      "technologyIds": ["rfid", "platform"], "formula": "loss_pool * recovery_rate",
+      "inputs": { "loss_pool": 126000, "recovery_rate": 0.50 },
+      "oneLiner": "RFID handheld capture reads consignment stock in seconds, cutting back-office reconciliation labor ~50%",
+      "evidence": { "confidence": "B", "citation": "Springer 2019 [2]" } },
+    { "id": "BD-02", "name": "Field consignment audit time (redeployed)", "custom": true, "active": true,
+      "theme": "Labor & Human Capacity", "rampType": "soft", "accessibilityTier": "configured", "haircut": 0.10,
+      "technologyIds": ["rfid", "platform"], "formula": "loss_pool * recovery_rate",
+      "inputs": { "loss_pool": 55826, "recovery_rate": 0.50 },
+      "oneLiner": "Field-rep on-site audit time freed for selling/clinical work rather than manual counts",
+      "evidence": { "confidence": "B", "citation": "Conservative [2]" } },
+    { "id": "BD-03", "name": "Consignment loss reduction", "custom": true, "active": true,
+      "theme": "Direct Cost & Spend", "rampType": "hard_cost", "accessibilityTier": "configured", "haircut": 0.10,
+      "technologyIds": ["rfid", "platform"], "formula": "loss_pool * recovery_rate",
+      "inputs": { "loss_pool": 1500000, "recovery_rate": 0.18 },
+      "oneLiner": "Item-level visibility recovers consignment stock before it is written off as lost",
+      "evidence": { "confidence": "B", "citation": "Auburn [8]" } },
+    { "id": "BD-04", "name": "Expiry / scrap reduction", "custom": true, "active": true,
+      "theme": "Direct Cost & Spend", "rampType": "hard_cost", "accessibilityTier": "configured", "haircut": 0.10,
+      "technologyIds": ["rfid", "platform"], "formula": "loss_pool * recovery_rate",
+      "inputs": { "loss_pool": 5900000, "recovery_rate": 0.15 },
+      "oneLiner": "FEFO rotation on real-time expiry data recovers product before it ages out (single most sensitive lever)",
+      "evidence": { "confidence": "B", "citation": "Cath-lab / CYBRA [3,7]" } },
+    { "id": "BD-05", "name": "GDC direct putaway labor", "custom": true, "active": true,
+      "theme": "Labor & Human Capacity", "rampType": "hard_labor", "accessibilityTier": "configured", "haircut": 0.10,
+      "technologyIds": ["rfid", "platform"], "formula": "loss_pool * recovery_rate",
+      "inputs": { "loss_pool": 471995, "recovery_rate": 0.40 },
+      "oneLiner": "RFID dock-door verification removes break-down / barcode-verify / rebuild touch on single-SKU pallets",
+      "evidence": { "confidence": "B", "citation": "BD June 2026; Project Zipper [1]" } },
+    { "id": "BD-06", "name": "GDC cycle-count labor", "custom": true, "active": true,
+      "theme": "Labor & Human Capacity", "rampType": "hard_labor", "accessibilityTier": "configured", "haircut": 0.10,
+      "technologyIds": ["rfid", "platform"], "formula": "loss_pool * recovery_rate",
+      "inputs": { "loss_pool": 14103, "recovery_rate": 0.75 },
+      "oneLiner": "RFID handhelds cut count time 90%+, making weekly counting practical at near-zero marginal labor",
+      "evidence": { "confidence": "B", "citation": "BD June 2026; Auburn [8]" } },
+    { "id": "BD-07", "name": "GDC non-standard box handling (redeployed)", "custom": true, "active": true,
+      "theme": "Labor & Human Capacity", "rampType": "soft", "accessibilityTier": "configured", "haircut": 0.10,
+      "technologyIds": ["rfid", "platform"], "formula": "loss_pool * recovery_rate",
+      "inputs": { "loss_pool": 110000, "recovery_rate": 0.25 },
+      "oneLiner": "Capacity from 2 dedicated FTE on non-standard box handling partially redeployed",
+      "evidence": { "confidence": "B", "citation": "BD June 2026; redeploy" } },
+    { "id": "BD-08", "name": "GDC outbound claims shipping reduction", "custom": true, "active": true,
+      "theme": "Direct Cost & Spend", "rampType": "hard_cost", "accessibilityTier": "configured", "haircut": 0.10,
+      "technologyIds": ["rfid", "platform"], "formula": "loss_pool * recovery_rate",
+      "inputs": { "loss_pool": 170100, "recovery_rate": 0.50 },
+      "oneLiner": "RFID tunnel verifies item/lot/size a scale cannot, cutting outbound claim shipping cost ~50%",
+      "evidence": { "confidence": "B", "citation": "BD June 2026; Project Zipper [1]" } },
+    { "id": "BD-09", "name": "GDC claims investigation labor", "custom": true, "active": true,
+      "theme": "Labor & Human Capacity", "rampType": "hard_labor", "accessibilityTier": "configured", "haircut": 0.10,
+      "technologyIds": ["rfid", "platform"], "formula": "loss_pool * recovery_rate",
+      "inputs": { "loss_pool": 312000, "recovery_rate": 0.35 },
+      "oneLiner": "Item-level chain of custody collapses claims/discrepancy investigation time",
+      "evidence": { "confidence": "C", "citation": "Project Zipper [1]" } },
+    { "id": "BD-10", "name": "Traceability audit-prep labor", "custom": true, "active": true,
+      "theme": "Regulatory & Compliance", "rampType": "hard_labor", "accessibilityTier": "configured", "haircut": 0.10,
+      "technologyIds": ["rfid", "platform"], "formula": "loss_pool * recovery_rate",
+      "inputs": { "loss_pool": 1560000, "recovery_rate": 0.50 },
+      "oneLiner": "UDI auto-capture of lot/serial/expiry cuts product-genealogy audit-prep labor (second-largest lever)",
+      "evidence": { "confidence": "B", "citation": "AssetPulse / MSM [6,8]" } },
+    { "id": "BD-11", "name": "QA/RA product-history labor", "custom": true, "active": true,
+      "theme": "Regulatory & Compliance", "rampType": "hard_labor", "accessibilityTier": "configured", "haircut": 0.10,
+      "technologyIds": ["rfid", "platform"], "formula": "loss_pool * recovery_rate",
+      "inputs": { "loss_pool": 62400, "recovery_rate": 0.50 },
+      "oneLiner": "Automated product-history capture reduces recurring QA/RA lookup labor",
+      "evidence": { "confidence": "B", "citation": "HID [4]" } },
+    { "id": "BD-12", "name": "Recall scope reduction", "custom": true, "active": true,
+      "theme": "Strategic / AI / Data", "rampType": "strategic", "accessibilityTier": "configured", "haircut": 0.10,
+      "technologyIds": ["rfid", "platform"], "formula": "loss_pool * recovery_rate",
+      "inputs": { "loss_pool": 250000, "recovery_rate": 0.35 },
+      "oneLiner": "Lot-level traceability narrows recall scope to affected lots (probabilistic avoidance, capped ramp)",
+      "evidence": { "confidence": "B", "citation": "Sanbor / HID [4,5]" } }
+  ],
+  "financeCredit": { "enabled": true, "rate": 0.40 },
+  "wacc": 0.10,
+  "decay": { "useDecay": false, "g": 0.035 },
+  "costs": { "attritionRate": 0, "annualTraining": 0 },
+  "contingencyRate": 0,
+  "costRows": [
+    { "label": "MOVE MEDICAL software and services (Year 0)", "qty": 1, "unitCost": 1300000, "yr0": 1300000, "yr1": 0, "yr2": 0, "cadence": "one-time" },
+    { "label": "Internal project cost", "qty": 1, "unitCost": 100000, "yr0": 100000, "yr1": 0, "yr2": 0, "cadence": "one-time" },
+    { "label": "RFID printers (3–4 @ $3k midpoint)", "qty": 1, "unitCost": 10500, "yr0": 10500, "yr1": 0, "yr2": 0, "cadence": "one-time" },
+    { "label": "RFID handhelds (4–5 @ $3k midpoint)", "qty": 1, "unitCost": 13500, "yr0": 13500, "yr1": 0, "yr2": 0, "cadence": "one-time" },
+    { "label": "RFID tunnel", "qty": 1, "unitCost": 15000, "yr0": 15000, "yr1": 0, "yr2": 0, "cadence": "one-time" },
+    { "label": "Initial tag deployment (500,000 × $0.15)", "qty": 500000, "unitCost": 0.15, "yr0": 75000, "yr1": 0, "yr2": 0, "cadence": "one-time" },
+    { "label": "Contingency (10% of hardware + tags)", "qty": 1, "unitCost": 11400, "yr0": 11400, "yr1": 0, "yr2": 0, "cadence": "one-time" },
+    { "label": "Receiving dock-door portals (24 doors) — pending Zebra quote", "qty": 1, "unitCost": 0, "yr0": 0, "yr1": 0, "yr2": 0, "cadence": "one-time" },
+    { "label": "MOVE MEDICAL software (annual continuation)", "qty": 1, "unitCost": 170000, "yr0": 0, "yr1": 170000, "yr2": 170000, "cadence": "annual" },
+    { "label": "Tag consumable (annual)", "qty": 1, "unitCost": 100000, "yr0": 0, "yr1": 100000, "yr2": 100000, "cadence": "annual" }
+  ]
+}
