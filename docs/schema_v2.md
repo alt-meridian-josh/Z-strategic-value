@@ -49,6 +49,22 @@ Analysis walkdown renders each pool's rationale + share split and marks member r
 **Provenance** — `{ confidence: "A"|"B"|"C", source, needs }` per input. Carried + exported;
 the data-status panel that surfaces it is Phase 5.
 
+**Input range (Chunk 4)** — a scenario input definition may carry an optional
+`range: [min, max]`, set **at or below** its cited source so the band never exceeds the
+benchmark and the default sits at the conservative end. It lives on the lever *definition*
+(library `SCENARIOS[].inputs[k].range`, or custom `CUSTOM_MECHANISMS[].vars[].range` /
+`customScenarios[].ranges[k]`) — not in the value-only engagement `inputs` block, which
+inherits it. Behavior: in **customer** mode a ranged input renders as a slider clamped to
+`[min,max]` and an input *without* a range is read-only; in **analyst** mode every input is
+an editable number, ranged ones showing a "bounded min–max" hint. `updateInput` /
+`updateCustomInput` clamp to the bounds on every edit, so an out-of-band value is impossible.
+
+**Customer-lite cost scope (Chunk 4)** — customers may edit line-item **values**
+(qty / unit / total) but not structure: row labels, cadence, the contingency buffer, the
+schema-driven TCO params (attrition / training), and the row-remove control are locked
+(`.cost-lock` / `.cost-remove`, active only under `body.customer-mode`). The
+tweak-but-revert baseline snapshot and the customer footer are unchanged.
+
 **Annotations** — `engagement` (string), `levers` (`{ [leverId]: note }`), `costRows`
 (`{ [index]: note }`). Carried + exported; surfaced in the report in Phase 5.
 

@@ -871,9 +871,12 @@ svg{max-width:100%;height:auto}
 }
 /* Phase 4 — customer-lite guardrails (UX guardrail, not security) */
 .customer-mode .analyst-only { display: none !important; }
-.customer-mode #cost-tbody .cost-remove { display: none !important; }
+.customer-mode .cost-remove { display: none !important; }
 .customer-mode .lever-locked { pointer-events: none; opacity: .85; }
-.customer-mode #cost-tbody input, .customer-mode #cost-tbody select { pointer-events: none; background: #f6f6f6; color: #555; }
+/* Customer-lite cost scope (Chunk 4): line-item VALUES (qty/unit/total) stay
+   editable; only structure is locked — labels, cadence, contingency, and the
+   schema-driven TCO params (attrition/training), plus the row-remove control. */
+.customer-mode .cost-lock, .customer-mode #cost-tbody select { pointer-events: none; background: #f6f6f6; color: #555; }
 #customer-footer { display: none; }
 .customer-mode #customer-footer { display: block; }
 @media print { .customer-mode #customer-footer { display: block; } }
@@ -2254,7 +2257,7 @@ const SCENARIOS = [
     inputs:{
       annual_store_revenue:{label:"Annual Revenue in Scope ($)",unit:"$",value:5000000,hint:"Total revenue for sites in scope — apparel avg $3M–$10M per store"},
       out_of_stock_baseline_pct:{label:"OOS Baseline (% of sales)",unit:"%",value:0.05,hint:"ECR: 4–8%; use 5% conservative"},
-      osa_improvement_pct:{label:"OSA Improvement from RFID",unit:"%",value:0.50,hint:"ECR/GS1: 50–80%; use 50%"},
+      osa_improvement_pct:{label:"OSA Improvement from RFID",unit:"%",value:0.50,hint:"ECR/GS1: 50–80%; use 50%",range:[0.50,0.80]},
       gross_margin_pct:{label:"Gross Margin %",unit:"%",value:0.40,hint:"Apparel: 40–60%; use 40%"}
     }
   },
@@ -2269,7 +2272,7 @@ const SCENARIOS = [
     inputs:{
       annual_store_revenue:{label:"Annual Revenue in Scope ($)",unit:"$",value:5000000,hint:"Total revenue for sites in scope — NRF 2023: avg retail store $3M–$10M"},
       shrink_pct_baseline:{label:"Shrink Baseline (% of revenue)",unit:"%",value:0.014,hint:"NRF 2023: 1.4–1.6% avg; use 1.4%"},
-      shrink_reduction_pct:{label:"Shrink Reduction from RFID",unit:"%",value:0.20,hint:"NRF 2023: 20–40%; use 20%"}
+      shrink_reduction_pct:{label:"Shrink Reduction from RFID",unit:"%",value:0.20,hint:"NRF 2023: 20–40%; use 20%",range:[0.20,0.40]}
     }
   },
   { id:"RET-04", name:"Markdown Reduction — Better Sell-Through",
@@ -2282,8 +2285,8 @@ const SCENARIOS = [
     discoveryQuestions:["What is your total annual markdown spend?","What fraction of markdowns are size/color-driven vs. seasonal?","Do you currently track phantom vs. actual inventory gaps?"],
     inputs:{
       annual_markdown_spend:{label:"Annual Markdown Spend ($)",unit:"$",value:750000,hint:"Typical apparel: 10–20% of revenue"},
-      markdown_reduction_pct:{label:"Markdown Reduction from RFID",unit:"%",value:0.10,hint:"Accenture 2022: 10–20%; use 10%"},
-      gm_recovery_pct:{label:"GM Recovery per Avoided Markdown",unit:"%",value:0.20,hint:"Accenture: 15–25 pts; use 20%"}
+      markdown_reduction_pct:{label:"Markdown Reduction from RFID",unit:"%",value:0.10,hint:"Accenture 2022: 10–20%; use 10%",range:[0.10,0.20]},
+      gm_recovery_pct:{label:"GM Recovery per Avoided Markdown",unit:"%",value:0.20,hint:"Accenture: 15–25 pts; use 20%",range:[0.15,0.25]}
     }
   },
   { id:"RET-05", name:"Receiving Accuracy & Labor",
@@ -2296,7 +2299,7 @@ const SCENARIOS = [
     discoveryQuestions:["How many hours per year does your team spend on inbound receiving verification?","What is the fully-loaded hourly rate for receiving associates?","What inbound accuracy do you achieve today vs. your target?"],
     inputs:{
       annual_receiving_labor_hours:{label:"Annual Receiving Labor Hours",unit:"hrs",value:8000,hint:"~5 hrs/event × 4 events/wk × 52 wks"},
-      labor_reduction_pct:{label:"Receiving Labor Reduction",unit:"%",value:0.40,hint:"GS1 US: 40–60%; use 40%"},
+      labor_reduction_pct:{label:"Receiving Labor Reduction",unit:"%",value:0.40,hint:"GS1 US: 40–60%; use 40%",range:[0.40,0.60]},
       loaded_rate:{label:"Loaded Labor Rate ($/hr)",unit:"$/hr",value:24,hint:"BLS retail median + 30%"}
     }
   },
@@ -2389,7 +2392,7 @@ const SCENARIOS = [
     inputs:{
       annual_orders_picked:{label:"Annual Orders Picked",unit:"count",value:2000000,hint:"Total pick events per year"},
       error_rate_baseline_pct:{label:"Pick Error Rate Baseline",unit:"%",value:0.005,hint:"Zebra: 0.5–1% manual; use 0.5%"},
-      error_reduction_pct:{label:"Error Reduction from RFID",unit:"%",value:0.80,hint:"Conservative: 80% reduction"},
+      error_reduction_pct:{label:"Error Reduction from RFID",unit:"%",value:0.80,hint:"Conservative: 80% reduction",range:[0.40,0.80]},
       cost_per_error:{label:"Cost per Pick Error ($)",unit:"$",value:20,hint:"Re-pick labor only — excludes return shipping"}
     }
   },
@@ -2404,7 +2407,7 @@ const SCENARIOS = [
     discoveryQuestions:["What is your annual spend on rental equipment — IV pumps, ventilators, specialty beds?","How many hours per shift do nurses spend searching for mobile equipment?","What is your current utilization rate for high-value mobile assets?"],
     inputs:{
       annual_rental_spend:{label:"Annual Equipment Rental Spend ($)",unit:"$",value:1200000,hint:"IV pumps, vents, specialty equipment"},
-      rental_reduction_pct:{label:"Rental Reduction from RFID",unit:"%",value:0.15,hint:"GE/ECRI lower bound: 15%"},
+      rental_reduction_pct:{label:"Rental Reduction from RFID",unit:"%",value:0.15,hint:"GE/ECRI lower bound: 15%",range:[0.10,0.15]},
       num_nursing_staff:{label:"Nursing Staff in Scope",unit:"count",value:200,hint:"Staff affected by equipment search"},
       nursing_search_hours_per_shift:{label:"Search Hours/Nurse/Shift",unit:"hrs",value:0.5,hint:"ECRI: 40–70% reduction baseline"},
       shifts_per_year:{label:"Shifts per Year",unit:"count",value:365,hint:"Daily shifts × 365"},
@@ -2422,7 +2425,7 @@ const SCENARIOS = [
     inputs:{
       annual_or_cases:{label:"Annual Surgical Cases",unit:"count",value:8000,hint:"Total OR cases per year"},
       instrument_delay_rate_pct:{label:"Cases with Instrument Delays",unit:"%",value:0.05,hint:"5% conservative baseline"},
-      delay_reduction_pct:{label:"Delay Reduction from RFID",unit:"%",value:0.25,hint:"Auburn lower bound: 25%"},
+      delay_reduction_pct:{label:"Delay Reduction from RFID",unit:"%",value:0.25,hint:"Auburn lower bound: 25%",range:[0.15,0.25]},
       avg_delay_duration_hr:{label:"Avg Delay Duration (hrs)",unit:"hrs",value:0.5,hint:"Conservative: 30 min"},
       or_delay_cost_per_hour:{label:"OR Cost per Hour of Delay ($)",unit:"$",value:6000,hint:"Auburn: $100/min = $6,000/hr conservative"}
     }
@@ -2533,7 +2536,7 @@ const SCENARIOS = [
     discoveryQuestions:["How many outbound verification labor hours per year across all docks?","What is your fully-loaded dock labor rate?","What % of outbound errors result in re-work or carrier claims?"],
     inputs:{
       outbound_labor_hours:{label:"Annual Outbound Verification Hours",unit:"hrs",value:10000,hint:"All dock lanes combined"},
-      labor_reduction_pct:{label:"Labor Reduction from RFID",unit:"%",value:0.35,hint:"GS1: 30–50%; use 35%"},
+      labor_reduction_pct:{label:"Labor Reduction from RFID",unit:"%",value:0.35,hint:"GS1: 30–50%; use 35%",range:[0.30,0.50]},
       loaded_rate:{label:"Loaded Labor Rate ($/hr)",unit:"$/hr",value:26,hint:"DC rate + 30% burden"}
     }
   },
@@ -2579,7 +2582,7 @@ const SCENARIOS = [
     discoveryQuestions:["How many FTE-hours were spent on last Joint Commission preparation?","What is your loaded clinical support rate?","How many compliance deficiencies were cited in the last inspection?"],
     inputs:{
       annual_audit_prep_hours:{label:"Annual Audit Prep Hours (FTE)",unit:"hrs",value:4000,hint:"All staff across departments"},
-      labor_reduction_pct:{label:"Reduction from RFID",unit:"%",value:0.40,hint:"Conservative: 40%"},
+      labor_reduction_pct:{label:"Reduction from RFID",unit:"%",value:0.40,hint:"Conservative: 40%",range:[0.25,0.40]},
       loaded_rate:{label:"Loaded Clinical Support Rate ($/hr)",unit:"$/hr",value:45,hint:"Clinical support avg"}
     }
   },
@@ -2593,9 +2596,9 @@ const SCENARIOS = [
     discoveryQuestions:["What is your annual supply expired write-off expense?","How many stockout events per week across all PAR locations?","What is your average cost per stockout event?"],
     inputs:{
       annual_expired_writeoffs:{label:"Annual Expired Write-offs ($)",unit:"$",value:400000,hint:"From supply chain records"},
-      expiry_reduction_pct:{label:"Expiry Reduction from RFID",unit:"%",value:0.15,hint:"Conservative: 15%"},
+      expiry_reduction_pct:{label:"Expiry Reduction from RFID",unit:"%",value:0.15,hint:"Conservative: 15%",range:[0.10,0.15]},
       annual_stockout_cost:{label:"Annual Stockout Cost ($)",unit:"$",value:200000,hint:"Emergency procurement + delay costs"},
-      stockout_reduction_pct:{label:"Stockout Reduction from RFID",unit:"%",value:0.20,hint:"Conservative: 20%"}
+      stockout_reduction_pct:{label:"Stockout Reduction from RFID",unit:"%",value:0.20,hint:"Conservative: 20%",range:[0.10,0.20]}
     }
   },
   { id:"HC-07", name:"Controlled Substance Diversion Prevention",
@@ -4629,8 +4632,7 @@ function renderDisc() {
               <td><div class="ikey">${k}</div></td>
               <td><div class="ilabel">${v.label}</div><div class="isource">${v.hint}</div></td>
               <td><span class="mono" style="font-size:11px">${fmtVal(v.value,v.unit)}</span></td>
-              <td><input class="iinput" type="number" step="any" value="${state.inputs[sc.id][k]}"
-                oninput="updateInput('${sc.id}','${k}',this)"></td>
+              <td>${valueInputHTML(sc.id, k, state.inputs[sc.id][k], v.unit, `oninput="updateInput('${sc.id}','${k}',this)"`)}</td>
             </tr>`).join('')}
           </tbody>
         </table>
@@ -4684,8 +4686,51 @@ function buildDonut(pct, rampType) {
   </svg>`;
 }
 
+// Resolve the optional citation-bounded range for a scenario input (Chunk 4).
+// Library levers carry it on SCENARIOS[].inputs[k].range; custom levers on the
+// mechanism var (CUSTOM_MECHANISMS[].vars[].range) or an explicit sc.ranges[k].
+function lookupInputRange(scId, key) {
+  const lib = SCENARIOS.find(s => s.id === scId);
+  if (lib && lib.inputs[key] && Array.isArray(lib.inputs[key].range)) return lib.inputs[key].range;
+  const cs = (state.customScenarios || []).find(s => s.id === scId);
+  if (cs) {
+    if (cs.ranges && Array.isArray(cs.ranges[key])) return cs.ranges[key];
+    const mech = CUSTOM_MECHANISMS.find(m => m.id === cs.mechanismId);
+    const vv = mech && mech.vars.find(x => x.key === key);
+    if (vv && Array.isArray(vv.range)) return vv.range;
+  }
+  return null;
+}
+
+// Render the "Your Value" control for one input, honoring mode + range (Chunk 4):
+//   customer + range  → bounded slider (clamped at its citation bounds)
+//   customer, no range → read-only (value shown, not editable)
+//   analyst           → editable number, with a "bounded a–b" hint when ranged
+function valueInputHTML(scId, key, value, unit, oninputAttr) {
+  const range = lookupInputRange(scId, key);
+  const cust = (appMode === 'customer');
+  if (cust && range) {
+    const v = Math.min(range[1], Math.max(range[0], +value));
+    const step = (range[1] - range[0]) / 100 || 'any';
+    return `<input class="iinput ranged-slider" type="range" min="${range[0]}" max="${range[1]}" step="${step}" value="${v}" ${oninputAttr}>`
+      + `<span class="mono ranged-val" style="font-size:11px;margin-left:8px">${fmtVal(v, unit)}</span>`;
+  }
+  if (cust) {
+    return `<span class="mono ranged-val" style="font-size:12px;color:#555">${fmtVal(value, unit)}</span>`;
+  }
+  const hint = range ? `<div class="isource" style="font-size:9px">bounded ${fmtVal(range[0],unit)}–${fmtVal(range[1],unit)}</div>` : '';
+  return `<input class="iinput" type="number" step="any" value="${value}" ${oninputAttr}>${hint}`;
+}
+
 function updateInput(scId, key, el) {
-  const v = parseFloat(el.value)||0;
+  let v = parseFloat(el.value)||0;
+  const r = lookupInputRange(scId, key);
+  if (r) {
+    v = Math.min(r[1], Math.max(r[0], v));               // clamp to citation bounds
+    if (el.type !== 'range' && +el.value !== v) el.value = v;
+    const disp = el.parentElement && el.parentElement.querySelector('.ranged-val');
+    if (disp) disp.textContent = fmtVal(v, (SCENARIOS.find(s=>s.id===scId)?.inputs[key]?.unit));
+  }
   state.inputs[scId][key] = v;
   el.classList.add('changed');
   const item = document.getElementById('acc-'+scId);
@@ -4809,14 +4854,14 @@ function renderCost() {
     if(r.contingency) return techHeader + `
       <tr style="background:var(--gray-50)">
         <td colspan="3" style="color:var(--muted);font-size:11px;font-style:italic">Contingency
-          <input class="editable-input num-input" value="${+(contingencyRate*100).toFixed(2)}" style="width:46px;text-align:right;margin:0 2px"
+          <input class="editable-input num-input cost-lock" value="${+(contingencyRate*100).toFixed(2)}" style="width:46px;text-align:right;margin:0 2px"
                  oninput="setContingencyRate(this.value)" title="Editable buffer on Yr-0 capital">% of Yr 0 subtotal</td>
         <td></td>
         <td class="r" style="color:var(--muted);font-family:var(--mono)">${fmt(cont)}</td>
         <td></td>
       </tr>`;
     return techHeader + `<tr>
-      <td><input class="editable-input" style="width:100%;text-align:left;font-size:12px" value="${r.label}" oninput="costRows[${i}].label=this.value"></td>
+      <td><input class="editable-input cost-lock" style="width:100%;text-align:left;font-size:12px" value="${r.label}" oninput="costRows[${i}].label=this.value"></td>
       <td>
         <select class="editable-input cadence-sel" onchange="costRows[${i}].cadence=this.value;recalcCostRow(${i})">
           ${['one-time','monthly','annual','per-site/yr','other'].map(o=>`<option value="${o}"${r.cadence===o?' selected':''}>${o}</option>`).join('')}
@@ -4825,7 +4870,7 @@ function renderCost() {
       <td class="r"><input class="editable-input num-input" value="${r.qty!==''?r.qty:''}" style="width:55px" placeholder="qty" oninput="costRows[${i}].qty=parseFloat(this.value)||0;recalcCostRow(${i})"></td>
       <td class="r"><input class="editable-input num-input" value="${r.unitCost!==''?r.unitCost:''}" style="width:70px" placeholder="$" oninput="costRows[${i}].unitCost=parseFloat(this.value.replace(/[$,]/g,''))||0;recalcCostRow(${i})"></td>
       <td class="r" style="font-family:var(--mono);font-weight:600;font-size:12px">${fmt(rowTotal)}</td>
-      <td><span style="cursor:pointer;color:var(--muted);font-size:12px;padding:0 6px" onclick="removeCostRow(${i})" title="Remove">✕</span></td>
+      <td><span class="cost-remove" style="cursor:pointer;color:var(--muted);font-size:12px;padding:0 6px" onclick="removeCostRow(${i})" title="Remove">✕</span></td>
     </tr>`;
   }).join('');
 
@@ -4850,13 +4895,13 @@ function renderCost() {
     </tr>
     <tr style="background:var(--gray-50);border-top:1px dashed var(--gray-300)" title="Attrition/backfill opex — schema-driven (SOP basis: handheld rollouts; refinement deferred)">
       <td colspan="2" style="font-size:12px;color:var(--muted);font-style:italic">Attrition / backfill</td>
-      <td colspan="2" class="r" style="font-size:11px;color:var(--muted)"><input class="editable-input num-input" value="${+(attritionRate*100).toFixed(2)}" style="width:46px;text-align:right;margin:0 2px" oninput="setAttritionRate(this.value)" title="% of Yr 0 capex">% of Yr 0</td>
+      <td colspan="2" class="r" style="font-size:11px;color:var(--muted)"><input class="editable-input num-input cost-lock" value="${+(attritionRate*100).toFixed(2)}" style="width:46px;text-align:right;margin:0 2px" oninput="setAttritionRate(this.value)" title="% of Yr 0 capex">% of Yr 0</td>
       <td class="r" style="font-size:13px;font-weight:600;font-family:var(--mono);color:var(--muted)">${fmt(Math.round(yr0t*attritionRate))}<span style="font-size:9px;font-weight:400">/yr</span></td>
       <td></td>
     </tr>
     <tr style="background:var(--gray-50)">
       <td colspan="2" style="font-size:12px;color:var(--muted);font-style:italic">Annual training</td>
-      <td colspan="2" class="r" style="font-size:11px;color:var(--muted)"><input class="editable-input num-input" value="${annualTraining}" style="width:70px;text-align:right;margin:0 2px" oninput="setAnnualTraining(this.value)" title="flat annual training opex ($)">$/yr</td>
+      <td colspan="2" class="r" style="font-size:11px;color:var(--muted)"><input class="editable-input num-input cost-lock" value="${annualTraining}" style="width:70px;text-align:right;margin:0 2px" oninput="setAnnualTraining(this.value)" title="flat annual training opex ($)">$/yr</td>
       <td class="r" style="font-size:13px;font-weight:600;font-family:var(--mono);color:var(--muted)">${fmt(annualTraining)}<span style="font-size:9px;font-weight:400">/yr</span></td>
       <td></td>
     </tr>
@@ -5262,7 +5307,7 @@ const CUSTOM_MECHANISMS = [
       {key:'events_per_week',    label:'Events / week',       default:50},
       {key:'hours_per_event',    label:'Hours per event',      default:0.5},
       {key:'loaded_rate',        label:'Fully-loaded rate ($/hr)', default:28},
-      {key:'reduction_pct',      label:'Reduction rate (%)',   default:0.70},
+      {key:'reduction_pct',      label:'Reduction rate (%)',   default:0.70, range:[0.30,0.70]},
     ],
     formula: v => v.events_per_week * v.hours_per_event * v.loaded_rate * v.reduction_pct * 52,
     rampDefault: 'hard_labor'
@@ -5351,13 +5396,15 @@ function renderCustomScenarios() {
       `<option value="${t}"${t === sc.accessibilityTier ? ' selected' : ''}>${t.charAt(0).toUpperCase()+t.slice(1)}</option>`
     ).join('');
 
-    const varInputs = mech.vars.map(v => `
+    const varInputs = mech.vars.map(v => {
+      const cur = sc.inputs[v.key] !== undefined ? sc.inputs[v.key] : v.default;
+      const ctl = valueInputHTML(sc.id, v.key, cur, '', `oninput="updateCustomInput(${idx},'${v.key}',this.value)"`);
+      return `
       <div style="margin-bottom:8px">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:3px">${v.label}</div>
-        <input type="number" value="${sc.inputs[v.key] !== undefined ? sc.inputs[v.key] : v.default}"
-          style="width:160px;font-size:12px"
-          onchange="updateCustomInput(${idx},'${v.key}',+this.value)">
-      </div>`).join('');
+        <div style="font-size:11px;color:var(--muted);margin-bottom:3px">${v.label}${Array.isArray(v.range)?` <span style="font-size:9px">[${v.range[0]}–${v.range[1]}]</span>`:''}</div>
+        ${ctl}
+      </div>`;
+    }).join('');
 
     return `
       <div style="border:1px dashed var(--gray-300);border-radius:8px;padding:16px;margin-bottom:12px;background:var(--gray-50)">
@@ -5415,7 +5462,11 @@ function renderCustomScenarios() {
 }
 
 function updateCustomInput(idx, key, val) {
-  state.customScenarios[idx].inputs[key] = val;
+  let v = +val || 0;
+  const sc = state.customScenarios[idx];
+  const r = sc && lookupInputRange(sc.id, key);   // clamp to citation bounds (Chunk 4)
+  if (r) v = Math.min(r[1], Math.max(r[0], v));
+  sc.inputs[key] = v;
   renderCustomScenarios();
   if (document.getElementById('kpi-grid')) renderROI();
 }

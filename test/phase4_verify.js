@@ -85,6 +85,37 @@ function loaded(obj) { const w = loadApp().window; w.applyEngagement(obj); w.ens
     ok('analyst session unaffected: identity editable', w.document.getElementById('i-customer').readOnly === false);
   }
 
+  console.log('\n── Chunk 4: ranged inputs + field-level cost scope ──');
+  {
+    const cust = readJSON(path.resolve(__dirname, '..', 'examples', 'sample_engagement.json'));
+    cust.mode = 'customer';
+    const w = loaded(cust); w.renderDisc(); w.renderCost();
+    const acc = w.document.getElementById('disc-accordion').innerHTML;
+    // RET-02 osa_improvement_pct is range:[0.50,0.80] → bounded slider in customer mode
+    ok('customer: ranged input renders as bounded slider',
+       /ranged-slider" type="range" min="0.5" max="0.8"/.test(acc));
+    ok('customer: unranged input is read-only (span, no input)',
+       /<span class="mono ranged-val"/.test(acc));
+    // clamp at both bounds
+    const mk = v => ({ value: v, type: 'number', classList: { add() {} }, parentElement: { querySelector() { return null; } } });
+    w.updateInput('RET-02', 'osa_improvement_pct', mk(0.95));
+    ok('clamp above max → 0.80', w.eval("state.inputs['RET-02'].osa_improvement_pct") === 0.8);
+    w.updateInput('RET-02', 'osa_improvement_pct', mk(0.10));
+    ok('clamp below min → 0.50', w.eval("state.inputs['RET-02'].osa_improvement_pct") === 0.5);
+    // field-level cost lock
+    const cost = w.document.getElementById('cost-tbody').innerHTML;
+    ok('cost label is locked (.cost-lock)', /class="editable-input cost-lock"/.test(cost));
+    ok('cost qty/unit values stay editable (no .cost-lock)',
+       /class="editable-input num-input" value="[^"]*" style="width:55px"/.test(cost) &&
+       /class="editable-input num-input" value="[^"]*" style="width:70px"/.test(cost));
+    ok('row-remove control marked .cost-remove (CSS-hidden in customer mode)', /class="cost-remove"/.test(cost));
+    // analyst mode: editable number + bounded hint
+    const a = readJSON(path.resolve(__dirname, '..', 'examples', 'sample_engagement.json'));
+    const wa = loaded(a); wa.renderDisc();
+    ok('analyst: ranged input editable number with bounded hint',
+       /bounded 50.0%–80.0%/.test(wa.document.getElementById('disc-accordion').innerHTML));
+  }
+
   console.log(`\n${fail ? '✗' : '✓'} ${pass} passed, ${fail} failed\n`);
   process.exit(fail ? 1 : 0);
 })();
