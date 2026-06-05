@@ -8508,8 +8508,7 @@ async function runPPTXDownload(callerBtn) {
       const inputText=sc.inputs?Object.values(sc.inputs).slice(0,2).map(v=>v.label+': '+v.value+' ('+v.hint+')').join('  ·  '):sc.oneLiner||'';
       [{label:'HOW IT WORKS',text:inputText,ac:rAc},
        {label:'EVIDENCE BASIS',text:evText||'See evidence registry',ac:rAc},
-       // Objection-handler coaching is seller-only — omit from customer-mode decks.
-       ...(appMode==='customer' ? [] : [{label:'HANDLING OBJECTIONS',text:sc.challenge||'—',ac:Z.AMBER}]),
+       // Seller objection-handler coaching is omitted from ALL deck exports (analyst + customer).
       ].forEach((r,i)=>{
         const ry=2.04+i*1.36;
         s.addShape(pres.shapes.RECTANGLE,{x:0.5,y:ry,w:8.6,h:1.26,fill:{color:Z.CARD},line:{color:Z.BORDER,width:0.5}});
