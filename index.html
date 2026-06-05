@@ -5215,6 +5215,17 @@ function calcDriverWalkdown(sc, result) {
   return rows;
 }
 
+// Registry metadata tag for a custom lever (Chunk 5; pure metadata, no behavior).
+// registered → [REG-xxx v2]; unregistered → [unregistered]. Sits next to [user].
+function registryTag(sc) {
+  if (sc.custom !== true) return '';
+  if (sc.registryId) {
+    const ver = sc.registryVersion ? ' ' + sc.registryVersion : '';
+    return ` <span title="registered lever" style="font-size:9px;font-weight:700;color:#2c5f2d">[${sc.registryId}${ver}]</span>`;
+  }
+  return ` <span title="not in registry" style="font-size:9px;color:#9a6b00">[unregistered]</span>`;
+}
+
 function renderWalkdownTable(activeScenarios, result) {
   const el = document.getElementById('nrv-walkdown-body');
   if (!el) return;
@@ -5241,7 +5252,7 @@ function renderWalkdownTable(activeScenarios, result) {
     const confMark = (_ev && (_ev.confidence === 'B' || _ev.confidence === 'C'))
       ? ` <span title="estimated/benchmarked input" style="font-size:9px;font-weight:700;color:${_ev.confidence==='B'?'#7a5200':'#842029'}">[${_ev.confidence}]</span>` : '';
     return `<tr${isCustom ? ' style="font-style:italic;opacity:0.8"' : ''}>
-      <td>${sc.id}${isCustom ? ' <span style="font-size:9px;color:var(--muted)">[user]</span>' : ''}${poolMark}${confMark}</td>
+      <td>${sc.id}${isCustom ? ' <span style="font-size:9px;color:var(--muted)">[user]</span>' + registryTag(sc) : ''}${poolMark}${confMark}</td>
       <td style="text-align:right">${fmt(Math.round(ann))}</td>
       <td style="text-align:right">${fmt(Math.round(afterRamp))}</td>
       <td style="text-align:right">${fmt(Math.round(afterAccess))}</td>

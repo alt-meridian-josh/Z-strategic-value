@@ -152,6 +152,16 @@ function compute(obj) {
     const c1 = g.customScenarios.find(s => s.id === 'CUSTOM-01');
     ok('custom lever evidence{confidence} round-trips', c1.evidence && c1.evidence.confidence === 'B', JSON.stringify(c1.evidence && c1.evidence.confidence));
     ok('custom lever technologyIds round-trips', Array.isArray(c1.technologyIds) && c1.technologyIds.join(',') === 'mv');
+    // Chunk 5: registryId/registryVersion round-trip + walkdown tag.
+    ok('custom lever registryId/Version round-trip', c1.registryId === 'REG-MV-RECV-014' && c1.registryVersion === 'v2', `${c1.registryId} ${c1.registryVersion}`);
+    {
+      const w = applied(readJSON(V2)); w.renderROI();
+      const wd = w.document.getElementById('nrv-walkdown-body').textContent.replace(/\s+/g, ' ');
+      ok('walkdown renders registry tag [REG-xxx v2]', /\[REG-MV-RECV-014 v2\]/.test(wd));
+      ok('walkdown renders [unregistered] when no registryId',
+         (function(){ w.eval('state.customScenarios[0].registryId=undefined'); w.renderROI();
+           return /\[unregistered\]/.test(w.document.getElementById('nrv-walkdown-body').textContent); })());
+    }
     ok('custom lever still enters calcSc (formula intact)', typeof applied(readJSON(V2)).calcSc(c1) === 'number');
     ok('overlay{} round-trips losslessly', diff(g.overlay, readJSON(V2).overlay) === null);
   }

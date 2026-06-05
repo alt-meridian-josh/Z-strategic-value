@@ -34,7 +34,10 @@ the stack.
 **Custom lever (full discipline)** — `customScenarios[]` gains `technologyIds: string[]`
 and `evidence: { confidence: "A"|"B"|"C", citation, evidenceIds, formulaSource }`. Enters
 `calcNRV`/`calcSc` through the identical ramp/tier/haircut/finance-credit gates; flagged
-`[user]`/"(user-generated)" in all exports.
+`[user]`/"(user-generated)" in all exports. **(Chunk 5)** also carries optional
+`registryId` + `registryVersion` — pure metadata, no behavior. Rendered next to the
+`[user]` mark in the walk-down: registered → `[REG-xxx v2]`, absent → `[unregistered]`;
+serialized and round-tripped.
 
 **LeverMeta (overlay)** — `{ technologyIds?, evidence? }` attached to library levers by id.
 `leverEvidence(sc)` resolves evidence from the custom-inline field or the overlay.
