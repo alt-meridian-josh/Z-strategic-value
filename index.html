@@ -3754,6 +3754,11 @@ let state = {
   benefits: {totAnnual:0, totY1:0, totY2:0, totY3:0, rows:[]},
   costs: {yr0:0, yr1:0, yr2:0},
   customScenarios: [],
+  // Good/Better/Best (Chunk 20): an OPTIONAL list of named solution tiers (2–4). Empty
+  // ⇒ the tool behaves exactly as a single, non-tiered analysis. costPerSite scales
+  // every cost line by engagement.sites (per-store entry → company-wide).
+  tiers: [],
+  costPerSite: false,
 };
 
 // init inputs
@@ -3962,10 +3967,20 @@ function applyEngagement(p) {
   // 5) Per-lever NRV overrides: deprecated-ignored (Chunk 1) — the dead
   //    secondary-NRV stack that read them was removed; key is tolerated, not read.
 
-  // 5b) Custom levers / strategic enablers (deep-copied)
+  // 5b) Custom levers / strategic enablers (deep-copied; gatingByTier array cloned only
+  //     when present, so non-tiered files don't gain an undefined key).
   if(Array.isArray(p.customScenarios)) {
-    state.customScenarios = p.customScenarios.map(sc => Object.assign({}, sc, { inputs: Object.assign({}, sc.inputs) }));
+    state.customScenarios = p.customScenarios.map(sc => {
+      const copy = Object.assign({}, sc, { inputs: Object.assign({}, sc.inputs) });
+      if(Array.isArray(sc.gatingByTier)) copy.gatingByTier = sc.gatingByTier.slice();
+      return copy;
+    });
   }
+
+  // 5b-i) Solution tiers (Chunk 20): optional Good/Better/Best (2–4). Absent ⇒ [] ⇒
+  //       the tool stays a single, non-tiered analysis.
+  state.tiers = Array.isArray(p.tiers) ? p.tiers.map(t => Object.assign({}, t)) : [];
+  state.costPerSite = !!p.costPerSite;
 
   // 5c) Finance Credit — write straight to the controls (the source of truth); no globals.
   if(p.financeCredit) {
@@ -3994,7 +4009,12 @@ function applyEngagement(p) {
   // 7) Cost model — explicit rows own the model verbatim (sliders won't overwrite)
   if(p.contingencyRate != null) contingencyRate = p.contingencyRate;
   if(Array.isArray(p.costRows)) {
-    costRows = p.costRows.map(r => Object.assign({}, r));
+    costRows = p.costRows.map(r => {
+      const copy = Object.assign({}, r);
+      if(Array.isArray(r.qtyByTier))    copy.qtyByTier    = r.qtyByTier.slice();
+      if(Array.isArray(r.amountByTier)) copy.amountByTier = r.amountByTier.slice();
+      return copy;
+    });
     costRowsEdited = true;
     costRowsPreset = true;
     rebuildCostState();
@@ -4046,7 +4066,12 @@ function gatherEngagement() {
              g: +(document.getElementById('nrv-g')?.value ?? 0.035) },
     costs: { attritionRate: attritionRate, annualTraining: annualTraining },
     contingencyRate: contingencyRate,
-    costRows: (costRows || []).map(r => Object.assign({}, r))
+    costRows: (costRows || []).map(r => Object.assign({}, r)),
+    // Solution tiers (Chunk 20) — emitted only when present so non-tiered engagements
+    // round-trip byte-identical (no empty keys added to the historical schema).
+    ...(Array.isArray(state.tiers) && state.tiers.length
+        ? { tiers: state.tiers.map(t => Object.assign({}, t)), costPerSite: !!state.costPerSite }
+        : {})
   };
   // Embedded resolved snapshots of selected pack levers — offline-complete (Chunk 14).
   // Emitted only when non-empty so baseline engagements stay clean.
@@ -5488,6 +5513,10 @@ function calcNRV(activeScenarios, costs, opts) {
   const g = (opts.g != null) ? opts.g : 0.035;
   // Finance credit flows through opts now, not globals (Chunk 10).
   const fc = opts.financeCredit || FINANCE_CREDIT_DEFAULT;
+  // Tier gating (Chunk 20): an OPTIONAL per-lever multiplier (0..1) used by the
+  // Good/Better/Best comparison to express how much of a lever a given solution tier
+  // captures. Defaults to 1 ⇒ byte-identical output for every non-tiered engagement.
+  const gate = (typeof opts.gating === 'function') ? opts.gating : function(){ return 1; };
   const capex = costs.yr0 || 0;
   const annOpex = costs.yr1 || 0;
   // Attrition/backfill + training are schema-driven (Chunk 2; D4). attritionRate
@@ -5498,7 +5527,7 @@ function calcNRV(activeScenarios, costs, opts) {
   const totalAnnOpex = annOpex + attrition + training;
 
   const B0 = activeScenarios.reduce((sum, sc) => {
-    return sum + Math.max(0, calcSc(sc));
+    return sum + Math.max(0, calcSc(sc)) * gate(sc);
   }, 0);
 
   const yearlyData = [];
@@ -5515,7 +5544,7 @@ function calcNRV(activeScenarios, costs, opts) {
       const ann = Math.max(0, calcSc(sc));
       const ramp = RAMP[sc.rampType].y[t];
       const access = ACCESS_TIER[sc.accessibilityTier || 'configured'][t];
-      return sum + ann * ramp * access * overlapFactor(sc) * financeCreditFactor(sc, fc);
+      return sum + ann * ramp * access * overlapFactor(sc) * financeCreditFactor(sc, fc) * gate(sc);
     }, 0);
 
     // Decay-Avoided inherits the full normalization chain (Chunk 10). Its base is the
@@ -5576,6 +5605,81 @@ function calcNRV(activeScenarios, costs, opts) {
     yearlyData, B0, totalAnnOpex, capex, wacc, financeCredit: fc,
     useDecay, g, attrition, training, annOpex   // surfaced for the unified walkdown (Chunk 3)
   };
+}
+
+// ── TIERED COST + COMPARISON (Chunk 20) ──────────────────────────────────────
+// Good / Better / Best (or any 2–4 named tiers) is one shared lever list + one shared
+// cost list, where each cost line carries a per-tier quantity (or amount) and each
+// lever carries a per-tier gating %. Nothing new in the math: the pure engine above
+// runs once per tier. The tier dimension is the deliberate downselect of WHICH levers
+// land and WHAT fraction of each pool a given solution can actually capture.
+
+// Roll one tier's cost lines into the {yr0,yr1,yr2,…} shape calcNRV expects. A line's
+// per-tier dollars come from amountByTier[k] when present, else unitCost × (qtyByTier[k]
+// ?? qty). `costPerSite` scales every line by `sites` (per-store entry → company-wide),
+// matching the common per-store cost workbook. cadence one-time/upfront/other → Yr0;
+// everything else (recurring/annual/monthly/per-site/yr) → flat Yr1+. Pure.
+function tierCostsFor(costRows, k, opts) {
+  opts = opts || {};
+  const sites = (opts.costPerSite && opts.sites > 0) ? opts.sites : 1;
+  const ONE_TIME = { 'one-time':1, 'upfront':1, 'other':1 };
+  let yr0 = 0, yr1 = 0;
+  (costRows || []).forEach(r => {
+    if (r.contingency) return;
+    let perSite;
+    if (Array.isArray(r.amountByTier))   perSite = (r.amountByTier[k] || 0);
+    else if (Array.isArray(r.qtyByTier)) perSite = (r.qtyByTier[k] || 0) * (r.unitCost || 0);
+    else                                 perSite = (r.qty || 0) * (r.unitCost || 0);
+    let amt = perSite * sites;
+    if (r.cadence === 'monthly') amt *= 12;
+    if (ONE_TIME[r.cadence] || r.cadence == null) yr0 += amt;
+    else yr1 += amt;   // recurring / annual / per-site/yr
+  });
+  const cont = Math.round(yr0 * (opts.contingencyRate || 0));
+  return { yr0: yr0 + cont, yr1: yr1, yr2: yr1,
+           attritionRate:  (opts.attritionRate  != null ? opts.attritionRate  : 0),
+           annualTraining: (opts.annualTraining != null ? opts.annualTraining : 0) };
+}
+
+// Run the engine once per tier. `tiers` is [{id,name}, …] (2–4); `scenarios` is the
+// shared, already-active lever list; `costRows` the shared cost lines. Each tier reads
+// its own column via qtyByTier/amountByTier (costs) and gatingByTier (levers). Returns
+// one entry per tier with its rolled-up costs and full calcNRV result. Pure: no DOM or
+// module-global reads, so identical inputs → identical comparison.
+function calcTiers(tiers, scenarios, costRows, opts) {
+  opts = opts || {};
+  return (tiers || []).map((tier, k) => {
+    const costs = tierCostsFor(costRows, k, opts);
+    const gating = sc => {
+      const g = sc.gatingByTier;
+      return Array.isArray(g) ? (g[k] != null ? g[k] : 1) : 1;
+    };
+    const result = calcNRV(scenarios, costs, Object.assign({}, opts, { gating }));
+    return { id: tier.id, name: tier.name, costs, result };
+  });
+}
+
+// The shared active lever set: selected library levers + active custom levers. One
+// definition so the single-analysis path (renderROI) and the tier comparison agree.
+function activeScenariosForNRV() {
+  return SCENARIOS.filter(s => state.selectedIds.has(s.id))
+    .concat((state.customScenarios || []).filter(s => s.active));
+}
+
+// Convenience: drive calcTiers straight off live state (the shared active lever set +
+// the live cost rows), reading the toolbar knobs the single-analysis path already uses.
+function computeTierComparison() {
+  if (!Array.isArray(state.tiers) || !state.tiers.length) return null;
+  const scenarios = activeScenariosForNRV();
+  const sites = +(document.getElementById('i-sites')?.value) || 0;
+  return calcTiers(state.tiers, scenarios, costRows, {
+    wacc: +(document.getElementById('nrv-wacc')?.value) || 0.10,
+    useDecay: (document.getElementById('nrv-decay')?.value ?? '0') === '1',
+    g: +(document.getElementById('nrv-g')?.value ?? 0.035),
+    financeCredit: getFinanceCreditState(),
+    costPerSite: !!state.costPerSite, sites,
+    contingencyRate: contingencyRate, attritionRate: attritionRate, annualTraining: annualTraining
+  });
 }
 
 // Delay shifts the model (Chunk 11). N months of delay pushes the ENTIRE cashflow
@@ -6039,8 +6143,7 @@ function removeCustomScenario(idx) {
 // ── STEP 5: ROI & VALUE CASE ──
 function renderROI() {
   updateFinanceCreditUI();
-  const active = SCENARIOS.filter(s => state.selectedIds.has(s.id))
-    .concat((state.customScenarios || []).filter(s => s.active));
+  const active = activeScenariosForNRV();
   if (!active.length) {
     document.getElementById('kpi-grid').innerHTML = '<div class="muted">No scenarios selected.</div>';
     return;
