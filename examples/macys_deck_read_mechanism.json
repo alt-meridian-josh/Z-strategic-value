@@ -1,0 +1,318 @@
+{
+  "_type": "strategic-value-engagement",
+  "_version": 2,
+  "_label": "Macy's RFID + Workcloud — Tiered by Read Mechanism (deck)",
+  "_notice": "Good/Better/Best are all RFID — what changes per tier is the READ MECHANISM (snapshot → event → continuous), provided cumulatively. Value activation per lever is computed from the capability×value matrix (the deck's None/Partial/Full). The capability axis is general: add a technology capability like Machine Vision later and it slots into the same matrix and bundles. NPVs run through this tool's standard conservatism, so they sit below the deck's flat-ramp headline; the steady-state Best credited value reconciles to the deck's $99.0M.",
+  "mode": "analyst",
+  "engagement": {
+    "company": "Zebra",
+    "customer": "Macy's",
+    "title": "RFID + Workcloud — Value Gated by Read Mechanism (Good / Better / Best)",
+    "sites": 441,
+    "partners": "Workcloud",
+    "pain": "Size the RFID + Workcloud opportunity across three read-mechanism tiers (handheld snapshot → fixed control points → full RTLS); the same tags carry the data, what changes is how often and where they are read."
+  },
+  "verticals": [
+    "retail"
+  ],
+  "selectedIds": [],
+  "inputs": {},
+  "technologies": [
+    {
+      "id": "rfid",
+      "label": "RFID"
+    },
+    {
+      "id": "platform",
+      "label": "Software Platform"
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "snapshot",
+      "label": "Snapshot reads (handheld)",
+      "kind": "mechanism"
+    },
+    {
+      "id": "event",
+      "label": "Event reads (control points)",
+      "kind": "mechanism"
+    },
+    {
+      "id": "continuous",
+      "label": "Continuous stream (RTLS)",
+      "kind": "mechanism"
+    }
+  ],
+  "tiers": [
+    {
+      "id": "good",
+      "name": "Good (Handheld)",
+      "capabilityIds": [
+        "snapshot"
+      ]
+    },
+    {
+      "id": "better",
+      "name": "Better (+ Control Points)",
+      "capabilityIds": [
+        "snapshot",
+        "event"
+      ]
+    },
+    {
+      "id": "best",
+      "name": "Best (+ Full RTLS)",
+      "capabilityIds": [
+        "snapshot",
+        "event",
+        "continuous"
+      ]
+    }
+  ],
+  "costPerSite": true,
+  "capability": {
+    "snapshot": {
+      "MD-01": 0,
+      "MD-02": 0.3,
+      "MD-03": 0.15,
+      "MD-04": 0,
+      "MD-05": 0.7,
+      "MD-06": 0,
+      "MD-07": 0.3,
+      "MD-08": 0.5
+    },
+    "event": {
+      "MD-01": 1,
+      "MD-02": 0.65,
+      "MD-03": 0.55,
+      "MD-04": 0.5,
+      "MD-05": 1,
+      "MD-06": 1,
+      "MD-07": 0.5,
+      "MD-08": 1
+    },
+    "continuous": {
+      "MD-01": 1,
+      "MD-02": 1,
+      "MD-03": 1,
+      "MD-04": 1,
+      "MD-05": 1,
+      "MD-06": 1,
+      "MD-07": 1,
+      "MD-08": 1
+    }
+  },
+  "customScenarios": [
+    {
+      "id": "MD-01",
+      "name": "Shrink & asset protection",
+      "custom": true,
+      "active": true,
+      "theme": "Direct Cost & Spend",
+      "rampType": "hard_cost",
+      "accessibilityTier": "configured",
+      "haircut": 0,
+      "formula": "loss_pool * recovery_rate",
+      "inputs": {
+        "loss_pool": 187100000,
+        "recovery_rate": 0.2
+      }
+    },
+    {
+      "id": "MD-02",
+      "name": "Markdown reduction",
+      "custom": true,
+      "active": true,
+      "theme": "Revenue & Growth",
+      "rampType": "revenue",
+      "accessibilityTier": "configured",
+      "haircut": 0,
+      "formula": "loss_pool * recovery_rate",
+      "inputs": {
+        "loss_pool": 43000000,
+        "recovery_rate": 0.1
+      }
+    },
+    {
+      "id": "MD-03",
+      "name": "Out-of-stock recovery",
+      "custom": true,
+      "active": true,
+      "theme": "Revenue & Growth",
+      "rampType": "revenue",
+      "accessibilityTier": "configured",
+      "haircut": 0,
+      "formula": "loss_pool * recovery_rate",
+      "inputs": {
+        "loss_pool": 129461700,
+        "recovery_rate": 0.5
+      }
+    },
+    {
+      "id": "MD-04",
+      "name": "BOPIS fulfillment",
+      "custom": true,
+      "active": true,
+      "theme": "Revenue & Growth",
+      "rampType": "revenue",
+      "accessibilityTier": "configured",
+      "haircut": 0,
+      "formula": "loss_pool * recovery_rate",
+      "inputs": {
+        "loss_pool": 15535404,
+        "recovery_rate": 0.5
+      }
+    },
+    {
+      "id": "MD-05",
+      "name": "Labor recovered",
+      "custom": true,
+      "active": true,
+      "theme": "Labor & Human Capacity",
+      "rampType": "hard_labor",
+      "accessibilityTier": "configured",
+      "haircut": 0,
+      "formula": "loss_pool * recovery_rate",
+      "inputs": {
+        "loss_pool": 39912000,
+        "recovery_rate": 0.25
+      }
+    },
+    {
+      "id": "MD-06",
+      "name": "Chargeback & receiving",
+      "custom": true,
+      "active": true,
+      "theme": "Direct Cost & Spend",
+      "rampType": "hard_cost",
+      "accessibilityTier": "configured",
+      "haircut": 0,
+      "formula": "loss_pool * recovery_rate",
+      "inputs": {
+        "loss_pool": 15000000,
+        "recovery_rate": 0.25
+      }
+    },
+    {
+      "id": "MD-07",
+      "name": "Inventory & safety stock",
+      "custom": true,
+      "active": true,
+      "theme": "Working Capital",
+      "rampType": "hard_cost",
+      "accessibilityTier": "configured",
+      "haircut": 0,
+      "formula": "loss_pool * recovery_rate",
+      "inputs": {
+        "loss_pool": 263000000,
+        "recovery_rate": 0.05
+      }
+    },
+    {
+      "id": "MD-08",
+      "name": "Device consolidation",
+      "custom": true,
+      "active": true,
+      "theme": "Direct Cost & Spend",
+      "rampType": "hard_cost",
+      "accessibilityTier": "configured",
+      "haircut": 0,
+      "formula": "loss_pool * recovery_rate",
+      "inputs": {
+        "loss_pool": 5300000,
+        "recovery_rate": 0.75
+      }
+    }
+  ],
+  "financeCredit": {
+    "enabled": true,
+    "rate": 0.4
+  },
+  "wacc": 0.1,
+  "decay": {
+    "useDecay": false,
+    "g": 0.035
+  },
+  "costs": {
+    "attritionRate": 0,
+    "annualTraining": 0
+  },
+  "contingencyRate": 0,
+  "costRows": [
+    {
+      "category": "SNAPSHOT",
+      "label": "RFID handhelds, sleds & printers",
+      "cadence": "upfront",
+      "amount": 23100,
+      "capabilityId": "snapshot"
+    },
+    {
+      "category": "EVENT",
+      "label": "Fixed readers & control-point install",
+      "cadence": "upfront",
+      "amount": 40000,
+      "capabilityId": "event"
+    },
+    {
+      "category": "EVENT",
+      "label": "Control-point maintenance",
+      "cadence": "recurring",
+      "amount": 1500,
+      "capabilityId": "event"
+    },
+    {
+      "category": "CONTINUOUS",
+      "label": "RTLS overhead grid & commissioning",
+      "cadence": "upfront",
+      "amount": 95000,
+      "capabilityId": "continuous"
+    },
+    {
+      "category": "CONTINUOUS",
+      "label": "RTLS maintenance",
+      "cadence": "recurring",
+      "amount": 3500,
+      "capabilityId": "continuous"
+    },
+    {
+      "category": "SHARED",
+      "label": "RFID tags (apparel, footwear, specialty)",
+      "cadence": "upfront",
+      "amount": 9500
+    },
+    {
+      "category": "SHARED",
+      "label": "Software setup & integration",
+      "cadence": "upfront",
+      "amount": 8000
+    },
+    {
+      "category": "SHARED",
+      "label": "Services — PM, training, SI",
+      "cadence": "upfront",
+      "amount": 6500
+    },
+    {
+      "category": "SHARED",
+      "label": "Workcloud software subscription",
+      "cadence": "recurring",
+      "amount": 4535
+    },
+    {
+      "category": "SHARED",
+      "label": "Tag replenishment",
+      "cadence": "recurring",
+      "amount": 6000
+    },
+    {
+      "category": "SHARED",
+      "label": "Support & hardware maintenance",
+      "cadence": "recurring",
+      "amount": 5500
+    }
+  ],
+  "annotations": {
+    "engagement": "Value is gated by workflow, not by a different technology: all three tiers are RFID. Good provides snapshot reads (handheld); Better adds event reads at fixed control points; Best adds a continuous RTLS stream. Each tier provides its capabilities cumulatively. Each value lever is served None/Partial/Full by the best read mechanism the tier provides — shrink and chargeback need exit/receiving EVENTS (nothing at Good); out-of-stock, BOPIS and safety stock reach Full only with the CONTINUOUS stream. Cost rolls up from the hardware each mechanism needs. To expand to Machine Vision or BLE, add it as a capability, give each tier the capability, and fill its matrix row."
+  }
+}

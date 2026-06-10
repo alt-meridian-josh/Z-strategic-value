@@ -73,16 +73,16 @@ const gate = (w, id, k) => w.eval(`tierGateFor(state.customScenarios.find(s=>s.i
 
   // ── 6) Toggling a technology in a solution changes its cost and activation.
   const beforeCap = w.eval('tierCostsFor(costRows,1,tierCostOpts()).yr0');   // BLE Suite capex
-  w.setSolutionTech(1, 'rfid', true);   // add RFID to the BLE solution
+  w.setSolutionCap(1, 'rfid', true);   // add RFID to the BLE solution
   const afterCap = w.eval('tierCostsFor(costRows,1,tierCostOpts()).yr0');
   ok('adding RFID to a solution raises its capex by the RFID line ($1.8M)', afterCap - beforeCap === 1800000, String(afterCap - beforeCap));
   ok('adding RFID lifts that solution\'s inventory-accuracy activation to 100%', gate(w,'RC-01',1) === 1.0, String(gate(w,'RC-01',1)));
-  w.setSolutionTech(1, 'rfid', false);
+  w.setSolutionCap(1, 'rfid', false);
 
   // ── 7) Round-trip preserves tier technologyIds + capability matrix.
   const saved = w.eval('gatherEngagement()');
-  ok('save emits tiers with technologyIds and the capability matrix',
-     saved.tiers.every(t => Array.isArray(t.technologyIds)) && !!saved.capability && saved.capability.rfid['RC-01'] === 1.0);
+  ok('save emits tiers with capability bundles and the capability matrix',
+     saved.tiers.every(t => Array.isArray(t.capabilityIds) || Array.isArray(t.technologyIds)) && !!saved.capability && saved.capability.rfid['RC-01'] === 1.0);
   const w2 = loadApp().window; await ready(w2);
   w2.applyEngagement(saved); w2.ensureCosts();
   ok('reload reproduces identical computed activation', gate(w2,'RC-03',2) === 0.9 && gate(w2,'RC-01',0) === 1.0);
