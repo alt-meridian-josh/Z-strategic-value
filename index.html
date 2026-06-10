@@ -3767,9 +3767,12 @@ let state = {
   selectedTier: null,   // which tier the headline KPIs/walkdown reflect (Chunk 20)
   gating: {},           // per-tier gating keyed by lever id — lets LIBRARY levers (not
                         // just custom) be gated; merged with a lever's own gatingByTier.
-  capability: {},       // technology→value-lever capability matrix: { techId: { leverId:
-                        // 0..1 } }. Drives computed activation when a solution declares
-                        // technologyIds; manual gating overrides it.
+  capability: {},       // capability→value-lever matrix: { capabilityId: { leverId:
+                        // 0..1 } }. A capability is a read-mechanism (snapshot/event/
+                        // continuous) OR a technology (rfid/mv/ble). Drives computed
+                        // activation when a solution declares capabilityIds.
+  capabilities: [],     // optional capability CATALOG [{id,label,kind}] the solutions
+                        // draw from; falls back to the technology stack when empty.
 };
 
 // init inputs
@@ -3994,6 +3997,7 @@ function applyEngagement(p) {
   state.costPerSite = !!p.costPerSite;
   state.gating = (p.gating && typeof p.gating === 'object') ? JSON.parse(JSON.stringify(p.gating)) : {};
   state.capability = (p.capability && typeof p.capability === 'object') ? JSON.parse(JSON.stringify(p.capability)) : {};
+  state.capabilities = Array.isArray(p.capabilities) ? JSON.parse(JSON.stringify(p.capabilities)) : [];
   state.selectedTier = null;
 
   // 5c) Finance Credit — write straight to the controls (the source of truth); no globals.
@@ -4086,7 +4090,8 @@ function gatherEngagement() {
     ...(Array.isArray(state.tiers) && state.tiers.length
         ? { tiers: JSON.parse(JSON.stringify(state.tiers)), costPerSite: !!state.costPerSite,
             ...(state.gating && Object.keys(state.gating).length ? { gating: JSON.parse(JSON.stringify(state.gating)) } : {}),
-            ...(state.capability && Object.keys(state.capability).length ? { capability: JSON.parse(JSON.stringify(state.capability)) } : {}) }
+            ...(state.capability && Object.keys(state.capability).length ? { capability: JSON.parse(JSON.stringify(state.capability)) } : {}),
+            ...(Array.isArray(state.capabilities) && state.capabilities.length ? { capabilities: JSON.parse(JSON.stringify(state.capabilities)) } : {}) }
         : {})
   };
   // Embedded resolved snapshots of selected pack levers — offline-complete (Chunk 14).
@@ -5753,19 +5758,22 @@ function tierCostsFor(costRows, k, opts) {
   opts = opts || {};
   const sites = (opts.costPerSite && opts.sites > 0) ? opts.sites : 1;
   const ONE_TIME = { 'one-time':1, 'upfront':1, 'other':1 };
-  // Technology-composed solution: when the tier declares technologyIds, a cost line is
-  // included iff its technologyId is in the bundle (lines with no technologyId are
-  // shared/common and always included). Cost AGGREGATES from the bundle. Falls back to
-  // the manual qtyByTier/amountByTier model when the tier carries no technologyIds.
+  // Capability-composed solution: when the tier declares capabilityIds (or legacy
+  // technologyIds), a cost line is included iff its capabilityId/technologyId is in the
+  // bundle (untagged lines are shared/common and always included). Cost AGGREGATES from
+  // the bundle. Falls back to the manual qtyByTier/amountByTier model when the tier
+  // declares no capabilities.
   const tier = (opts.tiers && opts.tiers[k]) || null;
-  const techSet = (tier && Array.isArray(tier.technologyIds) && tier.technologyIds.length)
-    ? new Set(tier.technologyIds) : null;
+  const capIds = tier && (Array.isArray(tier.capabilityIds) ? tier.capabilityIds
+               : Array.isArray(tier.technologyIds) ? tier.technologyIds : null);
+  const capSet = (capIds && capIds.length) ? new Set(capIds) : null;
   let yr0 = 0, yr1 = 0;
   (costRows || []).forEach(r => {
     if (r.contingency) return;
     let perSite;
-    if (techSet) {
-      const included = r.technologyId ? techSet.has(r.technologyId) : true;
+    if (capSet) {
+      const tag = (r.capabilityId != null) ? r.capabilityId : r.technologyId;
+      const included = tag ? capSet.has(tag) : true;
       const base = (r.amount != null) ? r.amount : (r.qty || 0) * (r.unitCost || 0);
       perSite = included ? base : 0;
     }
@@ -5806,24 +5814,29 @@ function calcTiers(tiers, scenarios, costRows, opts) {
 }
 
 // The technologies a solution (tier k) bundles, as a Set, or null if not tech-composed.
-function solutionTechSet(k) {
+// The capabilities a solution (tier k) provides, as a Set, or null if none. A capability
+// is a read-mechanism (snapshot/event/continuous) or a technology (rfid/mv/ble). Reads
+// capabilityIds, falling back to the legacy technologyIds field.
+function solutionCapSet(k) {
   const t = state.tiers && state.tiers[k];
-  return (t && Array.isArray(t.technologyIds) && t.technologyIds.length) ? new Set(t.technologyIds) : null;
+  const ids = t && (Array.isArray(t.capabilityIds) ? t.capabilityIds
+            : Array.isArray(t.technologyIds) ? t.technologyIds : null);
+  return (ids && ids.length) ? new Set(ids) : null;
 }
-// A technology's capability for a value lever (0..1), or undefined if unset.
-function capabilityFor(techId, leverId) {
-  const row = state.capability && state.capability[techId];
+// A capability's contribution to a value lever (0..1), or undefined if unset.
+function capabilityFor(capId, leverId) {
+  const row = state.capability && state.capability[capId];
   return (row && row[leverId] != null) ? row[leverId] : undefined;
 }
-// Computed activation of a lever by solution k from its technology bundle, or null when
-// the tier isn't tech-composed (caller then falls back to authored gating). If a
-// capability matrix entry exists for any bundled tech, activation = the best-suited
-// tech's capability. Otherwise it's derived structurally from what the lever REQUIRES:
-// a solution serves the lever fully only if it includes every technology the lever needs.
+// Computed activation of a lever by solution k from the capabilities it provides, or null
+// when the tier provides none (caller then falls back to authored gating). If the matrix
+// scores any provided capability for this lever, activation = the best-suited one.
+// Otherwise it derives structurally from what the lever REQUIRES (served fully only if the
+// solution provides every required technology).
 function computedActivation(sc, k) {
-  const T = solutionTechSet(k);
+  const T = solutionCapSet(k);
   if (!T) return null;
-  const fromMatrix = [...T].map(t => capabilityFor(t, sc.id)).filter(v => v != null);
+  const fromMatrix = [...T].map(c => capabilityFor(c, sc.id)).filter(v => v != null);
   if (fromMatrix.length) return Math.max(...fromMatrix);
   const need = (typeof leverTechnologyIds === 'function') ? leverTechnologyIds(sc) : [];
   if (!need.length) return 1;
@@ -6799,30 +6812,29 @@ function renderROI() {
   renderCapabilityMatrix();
 }
 
-// Capability matrix editor (Chunk 20): technology × value-lever, each cell 0–100% = how
-// much of that lever the technology can capture. Shown only when at least one solution is
-// technology-composed. Empty cell = unset → activation falls back to the structural rule
-// (a solution serves a lever fully iff it includes every technology the lever requires).
+// Capability matrix editor (Chunk 20): capability × value-lever, each cell 0–100% = how
+// much of that lever the capability (read-mechanism or technology) can capture. Shown only
+// when at least one solution declares capabilities. Empty cell = unset → activation falls
+// back to the structural rule (served fully iff the solution provides every required tech).
 function renderCapabilityMatrix() {
   const host = document.getElementById('capability-matrix');
   if (!host) return;
-  const usedTechs = [...new Set((state.tiers || []).flatMap(t => Array.isArray(t.technologyIds) ? t.technologyIds : []))];
-  if (!usedTechs.length) { host.style.display = 'none'; host.innerHTML = ''; return; }
+  const usedCaps = [...new Set((state.tiers || []).flatMap(solutionCapIds))];
+  if (!usedCaps.length) { host.style.display = 'none'; host.innerHTML = ''; return; }
   const levers = activeScenariosForNRV();
   host.style.display = 'block';
-  const techLabel = id => (TECHNOLOGY_CATALOG.find(c => c.id === id) || {label:id}).label;
-  const head = `<tr><th style="text-align:left;padding:6px 10px;font-size:11px;color:var(--muted)">Technology \\ value lever</th>${
+  const head = `<tr><th style="text-align:left;padding:6px 10px;font-size:11px;color:var(--muted)">Capability \\ value lever</th>${
     levers.map(sc => `<th class="r" style="padding:6px 8px;font-size:10px;color:var(--muted);max-width:90px">${sc.name}</th>`).join('')}</tr>`;
-  const body = usedTechs.map(tid => `<tr>
-      <td style="padding:5px 10px;font-size:12px;font-weight:600">${techLabel(tid)}</td>
+  const body = usedCaps.map(cid => `<tr>
+      <td style="padding:5px 10px;font-size:12px;font-weight:600">${capabilityLabel(cid)}</td>
       ${levers.map(sc => {
-        const v = capabilityFor(tid, sc.id);
-        return `<td class="r" style="padding:4px 8px"><input class="editable-input num-input" value="${v!=null?+(v*100).toFixed(0):''}" placeholder="—" style="width:42px;text-align:right" onchange="setCapability('${tid}','${sc.id}',this.value)" title="${techLabel(tid)} → ${sc.name}">${v!=null?'<span style="color:var(--muted);font-size:9px">%</span>':''}</td>`;
+        const v = capabilityFor(cid, sc.id);
+        return `<td class="r" style="padding:4px 8px"><input class="editable-input num-input" value="${v!=null?+(v*100).toFixed(0):''}" placeholder="—" style="width:42px;text-align:right" onchange="setCapability('${cid}','${sc.id}',this.value)" title="${capabilityLabel(cid)} → ${sc.name}">${v!=null?'<span style="color:var(--muted);font-size:9px">%</span>':''}</td>`;
       }).join('')}
     </tr>`).join('');
   host.innerHTML = `<details style="border:1px solid var(--gray-300);border-radius:8px;overflow:hidden">
     <summary style="padding:10px 14px;background:var(--gray-50);cursor:pointer;font-size:13px;font-weight:600">
-      <span class="badge b-green">CAPABILITY</span> Technology × value-lever matrix
+      <span class="badge b-green">CAPABILITY</span> Capability × value-lever matrix
       <span style="font-weight:400;font-size:11px;color:var(--muted)"> — drives each solution's activation; blank = derive from required technologies</span>
     </summary>
     <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
@@ -7047,24 +7059,41 @@ function tierEnableHTML() {
     <button class="btn btn-outline" style="margin-left:auto;height:28px;padding:0 12px;font-size:12px;white-space:nowrap" onclick="enableTiers()">+ Enable solution tiers</button>
   </div>`;
 }
+// The capabilities solutions can draw from: an explicit engagement catalog if present
+// (e.g. read-mechanisms snapshot/event/continuous), else the declared technology stack,
+// else the full technology catalog. A capability = read-mechanism OR technology.
+function capabilityCatalog() {
+  if (Array.isArray(state.capabilities) && state.capabilities.length) return state.capabilities;
+  if (Array.isArray(engagementTechnologies) && engagementTechnologies.length) return engagementTechnologies;
+  return TECHNOLOGY_CATALOG;
+}
+function capabilityLabel(id) {
+  const c = capabilityCatalog().find(x => x.id === id) || TECHNOLOGY_CATALOG.find(x => x.id === id);
+  return c ? c.label : id;
+}
+function solutionCapIds(t) {
+  return Array.isArray(t.capabilityIds) ? t.capabilityIds
+       : Array.isArray(t.technologyIds) ? t.technologyIds : [];
+}
 function tierManagerHTML() {
+  const cat = capabilityCatalog();
   const rows = state.tiers.map((t,k) => {
-    const techs = new Set(Array.isArray(t.technologyIds) ? t.technologyIds : []);
-    const pills = TECHNOLOGY_CATALOG.map(c => {
-      const on = techs.has(c.id);
-      return `<span onclick="setSolutionTech(${k},'${c.id}',${!on})" title="Toggle ${c.label} in this solution"
+    const have = new Set(solutionCapIds(t));
+    const pills = cat.map(c => {
+      const on = have.has(c.id);
+      return `<span onclick="setSolutionCap(${k},'${c.id}',${!on})" title="Toggle ${c.label} in this solution"
         style="cursor:pointer;font-size:10px;padding:2px 7px;border-radius:10px;border:1px solid ${on?'var(--brand-green,#16794C)':'var(--gray-300)'};background:${on?'rgba(22,121,76,.10)':'#fff'};color:${on?'var(--brand-green,#16794C)':'var(--muted)'}">${c.label}</span>`;
     }).join(' ');
     return `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 0;border-top:1px solid var(--gray-200)">
-      <input class="editable-input" value="${(t.name||'').replace(/"/g,'&quot;')}" style="width:130px;font-size:12px;font-weight:600" onchange="renameTier(${k},this.value)">
+      <input class="editable-input" value="${(t.name||'').replace(/"/g,'&quot;')}" style="width:140px;font-size:12px;font-weight:600" onchange="renameTier(${k},this.value)">
       ${state.tiers.length>2 ? `<span onclick="removeTier(${k})" title="Remove solution" style="cursor:pointer;color:var(--muted);font-size:12px">✕</span>` : ''}
-      <span style="font-size:10px;color:var(--muted);margin-left:2px">includes:</span> ${pills}
+      <span style="font-size:10px;color:var(--muted);margin-left:2px">provides:</span> ${pills}
     </div>`;
   }).join('');
   return `<div style="padding:8px 12px;border:1px solid var(--gray-300);border-radius:6px;background:var(--gray-50)">
     <div style="display:flex;align-items:center;gap:8px">
       <span class="badge b-green">SOLUTIONS</span>
-      <span style="font-size:11px;color:var(--muted)">Each solution bundles technologies — cost rolls up from them, value activation is computed from the capability matrix (override any cell).</span>
+      <span style="font-size:11px;color:var(--muted)">Each solution provides capabilities (read-mechanisms and/or technologies) — cost rolls up from them, value activation is computed from the capability matrix (override any cell).</span>
       ${state.tiers.length<4 ? `<button class="btn btn-outline" style="margin-left:auto;height:24px;padding:0 9px;font-size:11px" onclick="addTier()">+ Solution</button>` : '<span style="margin-left:auto"></span>'}
       <button class="btn btn-outline" style="height:24px;padding:0 9px;font-size:11px" onclick="disableTiers()" title="Collapse to a single analysis">Turn off</button>
     </div>
@@ -7072,18 +7101,19 @@ function tierManagerHTML() {
   </div>`;
 }
 
-// Toggle a technology in a solution's bundle. Declaring any technology switches that
-// solution to technology-composed cost + computed activation.
-function setSolutionTech(k, techId, on) {
+// Toggle a capability in a solution's bundle. Declaring any capability switches that
+// solution to capability-composed cost + computed activation. Writes capabilityIds.
+function setSolutionCap(k, capId, on) {
   const t = state.tiers[k]; if (!t) return;
-  let ids = Array.isArray(t.technologyIds) ? t.technologyIds.slice() : [];
-  if (on) { if (!ids.includes(techId)) ids.push(techId); }
-  else    { ids = ids.filter(x => x !== techId); }
-  t.technologyIds = ids;
-  // Surface the technology in the engagement stack too (drives cost-row tagging + filters).
-  if (on && !(engagementTechnologies || []).some(x => x.id === techId)) {
-    const cat = TECHNOLOGY_CATALOG.find(c => c.id === techId);
-    if (cat) engagementTechnologies.push({ id: cat.id, label: cat.label });
+  let ids = solutionCapIds(t).slice();
+  if (on) { if (!ids.includes(capId)) ids.push(capId); }
+  else    { ids = ids.filter(x => x !== capId); }
+  t.capabilityIds = ids;
+  if ('technologyIds' in t) delete t.technologyIds;   // migrate legacy field to capabilityIds
+  // If the capability is a technology, surface it in the engagement stack (cost-row tagging).
+  if (on && TECHNOLOGY_CATALOG.some(c => c.id === capId) && !(engagementTechnologies||[]).some(x => x.id === capId)) {
+    const cat = TECHNOLOGY_CATALOG.find(c => c.id === capId);
+    engagementTechnologies.push({ id: cat.id, label: cat.label });
   }
   rebuildCostState();
   refreshTierViews();
