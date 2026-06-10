@@ -1,0 +1,703 @@
+{
+  "_type": "strategic-value-engagement",
+  "_version": 2,
+  "_label": "Macy's RFID + Workcloud — Tiered Value Model",
+  "_notice": "Tiered (Good/Better/Best) worked example. Cost lines and value pools are transcribed from the Macy's Tiered Value Model workbook (per-store costs × 441 stores). Figures run through THIS tool's standard conservatism (ramps with post-peak decay, per-lever accessibility tiers, WACC 10%), so per-tier NPVs land below the workbook's flat-ramp v4.0 headline — see annotation. The tier MECHANISM (per-tier cost quantities + per-tier lever gating) reconciles to the workbook's steady-state credited column to the dollar.",
+  "mode": "analyst",
+  "engagement": {
+    "company": "Zebra",
+    "customer": "Macy's",
+    "title": "RFID + Workcloud — Tiered Value Model (Good / Better / Best)",
+    "sites": 441,
+    "seller": "",
+    "email": "",
+    "partners": "Workcloud",
+    "pain": "Size the RFID + Workcloud opportunity across three hardware tiers (handheld snapshot → control points → full RTLS) and compare ROI as the value gated by read mechanism rises with each tier."
+  },
+  "verticals": [
+    "retail"
+  ],
+  "selectedIds": [],
+  "inputs": {},
+  "tiers": [
+    {
+      "id": "good",
+      "name": "Good (Handheld)"
+    },
+    {
+      "id": "better",
+      "name": "Better (+ Control Points)"
+    },
+    {
+      "id": "best",
+      "name": "Best (Full RTLS)"
+    }
+  ],
+  "costPerSite": true,
+  "customScenarios": [
+    {
+      "id": "MCY-01",
+      "name": "Shrink reduction",
+      "custom": true,
+      "active": true,
+      "theme": "Direct Cost & Spend",
+      "rampType": "hard_cost",
+      "accessibilityTier": "infrastructure",
+      "haircut": 0,
+      "gatingByTier": [
+        0.2,
+        0.75,
+        1.0
+      ],
+      "formula": "loss_pool * recovery_rate",
+      "inputs": {
+        "loss_pool": 187100000,
+        "recovery_rate": 0.2
+      },
+      "evidence": {
+        "confidence": "B",
+        "citation": "Rate: NRF 20-40% (used 20%). Pool: NRF ~1.43% of sales × revenue (benchmark, not Macy's-reported)"
+      }
+    },
+    {
+      "id": "MCY-02",
+      "name": "Markdown reduction",
+      "custom": true,
+      "active": true,
+      "theme": "Revenue & Growth",
+      "rampType": "revenue",
+      "accessibilityTier": "configured",
+      "haircut": 0,
+      "gatingByTier": [
+        0.3,
+        0.65,
+        1.0
+      ],
+      "formula": "loss_pool * recovery_rate",
+      "inputs": {
+        "loss_pool": 43000000,
+        "recovery_rate": 0.1
+      },
+      "evidence": {
+        "confidence": "B",
+        "citation": "Rate: Accenture 10-20% (used 10%). Pool: unsourced, does not reconcile, recommend removing"
+      }
+    },
+    {
+      "id": "MCY-03",
+      "name": "Out-of-stock recovery",
+      "custom": true,
+      "active": true,
+      "theme": "Revenue & Growth",
+      "rampType": "revenue",
+      "accessibilityTier": "configured",
+      "haircut": 0,
+      "gatingByTier": [
+        0.15,
+        0.55,
+        1.0
+      ],
+      "formula": "loss_pool * recovery_rate",
+      "inputs": {
+        "loss_pool": 129461700,
+        "recovery_rate": 0.5
+      },
+      "evidence": {
+        "confidence": "B",
+        "citation": "Rate: ECR 50-80% (used 50%). Pool: revenue × 2.5% OOS × margin (benchmark assumption)"
+      }
+    },
+    {
+      "id": "MCY-04",
+      "name": "BOPIS fulfillment",
+      "custom": true,
+      "active": true,
+      "theme": "Revenue & Growth",
+      "rampType": "revenue",
+      "accessibilityTier": "configured",
+      "haircut": 0,
+      "gatingByTier": [
+        0.15,
+        0.5,
+        1.0
+      ],
+      "formula": "loss_pool * recovery_rate",
+      "inputs": {
+        "loss_pool": 15535404,
+        "recovery_rate": 0.5
+      },
+      "evidence": {
+        "confidence": "B",
+        "citation": "Rate: Auburn RFID Lab (used 50%). Pool: omni revenue × cancel × margin (benchmark assumption)"
+      }
+    },
+    {
+      "id": "MCY-05",
+      "name": "Labor efficiency",
+      "custom": true,
+      "active": true,
+      "theme": "Labor & Human Capacity",
+      "rampType": "hard_labor",
+      "accessibilityTier": "configured",
+      "haircut": 0,
+      "gatingByTier": [
+        0.7,
+        0.9,
+        1.0
+      ],
+      "formula": "loss_pool * recovery_rate",
+      "inputs": {
+        "loss_pool": 39912000,
+        "recovery_rate": 0.25
+      },
+      "evidence": {
+        "confidence": "B",
+        "citation": "Rate: GS1 20-50% (used 25%). Pool: headcount × hrs × 50wk × $24 (discovery + engine default)"
+      }
+    },
+    {
+      "id": "MCY-06",
+      "name": "Chargeback / receiving",
+      "custom": true,
+      "active": true,
+      "theme": "Direct Cost & Spend",
+      "rampType": "hard_cost",
+      "accessibilityTier": "infrastructure",
+      "haircut": 0,
+      "gatingByTier": [
+        0.25,
+        0.9,
+        1.0
+      ],
+      "formula": "loss_pool * recovery_rate",
+      "inputs": {
+        "loss_pool": 15000000,
+        "recovery_rate": 0.25
+      },
+      "evidence": {
+        "confidence": "B",
+        "citation": "Rate: GS1 receiving (used 25%). Pool: analyst estimate, pending Macy's receiving data"
+      }
+    }
+  ],
+  "financeCredit": {
+    "enabled": true,
+    "rate": 0.4
+  },
+  "wacc": 0.1,
+  "decay": {
+    "useDecay": false,
+    "g": 0.035
+  },
+  "costs": {
+    "attritionRate": 0,
+    "annualTraining": 0
+  },
+  "contingencyRate": 0,
+  "costRows": [
+    {
+      "category": "Hardware – Handheld",
+      "label": "RFID handheld sled (RFD40)",
+      "cadence": "upfront",
+      "unitCost": 1400,
+      "qtyByTier": [
+        6,
+        6,
+        6
+      ],
+      "note": "per-unit list"
+    },
+    {
+      "category": "Hardware – Handheld",
+      "label": "Mobile computer (TC5x)",
+      "cadence": "upfront",
+      "unitCost": 1600,
+      "qtyByTier": [
+        6,
+        6,
+        6
+      ]
+    },
+    {
+      "category": "Hardware – Handheld",
+      "label": "Charging cradle",
+      "cadence": "upfront",
+      "unitCost": 250,
+      "qtyByTier": [
+        6,
+        6,
+        6
+      ]
+    },
+    {
+      "category": "Hardware – Handheld",
+      "label": "Mobile RFID printer (ZQ630)",
+      "cadence": "upfront",
+      "unitCost": 700,
+      "qtyByTier": [
+        3,
+        3,
+        3
+      ]
+    },
+    {
+      "category": "Hardware – Handheld",
+      "label": "Handheld spares buffer",
+      "cadence": "upfront",
+      "unitCost": 1500,
+      "qtyByTier": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "category": "Hardware – Control Points",
+      "label": "Fixed reader FX9600 – receiving",
+      "cadence": "upfront",
+      "unitCost": 2200,
+      "qtyByTier": [
+        0,
+        2,
+        2
+      ]
+    },
+    {
+      "category": "Hardware – Control Points",
+      "label": "Fixed reader – exits",
+      "cadence": "upfront",
+      "unitCost": 2200,
+      "qtyByTier": [
+        0,
+        4,
+        4
+      ]
+    },
+    {
+      "category": "Hardware – Control Points",
+      "label": "Fixed reader – zone boundaries",
+      "cadence": "upfront",
+      "unitCost": 2200,
+      "qtyByTier": [
+        0,
+        2,
+        3
+      ]
+    },
+    {
+      "category": "Hardware – Control Points",
+      "label": "Fixed reader – DC outbound portal",
+      "cadence": "upfront",
+      "unitCost": 2200,
+      "qtyByTier": [
+        0,
+        1,
+        1
+      ]
+    },
+    {
+      "category": "Hardware – Control Points",
+      "label": "RFID antennas",
+      "cadence": "upfront",
+      "unitCost": 180,
+      "qtyByTier": [
+        0,
+        30,
+        36
+      ]
+    },
+    {
+      "category": "Hardware – Control Points",
+      "label": "Network cabling & drops",
+      "cadence": "upfront",
+      "unitCost": 400,
+      "qtyByTier": [
+        0,
+        10,
+        12
+      ],
+      "note": "per drop"
+    },
+    {
+      "category": "Hardware – Control Points",
+      "label": "PoE switch",
+      "cadence": "upfront",
+      "unitCost": 1400,
+      "qtyByTier": [
+        0,
+        2,
+        2
+      ]
+    },
+    {
+      "category": "Hardware – Control Points",
+      "label": "Reader mounting hardware",
+      "cadence": "upfront",
+      "unitCost": 300,
+      "qtyByTier": [
+        0,
+        9,
+        10
+      ]
+    },
+    {
+      "category": "Hardware – Control Points",
+      "label": "Exit / video integration",
+      "cadence": "upfront",
+      "unitCost": 1500,
+      "qtyByTier": [
+        0,
+        2,
+        2
+      ]
+    },
+    {
+      "category": "Hardware – Full RTLS",
+      "label": "Overhead grid reader",
+      "cadence": "upfront",
+      "unitCost": 2200,
+      "qtyByTier": [
+        0,
+        0,
+        20
+      ],
+      "note": "store-wide grid"
+    },
+    {
+      "category": "Hardware – Full RTLS",
+      "label": "Grid antennas",
+      "cadence": "upfront",
+      "unitCost": 180,
+      "qtyByTier": [
+        0,
+        0,
+        80
+      ]
+    },
+    {
+      "category": "Hardware – Full RTLS",
+      "label": "Overhead mounting / infrastructure",
+      "cadence": "upfront",
+      "unitCost": 300,
+      "qtyByTier": [
+        0,
+        0,
+        20
+      ]
+    },
+    {
+      "category": "Hardware – Full RTLS",
+      "label": "Network backbone drops",
+      "cadence": "upfront",
+      "unitCost": 400,
+      "qtyByTier": [
+        0,
+        0,
+        20
+      ]
+    },
+    {
+      "category": "Hardware – Full RTLS",
+      "label": "Edge compute / gateway",
+      "cadence": "upfront",
+      "unitCost": 3500,
+      "qtyByTier": [
+        0,
+        0,
+        2
+      ]
+    },
+    {
+      "category": "Hardware – Full RTLS",
+      "label": "RTLS calibration / commissioning",
+      "cadence": "upfront",
+      "unitCost": 5000,
+      "qtyByTier": [
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "category": "Tags",
+      "label": "RFID tags – apparel",
+      "cadence": "upfront",
+      "unitCost": 0.05,
+      "qtyByTier": [
+        120000,
+        120000,
+        130000
+      ],
+      "note": "$0.05/tag"
+    },
+    {
+      "category": "Tags",
+      "label": "RFID tags – footwear",
+      "cadence": "upfront",
+      "unitCost": 0.05,
+      "qtyByTier": [
+        20000,
+        20000,
+        24000
+      ]
+    },
+    {
+      "category": "Tags",
+      "label": "Specialty on-metal tags",
+      "cadence": "upfront",
+      "unitCost": 0.5,
+      "qtyByTier": [
+        5000,
+        7000,
+        8000
+      ],
+      "note": "jewelry/fragrance"
+    },
+    {
+      "category": "Tags",
+      "label": "Tag encoding / commissioning labor",
+      "cadence": "upfront",
+      "amountByTier": [
+        2000,
+        2000,
+        2000
+      ],
+      "note": "allowance"
+    },
+    {
+      "category": "Tags",
+      "label": "Source-tagging vendor setup",
+      "cadence": "upfront",
+      "amountByTier": [
+        1500,
+        1500,
+        1500
+      ],
+      "note": "allowance"
+    },
+    {
+      "category": "Software setup",
+      "label": "Workcloud Inventory Visibility setup",
+      "cadence": "upfront",
+      "amountByTier": [
+        2500,
+        3000,
+        4000
+      ],
+      "note": "allowance"
+    },
+    {
+      "category": "Software setup",
+      "label": "Workcloud Sync setup",
+      "cadence": "upfront",
+      "amountByTier": [
+        1500,
+        2000,
+        2500
+      ],
+      "note": "allowance"
+    },
+    {
+      "category": "Software setup",
+      "label": "Actionable Intelligence (ZAI) setup",
+      "cadence": "upfront",
+      "amountByTier": [
+        0,
+        1500,
+        2500
+      ],
+      "note": "allowance"
+    },
+    {
+      "category": "Software setup",
+      "label": "Integrations (POS / OMS / video / middleware)",
+      "cadence": "upfront",
+      "amountByTier": [
+        1500,
+        2500,
+        4000
+      ],
+      "note": "allowance"
+    },
+    {
+      "category": "Services",
+      "label": "Site survey & RF planning",
+      "cadence": "upfront",
+      "amountByTier": [
+        1000,
+        2000,
+        4000
+      ],
+      "note": "allowance"
+    },
+    {
+      "category": "Services",
+      "label": "Install labor – handheld rollout",
+      "cadence": "upfront",
+      "amountByTier": [
+        1500,
+        1500,
+        1500
+      ],
+      "note": "allowance"
+    },
+    {
+      "category": "Services",
+      "label": "Install labor – control points",
+      "cadence": "upfront",
+      "amountByTier": [
+        0,
+        3500,
+        3500
+      ],
+      "note": "allowance"
+    },
+    {
+      "category": "Services",
+      "label": "Install labor – RTLS grid",
+      "cadence": "upfront",
+      "amountByTier": [
+        0,
+        0,
+        12000
+      ],
+      "note": "allowance"
+    },
+    {
+      "category": "Services",
+      "label": "Professional services / SI",
+      "cadence": "upfront",
+      "amountByTier": [
+        1500,
+        2500,
+        5000
+      ],
+      "note": "allowance"
+    },
+    {
+      "category": "Services",
+      "label": "Project management",
+      "cadence": "upfront",
+      "amountByTier": [
+        1000,
+        1500,
+        3000
+      ],
+      "note": "allowance"
+    },
+    {
+      "category": "Services",
+      "label": "Training & change management",
+      "cadence": "upfront",
+      "amountByTier": [
+        500,
+        1000,
+        2000
+      ],
+      "note": "allowance"
+    },
+    {
+      "category": "Recurring",
+      "label": "Workcloud software subscription",
+      "cadence": "recurring",
+      "amountByTier": [
+        4535,
+        4535,
+        4535
+      ],
+      "note": "deal term"
+    },
+    {
+      "category": "Recurring",
+      "label": "Actionable Intelligence subscription",
+      "cadence": "recurring",
+      "amountByTier": [
+        0,
+        2500,
+        4000
+      ],
+      "note": "allowance"
+    },
+    {
+      "category": "Recurring",
+      "label": "Tag replenishment",
+      "cadence": "recurring",
+      "unitCost": 0.05,
+      "qtyByTier": [
+        120000,
+        130000,
+        140000
+      ],
+      "note": "~40% churn"
+    },
+    {
+      "category": "Recurring",
+      "label": "Hardware maintenance – handheld",
+      "cadence": "recurring",
+      "amountByTier": [
+        1200,
+        1200,
+        1200
+      ],
+      "note": "allowance"
+    },
+    {
+      "category": "Recurring",
+      "label": "Hardware maintenance – fixed / CP / RTLS",
+      "cadence": "recurring",
+      "amountByTier": [
+        0,
+        1500,
+        3500
+      ],
+      "note": "allowance"
+    },
+    {
+      "category": "Recurring",
+      "label": "Device attrition (handheld ~20%/yr)",
+      "cadence": "recurring",
+      "amountByTier": [
+        2000,
+        2000,
+        2000
+      ],
+      "note": "allowance"
+    },
+    {
+      "category": "Recurring",
+      "label": "Network / connectivity",
+      "cadence": "recurring",
+      "amountByTier": [
+        800,
+        1200,
+        2000
+      ],
+      "note": "allowance"
+    },
+    {
+      "category": "Recurring",
+      "label": "Ongoing training / support",
+      "cadence": "recurring",
+      "amountByTier": [
+        1000,
+        1300,
+        1800
+      ],
+      "note": "allowance"
+    },
+    {
+      "category": "Recurring",
+      "label": "Tag printer supplies",
+      "cadence": "recurring",
+      "amountByTier": [
+        500,
+        600,
+        700
+      ],
+      "note": "allowance"
+    }
+  ],
+  "annotations": {
+    "engagement": "Three solution tiers gated by read mechanism: Good (handheld snapshot reads), Better (+ fixed readers at chokepoints), Best (full store-wide RTLS). Each value lever is gated per tier (Gating Good/Better/Best) because continuous-dependent value cannot be served by handheld snapshots. Costs are per-store and scale by the 441 in-scope stores. Finance credit (40%) applies to revenue-type levers via the engine's standard rule, matching the workbook's finance-credit column exactly. Accessibility tiers are set per lever on their merits: durable hard-cost visibility (shrink, chargeback) = infrastructure; revenue and labor levers = configured. NPVs are below the workbook's $176.5M-era v4.0 figure because this tool applies conservative ramps with post-peak decay and accessibility compression, which the flat-ramp workbook does not."
+  }
+}

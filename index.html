@@ -1241,6 +1241,7 @@ svg{max-width:100%;height:auto}
     <strong>Finance Credit on.</strong> Revenue-recovery benefit types (revenue, working-capital, soft) are credited at <span id="fin-credit-note-rate">40</span>% of modeled value; hard labor/cost benefits at 100%. Rationale: benefit estimates are risk-adjusted downward by likelihood-of-realization and trackability (Forrester <em>Total Economic Impact</em> methodology), and RFID sales uplift — though real at 1.5–5.5% — is the hardest benefit to attribute (Beck/ECR, <em>Measuring the Impact of RFID in Retailing</em>, 2018). The credit rate is a deliberately conservative assumption, not a published constant — adjust it to your finance team's standard.
   </div>
 
+  <div id="tier-comparison" style="display:none;margin:0 0 18px"></div>
   <div id="bcr-banner" class="nrv-bcr-flag" style="display:none;margin:0 0 16px"></div>
   <div id="evidence-conc-flag" style="display:none;margin:0 0 16px"></div>
       <div class="kpi-grid" id="kpi-grid"></div>
@@ -3754,6 +3755,12 @@ let state = {
   benefits: {totAnnual:0, totY1:0, totY2:0, totY3:0, rows:[]},
   costs: {yr0:0, yr1:0, yr2:0},
   customScenarios: [],
+  // Good/Better/Best (Chunk 20): an OPTIONAL list of named solution tiers (2–4). Empty
+  // ⇒ the tool behaves exactly as a single, non-tiered analysis. costPerSite scales
+  // every cost line by engagement.sites (per-store entry → company-wide).
+  tiers: [],
+  costPerSite: false,
+  selectedTier: null,   // which tier the headline KPIs/walkdown reflect (Chunk 20)
 };
 
 // init inputs
@@ -3962,10 +3969,20 @@ function applyEngagement(p) {
   // 5) Per-lever NRV overrides: deprecated-ignored (Chunk 1) — the dead
   //    secondary-NRV stack that read them was removed; key is tolerated, not read.
 
-  // 5b) Custom levers / strategic enablers (deep-copied)
+  // 5b) Custom levers / strategic enablers (deep-copied; gatingByTier array cloned only
+  //     when present, so non-tiered files don't gain an undefined key).
   if(Array.isArray(p.customScenarios)) {
-    state.customScenarios = p.customScenarios.map(sc => Object.assign({}, sc, { inputs: Object.assign({}, sc.inputs) }));
+    state.customScenarios = p.customScenarios.map(sc => {
+      const copy = Object.assign({}, sc, { inputs: Object.assign({}, sc.inputs) });
+      if(Array.isArray(sc.gatingByTier)) copy.gatingByTier = sc.gatingByTier.slice();
+      return copy;
+    });
   }
+
+  // 5b-i) Solution tiers (Chunk 20): optional Good/Better/Best (2–4). Absent ⇒ [] ⇒
+  //       the tool stays a single, non-tiered analysis.
+  state.tiers = Array.isArray(p.tiers) ? p.tiers.map(t => Object.assign({}, t)) : [];
+  state.costPerSite = !!p.costPerSite;
 
   // 5c) Finance Credit — write straight to the controls (the source of truth); no globals.
   if(p.financeCredit) {
@@ -3994,7 +4011,12 @@ function applyEngagement(p) {
   // 7) Cost model — explicit rows own the model verbatim (sliders won't overwrite)
   if(p.contingencyRate != null) contingencyRate = p.contingencyRate;
   if(Array.isArray(p.costRows)) {
-    costRows = p.costRows.map(r => Object.assign({}, r));
+    costRows = p.costRows.map(r => {
+      const copy = Object.assign({}, r);
+      if(Array.isArray(r.qtyByTier))    copy.qtyByTier    = r.qtyByTier.slice();
+      if(Array.isArray(r.amountByTier)) copy.amountByTier = r.amountByTier.slice();
+      return copy;
+    });
     costRowsEdited = true;
     costRowsPreset = true;
     rebuildCostState();
@@ -4046,7 +4068,12 @@ function gatherEngagement() {
              g: +(document.getElementById('nrv-g')?.value ?? 0.035) },
     costs: { attritionRate: attritionRate, annualTraining: annualTraining },
     contingencyRate: contingencyRate,
-    costRows: (costRows || []).map(r => Object.assign({}, r))
+    costRows: (costRows || []).map(r => Object.assign({}, r)),
+    // Solution tiers (Chunk 20) — emitted only when present so non-tiered engagements
+    // round-trip byte-identical (no empty keys added to the historical schema).
+    ...(Array.isArray(state.tiers) && state.tiers.length
+        ? { tiers: state.tiers.map(t => Object.assign({}, t)), costPerSite: !!state.costPerSite }
+        : {})
   };
   // Embedded resolved snapshots of selected pack levers — offline-complete (Chunk 14).
   // Emitted only when non-empty so baseline engagements stay clean.
@@ -5488,6 +5515,10 @@ function calcNRV(activeScenarios, costs, opts) {
   const g = (opts.g != null) ? opts.g : 0.035;
   // Finance credit flows through opts now, not globals (Chunk 10).
   const fc = opts.financeCredit || FINANCE_CREDIT_DEFAULT;
+  // Tier gating (Chunk 20): an OPTIONAL per-lever multiplier (0..1) used by the
+  // Good/Better/Best comparison to express how much of a lever a given solution tier
+  // captures. Defaults to 1 ⇒ byte-identical output for every non-tiered engagement.
+  const gate = (typeof opts.gating === 'function') ? opts.gating : function(){ return 1; };
   const capex = costs.yr0 || 0;
   const annOpex = costs.yr1 || 0;
   // Attrition/backfill + training are schema-driven (Chunk 2; D4). attritionRate
@@ -5498,7 +5529,7 @@ function calcNRV(activeScenarios, costs, opts) {
   const totalAnnOpex = annOpex + attrition + training;
 
   const B0 = activeScenarios.reduce((sum, sc) => {
-    return sum + Math.max(0, calcSc(sc));
+    return sum + Math.max(0, calcSc(sc)) * gate(sc);
   }, 0);
 
   const yearlyData = [];
@@ -5515,7 +5546,7 @@ function calcNRV(activeScenarios, costs, opts) {
       const ann = Math.max(0, calcSc(sc));
       const ramp = RAMP[sc.rampType].y[t];
       const access = ACCESS_TIER[sc.accessibilityTier || 'configured'][t];
-      return sum + ann * ramp * access * overlapFactor(sc) * financeCreditFactor(sc, fc);
+      return sum + ann * ramp * access * overlapFactor(sc) * financeCreditFactor(sc, fc) * gate(sc);
     }, 0);
 
     // Decay-Avoided inherits the full normalization chain (Chunk 10). Its base is the
@@ -5576,6 +5607,81 @@ function calcNRV(activeScenarios, costs, opts) {
     yearlyData, B0, totalAnnOpex, capex, wacc, financeCredit: fc,
     useDecay, g, attrition, training, annOpex   // surfaced for the unified walkdown (Chunk 3)
   };
+}
+
+// ── TIERED COST + COMPARISON (Chunk 20) ──────────────────────────────────────
+// Good / Better / Best (or any 2–4 named tiers) is one shared lever list + one shared
+// cost list, where each cost line carries a per-tier quantity (or amount) and each
+// lever carries a per-tier gating %. Nothing new in the math: the pure engine above
+// runs once per tier. The tier dimension is the deliberate downselect of WHICH levers
+// land and WHAT fraction of each pool a given solution can actually capture.
+
+// Roll one tier's cost lines into the {yr0,yr1,yr2,…} shape calcNRV expects. A line's
+// per-tier dollars come from amountByTier[k] when present, else unitCost × (qtyByTier[k]
+// ?? qty). `costPerSite` scales every line by `sites` (per-store entry → company-wide),
+// matching the common per-store cost workbook. cadence one-time/upfront/other → Yr0;
+// everything else (recurring/annual/monthly/per-site/yr) → flat Yr1+. Pure.
+function tierCostsFor(costRows, k, opts) {
+  opts = opts || {};
+  const sites = (opts.costPerSite && opts.sites > 0) ? opts.sites : 1;
+  const ONE_TIME = { 'one-time':1, 'upfront':1, 'other':1 };
+  let yr0 = 0, yr1 = 0;
+  (costRows || []).forEach(r => {
+    if (r.contingency) return;
+    let perSite;
+    if (Array.isArray(r.amountByTier))   perSite = (r.amountByTier[k] || 0);
+    else if (Array.isArray(r.qtyByTier)) perSite = (r.qtyByTier[k] || 0) * (r.unitCost || 0);
+    else                                 perSite = (r.qty || 0) * (r.unitCost || 0);
+    let amt = perSite * sites;
+    if (r.cadence === 'monthly') amt *= 12;
+    if (ONE_TIME[r.cadence] || r.cadence == null) yr0 += amt;
+    else yr1 += amt;   // recurring / annual / per-site/yr
+  });
+  const cont = Math.round(yr0 * (opts.contingencyRate || 0));
+  return { yr0: yr0 + cont, yr1: yr1, yr2: yr1,
+           attritionRate:  (opts.attritionRate  != null ? opts.attritionRate  : 0),
+           annualTraining: (opts.annualTraining != null ? opts.annualTraining : 0) };
+}
+
+// Run the engine once per tier. `tiers` is [{id,name}, …] (2–4); `scenarios` is the
+// shared, already-active lever list; `costRows` the shared cost lines. Each tier reads
+// its own column via qtyByTier/amountByTier (costs) and gatingByTier (levers). Returns
+// one entry per tier with its rolled-up costs and full calcNRV result. Pure: no DOM or
+// module-global reads, so identical inputs → identical comparison.
+function calcTiers(tiers, scenarios, costRows, opts) {
+  opts = opts || {};
+  return (tiers || []).map((tier, k) => {
+    const costs = tierCostsFor(costRows, k, opts);
+    const gating = sc => {
+      const g = sc.gatingByTier;
+      return Array.isArray(g) ? (g[k] != null ? g[k] : 1) : 1;
+    };
+    const result = calcNRV(scenarios, costs, Object.assign({}, opts, { gating }));
+    return { id: tier.id, name: tier.name, costs, result };
+  });
+}
+
+// The shared active lever set: selected library levers + active custom levers. One
+// definition so the single-analysis path (renderROI) and the tier comparison agree.
+function activeScenariosForNRV() {
+  return SCENARIOS.filter(s => state.selectedIds.has(s.id))
+    .concat((state.customScenarios || []).filter(s => s.active));
+}
+
+// Convenience: drive calcTiers straight off live state (the shared active lever set +
+// the live cost rows), reading the toolbar knobs the single-analysis path already uses.
+function computeTierComparison() {
+  if (!Array.isArray(state.tiers) || !state.tiers.length) return null;
+  const scenarios = activeScenariosForNRV();
+  const sites = +(document.getElementById('i-sites')?.value) || 0;
+  return calcTiers(state.tiers, scenarios, costRows, {
+    wacc: +(document.getElementById('nrv-wacc')?.value) || 0.10,
+    useDecay: (document.getElementById('nrv-decay')?.value ?? '0') === '1',
+    g: +(document.getElementById('nrv-g')?.value ?? 0.035),
+    financeCredit: getFinanceCreditState(),
+    costPerSite: !!state.costPerSite, sites,
+    contingencyRate: contingencyRate, attritionRate: attritionRate, annualTraining: annualTraining
+  });
 }
 
 // Delay shifts the model (Chunk 11). N months of delay pushes the ENTIRE cashflow
@@ -6039,8 +6145,7 @@ function removeCustomScenario(idx) {
 // ── STEP 5: ROI & VALUE CASE ──
 function renderROI() {
   updateFinanceCreditUI();
-  const active = SCENARIOS.filter(s => state.selectedIds.has(s.id))
-    .concat((state.customScenarios || []).filter(s => s.active));
+  const active = activeScenariosForNRV();
   if (!active.length) {
     document.getElementById('kpi-grid').innerHTML = '<div class="muted">No scenarios selected.</div>';
     return;
@@ -6057,11 +6162,28 @@ function renderROI() {
   _setSv('nrv-g-v',    (gRate*100).toFixed(1)+'%');
 
   ensureCosts();
-  const c = state.costs;
+  // Tier-aware single path (Chunk 20): when the engagement declares solution tiers,
+  // the headline KPIs / walkdown / charts reflect the SELECTED tier — its own cost
+  // rollup and its own per-lever gating — so the whole panel is internally consistent
+  // with the comparison table on top. Non-tiered engagements take the legacy path
+  // verbatim (no tiers ⇒ tierIdx null ⇒ state.costs + gating-of-1).
+  const tiers = state.tiers || [];
+  let tierComp = null, tierIdx = null;
+  let c = state.costs, gatingOpt = {};
+  if (tiers.length) {
+    tierComp = computeTierComparison();
+    if (state.selectedTier == null || state.selectedTier >= tiers.length) {
+      // Default to the best-NPV tier so the panel opens on the strongest case.
+      state.selectedTier = tierComp.reduce((bi,t,i,a)=> t.result.nrv > a[bi].result.nrv ? i : bi, 0);
+    }
+    tierIdx = state.selectedTier;
+    c = tierComp[tierIdx].costs;
+    gatingOpt = { gating: sc => Array.isArray(sc.gatingByTier) ? (sc.gatingByTier[tierIdx] != null ? sc.gatingByTier[tierIdx] : 1) : 1 };
+  }
   // One engine, one path (Chunk 10): every toolbar knob — WACC, decay, g, finance
   // credit — is gathered here and handed to calcNRV in a single opts object. No
   // hidden globals. MIRR uses WACC for both legs.
-  const result = calcNRV(active, c, { wacc, useDecay, g: gRate, financeCredit: getFinanceCreditState() });
+  const result = calcNRV(active, c, { wacc, useDecay, g: gRate, financeCredit: getFinanceCreditState(), ...gatingOpt });
   const { nrv, mirr, paybackMo, bcr, peakAnnual, peakYear, roi5, yearlyData } = result;
   const waccPctLbl = (wacc*100).toFixed(0);
 
@@ -6072,7 +6194,10 @@ function renderROI() {
     totY2: yearlyData[1].netBenefit,
     totY3: yearlyData[2].netBenefit,
     rows: active.map(sc => {
-      const ann = Math.max(0, calcSc(sc));
+      // Tier gate (Chunk 20): when a tier is selected, the walkdown shows THIS tier's
+      // gated benefit so Σ ny1 still reconciles to the gated headline. gt = 1 otherwise.
+      const gt = gatingOpt.gating ? gatingOpt.gating(sc) : 1;
+      const ann = Math.max(0, calcSc(sc)) * gt;
       const acc = ACCESS_TIER[sc.accessibilityTier || 'configured'];
       const ov = overlapFactor(sc), fcf = financeCreditFactor(sc, result.financeCredit);
       return {
@@ -6481,6 +6606,118 @@ function renderROI() {
   document.getElementById('vtbl-foot').innerHTML =
     decayFootRow +
     `<tr class="total-row"><td><strong>TOTAL</strong></td><td class="r mono"><strong>${fmt(totAnnual)}</strong></td><td class="r mono"><strong>${fmt(Math.round(totY1 + decayAvoided[0]))}</strong></td><td class="r mono"><strong>${fmt(Math.round(totY2 + decayAvoided[1]))}</strong></td><td class="r mono"><strong>${fmt(Math.round(totY3 + decayAvoided[2]))}</strong></td><td class="r mono"><strong>${fmt(Math.round(totY4 + decayAvoided[3]))}</strong></td><td class="r mono"><strong>${fmt(Math.round(totY5 + decayAvoided[4]))}</strong></td><td></td></tr>`;
+
+  // Tier comparison (Chunk 20) — renders only when the engagement declares tiers.
+  renderTierComparison(tierComp, tierIdx);
+}
+
+// ── TIER COMPARISON UI (Chunk 20) ────────────────────────────────────────────
+// Side-by-side Good/Better/Best columns + an editable per-lever gating matrix. Reads
+// the comparison computed by renderROI (so the toolbar knobs apply) and the SELECTED
+// tier (its column is highlighted; the headline KPIs above reflect it). Clicking a
+// column header selects that tier; editing a gating cell re-runs the whole panel.
+function renderTierComparison(comp, selectedIdx) {
+  const host = document.getElementById('tier-comparison');
+  if (!host) return;
+  const tiers = state.tiers || [];
+  if (!tiers.length || !Array.isArray(comp) || !comp.length) { host.style.display = 'none'; host.innerHTML = ''; return; }
+  host.style.display = 'block';
+
+  const fc = getFinanceCreditState();
+  const levers = activeScenariosForNRV();
+  const mo = m => (m == null ? '—' : m.toFixed(1) + ' mo');
+  const x2 = v => (v == null ? '—' : v.toFixed(2) + '×');
+  const sites = +(document.getElementById('i-sites')?.value) || 0;
+
+  // Each KPI as a row; tiers as columns. Selected column tinted.
+  const kpis = [
+    ['NPV @ WACC',         t => fmt(t.result.nrv),                  true],
+    ['Discounted payback', t => mo(t.result.paybackMo),             false],
+    ['Steady-state BCR',   t => x2(t.result.bcr),                   false],
+    ['5-yr ROI',           t => t.result.roi5 + '%',                false],
+    ['Peak annual benefit',t => fmt(Math.round(t.result.peakAnnual)), false],
+    ['Upfront (Yr 0)',     t => fmt(Math.round(t.result.capex)),    false],
+    ['Recurring / yr',     t => fmt(Math.round(t.result.annOpex)),  false],
+  ];
+  const colHead = comp.map((t, k) => {
+    const sel = k === selectedIdx;
+    return `<th onclick="selectTier(${k})" title="Show this tier in the KPIs & walkdown above"
+      style="cursor:pointer;text-align:right;padding:8px 12px;font-size:12px;border-bottom:2px solid ${sel ? 'var(--brand-green,#16794C)' : 'var(--gray-300)'};background:${sel ? 'rgba(22,121,76,.08)' : 'transparent'}">
+      ${sel ? '● ' : ''}${t.name}</th>`;
+  }).join('');
+  const kpiBody = kpis.map(([label, get]) => `
+    <tr>
+      <td style="padding:6px 12px;font-size:12px;color:var(--muted)">${label}</td>
+      ${comp.map((t, k) => `<td class="r mono" style="padding:6px 12px;font-weight:600;${k===selectedIdx?'background:rgba(22,121,76,.06)':''}">${get(t)}</td>`).join('')}
+    </tr>`).join('');
+
+  // Editable gating matrix: levers × tiers. Cell = gating %; below it, the credited
+  // benefit (calcSc × finance credit × gating). Steady-state, company-wide.
+  const gatingBody = levers.map(sc => {
+    const gross = Math.max(0, calcSc(sc));
+    const fcf = financeCreditFactor(sc, fc);
+    const editable = (state.customScenarios || []).some(s => s.id === sc.id);
+    return `<tr>
+      <td style="padding:5px 12px;font-size:12px">${sc.name}</td>
+      ${comp.map((t, k) => {
+        const g = Array.isArray(sc.gatingByTier) ? (sc.gatingByTier[k] != null ? sc.gatingByTier[k] : 1) : 1;
+        const credited = gross * fcf * g;
+        const input = editable
+          ? `<input class="editable-input num-input" value="${+(g*100).toFixed(0)}" style="width:46px;text-align:right"
+               onchange="setGating('${sc.id}',${k},this.value)" title="Gating % for ${t.name}">`
+          : `<span class="mono">${(g*100).toFixed(0)}</span>`;
+        return `<td class="r" style="padding:5px 12px;${k===selectedIdx?'background:rgba(22,121,76,.06)':''}">
+          ${input}<span style="color:var(--muted);font-size:10px">%</span>
+          <div class="mono" style="font-size:10px;color:var(--muted)">${fmt(Math.round(credited))}</div></td>`;
+      }).join('')}
+    </tr>`;
+  }).join('');
+  const creditedTotals = comp.map((t, k) => {
+    const tot = levers.reduce((s, sc) => {
+      const g = Array.isArray(sc.gatingByTier) ? (sc.gatingByTier[k] != null ? sc.gatingByTier[k] : 1) : 1;
+      return s + Math.max(0, calcSc(sc)) * financeCreditFactor(sc, fc) * g;
+    }, 0);
+    return `<td class="r mono" style="padding:6px 12px;font-weight:700;${k===selectedIdx?'background:rgba(22,121,76,.06)':''}">${fmt(Math.round(tot))}</td>`;
+  }).join('');
+
+  host.innerHTML = `
+    <div style="border:1px solid var(--gray-300);border-radius:8px;overflow:hidden">
+      <div style="padding:10px 14px;background:var(--gray-50);border-bottom:1px solid var(--gray-300);display:flex;align-items:center;gap:8px">
+        <span class="badge b-green">TIERS</span>
+        <strong style="font-size:13px">Solution comparison — ${comp.map(t=>t.name).join(' · ')}</strong>
+        <span style="margin-left:auto;font-size:11px;color:var(--muted)">Click a column to drive the KPIs &amp; walkdown below · NPVs run through this tool's standard conservatism</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr><th style="text-align:left;padding:8px 12px;font-size:12px;border-bottom:2px solid var(--gray-300)">Metric</th>${colHead}</tr></thead>
+        <tbody>${kpiBody}</tbody>
+      </table>
+      <div style="padding:8px 14px;background:var(--gray-50);border-top:1px solid var(--gray-300);border-bottom:1px solid var(--gray-300);font-size:11px;font-weight:700;letter-spacing:.03em;color:var(--muted);text-transform:uppercase">
+        Value-lever gating &nbsp;<span style="font-weight:400;text-transform:none">— % of each lever a tier captures; figure below = credited steady-state benefit (company-wide)</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr><th style="text-align:left;padding:6px 12px;font-size:11px;color:var(--muted)">Value lever</th>${comp.map((t,k)=>`<th class="r" style="padding:6px 12px;font-size:11px;color:var(--muted);${k===selectedIdx?'background:rgba(22,121,76,.06)':''}">${t.name}</th>`).join('')}</tr></thead>
+        <tbody>${gatingBody}</tbody>
+        <tfoot><tr style="border-top:2px solid var(--gray-300)"><td style="padding:6px 12px;font-size:12px;font-weight:700">Total credited steady-state</td>${creditedTotals}</tr></tfoot>
+      </table>
+    </div>`;
+}
+
+// Select which tier the headline KPIs / walkdown / charts reflect, then re-render.
+function selectTier(k) {
+  if (!Array.isArray(state.tiers) || k < 0 || k >= state.tiers.length) return;
+  state.selectedTier = k;
+  renderROI();
+}
+
+// Edit a lever's gating % for one tier (0..100 → 0..1), seeding the array if absent.
+function setGating(leverId, k, val) {
+  const sc = (state.customScenarios || []).find(s => s.id === leverId);
+  if (!sc) return;
+  const n = state.tiers.length;
+  if (!Array.isArray(sc.gatingByTier)) sc.gatingByTier = Array.from({length:n}, () => 1);
+  const v = Math.min(100, Math.max(0, parseFloat(val) || 0)) / 100;
+  sc.gatingByTier[k] = v;
+  renderROI();
 }
 
 function syncDelay() {
