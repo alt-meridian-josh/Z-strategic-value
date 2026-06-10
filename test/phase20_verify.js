@@ -116,6 +116,37 @@ const STEADY  = [20272013.12, 57332527.4, 81867420.8]; // credited steady-state 
   ok('setGating lowers the live NPV and persists on the lever',
      w3.eval('state.nrvResult.nrv') < beforeG && w3.eval("state.customScenarios.find(s=>s.id==='MCY-03').gatingByTier[0]") === 0);
 
+  // ── 8) Tiered cost editor: per-tier columns, reconciled totals, live edits.
+  const w4 = loadApp().window; await ready(w4);
+  w4.applyEngagement(data);
+  w4.eval("document.getElementById('panel-3').classList.add('active')");
+  w4.ensureCosts(); w4.renderCost();
+  const head = w4.eval("document.getElementById('cost-head-row').innerHTML");
+  ok('cost header carries a column per tier',
+     ['Good (Handheld)','Better (+ Control Points)','Best (Full RTLS)'].every(n => head.includes(n)));
+  const foot = w4.eval("document.getElementById('cost-tfoot').innerHTML.replace(/<[^>]+>/g,' ')");
+  ok('cost footer shows each tier capex (fmt) reconciled to workbook',
+     CAPEX.every(v => foot.includes(w4.eval(`fmt(${v})`))),
+     CAPEX.map(v=>w4.eval(`fmt(${v})`)).join(' / '));
+  ok('cost footer shows each tier recurring (fmt)',
+     RECUR.every(v => foot.includes(w4.eval(`fmt(${v})`))));
+  const gi = w4.eval("costRows.findIndex(r=>r.label==='Overhead grid reader')");
+  const capBefore = w4.eval('tierCostsFor(costRows,2,tierCostOpts()).yr0');
+  w4.setTierQty(gi, 2, 25);   // 20 → 25 grid readers, Best tier only
+  const capAfter = w4.eval('tierCostsFor(costRows,2,tierCostOpts()).yr0');
+  ok('editing a per-tier quantity updates that tier capex (+5×$2,200×441)',
+     capAfter - capBefore === 5 * 2200 * 441, String(capAfter - capBefore));
+
+  // ── 9) Non-tiered cost tab is byte-unchanged (legacy header + totals).
+  const w5 = loadApp().window; await ready(w5);
+  w5.applyEngagement(readJSON(BD));
+  w5.eval("document.getElementById('panel-3').classList.add('active')");
+  w5.ensureCosts(); w5.renderCost();
+  const h2 = w5.eval("document.getElementById('cost-head-row').innerHTML");
+  ok('legacy cost header restored (Qty/Total, no tier names)',
+     h2.includes('Qty') && h2.includes('Total') && !h2.includes('Handheld'));
+  ok('legacy cost rollup intact ($1,525,400 Yr 0)', w5.eval('state.costs.yr0') === 1525400, String(w5.eval('state.costs.yr0')));
+
   console.log(`\n${fail ? '✗' : '✓'} ${pass} passed, ${fail} failed`);
   process.exit(fail ? 1 : 0);
 })();

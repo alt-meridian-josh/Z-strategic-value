@@ -1165,7 +1165,7 @@ svg{max-width:100%;height:auto}
     <div class="card-title">Cost Line Items <span class="badge b-green">EDITABLE &#8212; CLICK ANY VALUE</span></div>
     <div class="cost-table-wrap">
     <table class="cost-tbl">
-      <thead><tr><th>Line Item</th><th>Cadence</th><th class="r">Qty</th><th class="r">Unit Cost</th><th class="r">Total</th><th></th></tr></thead>
+      <thead><tr id="cost-head-row"><th>Line Item</th><th>Cadence</th><th class="r">Qty</th><th class="r">Unit Cost</th><th class="r">Total</th><th></th></tr></thead>
       <tbody id="cost-tbody"></tbody>
       <tfoot id="cost-tfoot"></tfoot>
     </table>
@@ -5014,10 +5014,24 @@ function resetCost() {
   syncCost();
 }
 
+// Shared tier cost options (Chunk 20): read once so renderCost/rebuildCostState and
+// the ROI comparison roll costs up identically (per-store × sites, contingency, opex).
+function tierCostOpts() {
+  return { costPerSite: !!state.costPerSite,
+           sites: (+(document.getElementById('i-sites')?.value) || 0),
+           contingencyRate: contingencyRate, attritionRate: attritionRate, annualTraining: annualTraining };
+}
+
 function renderCost() {
   // Show/hide the slider-sync warning
   const editHint = document.getElementById('cost-edit-hint');
   if(editHint) editHint.style.display = costRowsEdited ? 'flex' : 'none';
+
+  // Tiered engagements get a Good/Better/Best cost editor (per-tier quantity columns).
+  if(Array.isArray(state.tiers) && state.tiers.length) { renderCostTiered(); return; }
+  // Legacy header (restore in case a tiered file was viewed earlier this session).
+  const headRow = document.getElementById('cost-head-row');
+  if(headRow) headRow.innerHTML = '<th>Line Item</th><th>Cadence</th><th class="r">Qty</th><th class="r">Unit Cost</th><th class="r">Total</th><th></th>';
 
   let yr0Sub=0, yr1Sub=0, yr2Sub=0;
   costRows.forEach(r=>{ if(!r.contingency){ yr0Sub+=r.yr0||0; yr1Sub+=r.yr1||0; yr2Sub+=r.yr2||0; }});
@@ -5101,6 +5115,86 @@ function renderCost() {
     </tr>`;
 }
 
+// Tiered cost editor (Chunk 20): one row per cost line, one quantity (or amount) column
+// per tier. Unit-priced lines edit qtyByTier (× unitCost × sites); allowance lines edit
+// amountByTier ($ per site). Footer shows each tier's company-wide Yr-0 / recurring.
+function renderCostTiered() {
+  const tiers = state.tiers;
+  const opts = tierCostOpts();
+  const sites = (opts.costPerSite && opts.sites > 0) ? opts.sites : 1;
+  const span = 3 + tiers.length + 1;
+
+  const headRow = document.getElementById('cost-head-row');
+  if(headRow) headRow.innerHTML =
+    '<th>Line Item</th><th>Cadence</th><th class="r">Unit Cost</th>'
+    + tiers.map(t=>`<th class="r" title="Quantity (unit lines) or $ allowance (per site)">${t.name}</th>`).join('')
+    + '<th></th>';
+
+  rebuildCostState();
+
+  const tbody = document.getElementById('cost-tbody');
+  tbody.innerHTML = costRows.map((r,i) => {
+    if(r.contingency) return '';
+    const catHeader = (r.category && (i===0 || costRows[i-1].category!==r.category))
+      ? `<tr><td colspan="${span}" style="background:var(--gray-100);font-size:10px;font-weight:700;letter-spacing:.04em;color:var(--muted);text-transform:uppercase;padding:6px 8px">${r.category}</td></tr>`
+      : '';
+    const isAmount = Array.isArray(r.amountByTier);
+    const unitCell = isAmount
+      ? '<td class="r" style="color:var(--muted)">—</td>'
+      : `<td class="r"><input class="editable-input num-input" value="${r.unitCost!=null?r.unitCost:''}" style="width:64px" placeholder="$" oninput="costRows[${i}].unitCost=parseFloat(this.value.replace(/[$,]/g,''))||0;recalcCostRowTiered(${i})"></td>`;
+    const tierCells = tiers.map((t,k) => {
+      if(isAmount) {
+        const a = (r.amountByTier[k]!=null) ? r.amountByTier[k] : 0;
+        return `<td class="r"><input class="editable-input num-input" value="${a}" style="width:74px" placeholder="$/site" oninput="setTierAmount(${i},${k},this.value)"><div class="mono" style="font-size:10px;color:var(--muted)">${fmt(Math.round(a*sites))}</div></td>`;
+      }
+      const q = (Array.isArray(r.qtyByTier) && r.qtyByTier[k]!=null) ? r.qtyByTier[k] : 0;
+      const lineTot = q * (r.unitCost||0) * sites;
+      return `<td class="r"><input class="editable-input num-input" value="${q}" style="width:54px" placeholder="qty" oninput="setTierQty(${i},${k},this.value)"><div class="mono" style="font-size:10px;color:var(--muted)">${fmt(Math.round(lineTot))}</div></td>`;
+    }).join('');
+    return catHeader + `<tr>
+      <td><input class="editable-input" style="width:100%;text-align:left;font-size:12px" value="${r.label||''}" oninput="costRows[${i}].label=this.value"></td>
+      <td><select class="editable-input cadence-sel" onchange="costRows[${i}].cadence=this.value;recalcCostRowTiered(${i})">
+        ${['upfront','recurring','one-time','annual','monthly','per-site/yr','other'].map(o=>`<option value="${o}"${r.cadence===o?' selected':''}>${o}</option>`).join('')}
+      </select></td>
+      ${unitCell}${tierCells}
+      <td><span class="cost-remove" style="cursor:pointer;color:var(--muted);font-size:12px;padding:0 6px" onclick="removeCostRow(${i})" title="Remove">✕</span></td>
+    </tr>`;
+  }).join('');
+
+  const cells = (pick, suffix='') => tiers.map((t,k) => {
+    const c = tierCostsFor(costRows, k, opts);
+    const sel = (state.selectedTier===k);
+    return `<td class="r mono" style="font-weight:700;font-size:13px;${sel?'background:rgba(22,121,76,.06)':''}">${fmt(Math.round(pick(c)))}${suffix}</td>`;
+  }).join('');
+  const scaleNote = (opts.costPerSite && sites>1) ? ` · per-store × ${sites} sites` : '';
+  document.getElementById('cost-tfoot').innerHTML = `
+    <tr class="total-row"><td colspan="3"><strong>Upfront (Yr 0)</strong><span style="font-size:10px;color:var(--muted);font-weight:400">${scaleNote}</span></td>${cells(c=>c.yr0)}<td></td></tr>
+    <tr style="background:var(--gray-50)"><td colspan="3" style="font-size:12px;color:var(--muted)">Recurring (Yr 1+)</td>${cells(c=>c.yr1,'<span style="font-size:9px;font-weight:400">/yr</span>')}<td></td></tr>`;
+}
+
+// Edit handlers for the tiered table — seed the per-tier array if absent, clamp, then
+// rebuild + re-render (and refresh ROI when that panel is showing).
+function recalcCostRowTiered(i) {
+  costRowsEdited = true;
+  rebuildCostState();
+  renderCost();
+  if(document.getElementById('panel-4')?.classList.contains('active')) { try { renderROI(); } catch(e){} }
+}
+function setTierQty(i, k, val) {
+  const r = costRows[i]; if(!r) return;
+  const n = state.tiers.length;
+  if(!Array.isArray(r.qtyByTier)) r.qtyByTier = Array.from({length:n}, () => 0);
+  r.qtyByTier[k] = Math.max(0, parseFloat(val) || 0);
+  recalcCostRowTiered(i);
+}
+function setTierAmount(i, k, val) {
+  const r = costRows[i]; if(!r) return;
+  const n = state.tiers.length;
+  if(!Array.isArray(r.amountByTier)) r.amountByTier = Array.from({length:n}, () => 0);
+  r.amountByTier[k] = Math.max(0, parseFloat((''+val).replace(/[$,]/g,'')) || 0);
+  recalcCostRowTiered(i);
+}
+
 // Compute a single row's total based on cadence
 function computeRowTotal(r) {
   const base = (r.qty||1) * (r.unitCost||0);
@@ -5129,6 +5223,13 @@ function recalcCostRow(i) {
 
 // Rebuild state.costs from all rows
 function rebuildCostState() {
+  // Tiered: state.costs tracks the SELECTED tier's rollup (the ROI panel reflects it),
+  // computed from per-tier quantities — never from the legacy yr0/yr1 fields.
+  if(Array.isArray(state.tiers) && state.tiers.length) {
+    const k = (state.selectedTier != null && state.selectedTier < state.tiers.length) ? state.selectedTier : 0;
+    state.costs = tierCostsFor(costRows, k, tierCostOpts());
+    return;
+  }
   let yr0Sub=0, yr1Sub=0, yr2Sub=0;
   costRows.forEach(r=>{ if(!r.contingency){ yr0Sub+=r.yr0||0; yr1Sub+=r.yr1||0; yr2Sub+=r.yr2||0; }});
   const cont = Math.round(yr0Sub*contingencyRate);
@@ -5496,6 +5597,9 @@ function calcSc(sc) {
 // Ensure cost model is populated before ROI renders
 function ensureCosts() {
   if(!costRows || costRows.length===0) costRows = defaultCostRows();
+  // Tiered rows carry qtyByTier/amountByTier, not yr0/yr1 — never run applyBuckets on
+  // them (it would synthesize bogus single-column totals). Roll up per tier instead.
+  if(Array.isArray(state.tiers) && state.tiers.length) { rebuildCostState(); return; }
   if(!state.costs || state.costs.yr0===undefined) rebuildCostState();
   if(state.costs.yr0===0 && state.costs.yr1===0) {
     costRows.forEach(r=>{ if(!r.contingency) applyBuckets(r); });
