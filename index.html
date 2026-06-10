@@ -1241,6 +1241,7 @@ svg{max-width:100%;height:auto}
     <strong>Finance Credit on.</strong> Revenue-recovery benefit types (revenue, working-capital, soft) are credited at <span id="fin-credit-note-rate">40</span>% of modeled value; hard labor/cost benefits at 100%. Rationale: benefit estimates are risk-adjusted downward by likelihood-of-realization and trackability (Forrester <em>Total Economic Impact</em> methodology), and RFID sales uplift — though real at 1.5–5.5% — is the hardest benefit to attribute (Beck/ECR, <em>Measuring the Impact of RFID in Retailing</em>, 2018). The credit rate is a deliberately conservative assumption, not a published constant — adjust it to your finance team's standard.
   </div>
 
+  <div id="tier-comparison" style="display:none;margin:0 0 18px"></div>
   <div id="bcr-banner" class="nrv-bcr-flag" style="display:none;margin:0 0 16px"></div>
   <div id="evidence-conc-flag" style="display:none;margin:0 0 16px"></div>
       <div class="kpi-grid" id="kpi-grid"></div>
@@ -3759,6 +3760,7 @@ let state = {
   // every cost line by engagement.sites (per-store entry → company-wide).
   tiers: [],
   costPerSite: false,
+  selectedTier: null,   // which tier the headline KPIs/walkdown reflect (Chunk 20)
 };
 
 // init inputs
@@ -6160,11 +6162,28 @@ function renderROI() {
   _setSv('nrv-g-v',    (gRate*100).toFixed(1)+'%');
 
   ensureCosts();
-  const c = state.costs;
+  // Tier-aware single path (Chunk 20): when the engagement declares solution tiers,
+  // the headline KPIs / walkdown / charts reflect the SELECTED tier — its own cost
+  // rollup and its own per-lever gating — so the whole panel is internally consistent
+  // with the comparison table on top. Non-tiered engagements take the legacy path
+  // verbatim (no tiers ⇒ tierIdx null ⇒ state.costs + gating-of-1).
+  const tiers = state.tiers || [];
+  let tierComp = null, tierIdx = null;
+  let c = state.costs, gatingOpt = {};
+  if (tiers.length) {
+    tierComp = computeTierComparison();
+    if (state.selectedTier == null || state.selectedTier >= tiers.length) {
+      // Default to the best-NPV tier so the panel opens on the strongest case.
+      state.selectedTier = tierComp.reduce((bi,t,i,a)=> t.result.nrv > a[bi].result.nrv ? i : bi, 0);
+    }
+    tierIdx = state.selectedTier;
+    c = tierComp[tierIdx].costs;
+    gatingOpt = { gating: sc => Array.isArray(sc.gatingByTier) ? (sc.gatingByTier[tierIdx] != null ? sc.gatingByTier[tierIdx] : 1) : 1 };
+  }
   // One engine, one path (Chunk 10): every toolbar knob — WACC, decay, g, finance
   // credit — is gathered here and handed to calcNRV in a single opts object. No
   // hidden globals. MIRR uses WACC for both legs.
-  const result = calcNRV(active, c, { wacc, useDecay, g: gRate, financeCredit: getFinanceCreditState() });
+  const result = calcNRV(active, c, { wacc, useDecay, g: gRate, financeCredit: getFinanceCreditState(), ...gatingOpt });
   const { nrv, mirr, paybackMo, bcr, peakAnnual, peakYear, roi5, yearlyData } = result;
   const waccPctLbl = (wacc*100).toFixed(0);
 
@@ -6175,7 +6194,10 @@ function renderROI() {
     totY2: yearlyData[1].netBenefit,
     totY3: yearlyData[2].netBenefit,
     rows: active.map(sc => {
-      const ann = Math.max(0, calcSc(sc));
+      // Tier gate (Chunk 20): when a tier is selected, the walkdown shows THIS tier's
+      // gated benefit so Σ ny1 still reconciles to the gated headline. gt = 1 otherwise.
+      const gt = gatingOpt.gating ? gatingOpt.gating(sc) : 1;
+      const ann = Math.max(0, calcSc(sc)) * gt;
       const acc = ACCESS_TIER[sc.accessibilityTier || 'configured'];
       const ov = overlapFactor(sc), fcf = financeCreditFactor(sc, result.financeCredit);
       return {
@@ -6584,6 +6606,118 @@ function renderROI() {
   document.getElementById('vtbl-foot').innerHTML =
     decayFootRow +
     `<tr class="total-row"><td><strong>TOTAL</strong></td><td class="r mono"><strong>${fmt(totAnnual)}</strong></td><td class="r mono"><strong>${fmt(Math.round(totY1 + decayAvoided[0]))}</strong></td><td class="r mono"><strong>${fmt(Math.round(totY2 + decayAvoided[1]))}</strong></td><td class="r mono"><strong>${fmt(Math.round(totY3 + decayAvoided[2]))}</strong></td><td class="r mono"><strong>${fmt(Math.round(totY4 + decayAvoided[3]))}</strong></td><td class="r mono"><strong>${fmt(Math.round(totY5 + decayAvoided[4]))}</strong></td><td></td></tr>`;
+
+  // Tier comparison (Chunk 20) — renders only when the engagement declares tiers.
+  renderTierComparison(tierComp, tierIdx);
+}
+
+// ── TIER COMPARISON UI (Chunk 20) ────────────────────────────────────────────
+// Side-by-side Good/Better/Best columns + an editable per-lever gating matrix. Reads
+// the comparison computed by renderROI (so the toolbar knobs apply) and the SELECTED
+// tier (its column is highlighted; the headline KPIs above reflect it). Clicking a
+// column header selects that tier; editing a gating cell re-runs the whole panel.
+function renderTierComparison(comp, selectedIdx) {
+  const host = document.getElementById('tier-comparison');
+  if (!host) return;
+  const tiers = state.tiers || [];
+  if (!tiers.length || !Array.isArray(comp) || !comp.length) { host.style.display = 'none'; host.innerHTML = ''; return; }
+  host.style.display = 'block';
+
+  const fc = getFinanceCreditState();
+  const levers = activeScenariosForNRV();
+  const mo = m => (m == null ? '—' : m.toFixed(1) + ' mo');
+  const x2 = v => (v == null ? '—' : v.toFixed(2) + '×');
+  const sites = +(document.getElementById('i-sites')?.value) || 0;
+
+  // Each KPI as a row; tiers as columns. Selected column tinted.
+  const kpis = [
+    ['NPV @ WACC',         t => fmt(t.result.nrv),                  true],
+    ['Discounted payback', t => mo(t.result.paybackMo),             false],
+    ['Steady-state BCR',   t => x2(t.result.bcr),                   false],
+    ['5-yr ROI',           t => t.result.roi5 + '%',                false],
+    ['Peak annual benefit',t => fmt(Math.round(t.result.peakAnnual)), false],
+    ['Upfront (Yr 0)',     t => fmt(Math.round(t.result.capex)),    false],
+    ['Recurring / yr',     t => fmt(Math.round(t.result.annOpex)),  false],
+  ];
+  const colHead = comp.map((t, k) => {
+    const sel = k === selectedIdx;
+    return `<th onclick="selectTier(${k})" title="Show this tier in the KPIs & walkdown above"
+      style="cursor:pointer;text-align:right;padding:8px 12px;font-size:12px;border-bottom:2px solid ${sel ? 'var(--brand-green,#16794C)' : 'var(--gray-300)'};background:${sel ? 'rgba(22,121,76,.08)' : 'transparent'}">
+      ${sel ? '● ' : ''}${t.name}</th>`;
+  }).join('');
+  const kpiBody = kpis.map(([label, get]) => `
+    <tr>
+      <td style="padding:6px 12px;font-size:12px;color:var(--muted)">${label}</td>
+      ${comp.map((t, k) => `<td class="r mono" style="padding:6px 12px;font-weight:600;${k===selectedIdx?'background:rgba(22,121,76,.06)':''}">${get(t)}</td>`).join('')}
+    </tr>`).join('');
+
+  // Editable gating matrix: levers × tiers. Cell = gating %; below it, the credited
+  // benefit (calcSc × finance credit × gating). Steady-state, company-wide.
+  const gatingBody = levers.map(sc => {
+    const gross = Math.max(0, calcSc(sc));
+    const fcf = financeCreditFactor(sc, fc);
+    const editable = (state.customScenarios || []).some(s => s.id === sc.id);
+    return `<tr>
+      <td style="padding:5px 12px;font-size:12px">${sc.name}</td>
+      ${comp.map((t, k) => {
+        const g = Array.isArray(sc.gatingByTier) ? (sc.gatingByTier[k] != null ? sc.gatingByTier[k] : 1) : 1;
+        const credited = gross * fcf * g;
+        const input = editable
+          ? `<input class="editable-input num-input" value="${+(g*100).toFixed(0)}" style="width:46px;text-align:right"
+               onchange="setGating('${sc.id}',${k},this.value)" title="Gating % for ${t.name}">`
+          : `<span class="mono">${(g*100).toFixed(0)}</span>`;
+        return `<td class="r" style="padding:5px 12px;${k===selectedIdx?'background:rgba(22,121,76,.06)':''}">
+          ${input}<span style="color:var(--muted);font-size:10px">%</span>
+          <div class="mono" style="font-size:10px;color:var(--muted)">${fmt(Math.round(credited))}</div></td>`;
+      }).join('')}
+    </tr>`;
+  }).join('');
+  const creditedTotals = comp.map((t, k) => {
+    const tot = levers.reduce((s, sc) => {
+      const g = Array.isArray(sc.gatingByTier) ? (sc.gatingByTier[k] != null ? sc.gatingByTier[k] : 1) : 1;
+      return s + Math.max(0, calcSc(sc)) * financeCreditFactor(sc, fc) * g;
+    }, 0);
+    return `<td class="r mono" style="padding:6px 12px;font-weight:700;${k===selectedIdx?'background:rgba(22,121,76,.06)':''}">${fmt(Math.round(tot))}</td>`;
+  }).join('');
+
+  host.innerHTML = `
+    <div style="border:1px solid var(--gray-300);border-radius:8px;overflow:hidden">
+      <div style="padding:10px 14px;background:var(--gray-50);border-bottom:1px solid var(--gray-300);display:flex;align-items:center;gap:8px">
+        <span class="badge b-green">TIERS</span>
+        <strong style="font-size:13px">Solution comparison — ${comp.map(t=>t.name).join(' · ')}</strong>
+        <span style="margin-left:auto;font-size:11px;color:var(--muted)">Click a column to drive the KPIs &amp; walkdown below · NPVs run through this tool's standard conservatism</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr><th style="text-align:left;padding:8px 12px;font-size:12px;border-bottom:2px solid var(--gray-300)">Metric</th>${colHead}</tr></thead>
+        <tbody>${kpiBody}</tbody>
+      </table>
+      <div style="padding:8px 14px;background:var(--gray-50);border-top:1px solid var(--gray-300);border-bottom:1px solid var(--gray-300);font-size:11px;font-weight:700;letter-spacing:.03em;color:var(--muted);text-transform:uppercase">
+        Value-lever gating &nbsp;<span style="font-weight:400;text-transform:none">— % of each lever a tier captures; figure below = credited steady-state benefit (company-wide)</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr><th style="text-align:left;padding:6px 12px;font-size:11px;color:var(--muted)">Value lever</th>${comp.map((t,k)=>`<th class="r" style="padding:6px 12px;font-size:11px;color:var(--muted);${k===selectedIdx?'background:rgba(22,121,76,.06)':''}">${t.name}</th>`).join('')}</tr></thead>
+        <tbody>${gatingBody}</tbody>
+        <tfoot><tr style="border-top:2px solid var(--gray-300)"><td style="padding:6px 12px;font-size:12px;font-weight:700">Total credited steady-state</td>${creditedTotals}</tr></tfoot>
+      </table>
+    </div>`;
+}
+
+// Select which tier the headline KPIs / walkdown / charts reflect, then re-render.
+function selectTier(k) {
+  if (!Array.isArray(state.tiers) || k < 0 || k >= state.tiers.length) return;
+  state.selectedTier = k;
+  renderROI();
+}
+
+// Edit a lever's gating % for one tier (0..100 → 0..1), seeding the array if absent.
+function setGating(leverId, k, val) {
+  const sc = (state.customScenarios || []).find(s => s.id === leverId);
+  if (!sc) return;
+  const n = state.tiers.length;
+  if (!Array.isArray(sc.gatingByTier)) sc.gatingByTier = Array.from({length:n}, () => 1);
+  const v = Math.min(100, Math.max(0, parseFloat(val) || 0)) / 100;
+  sc.gatingByTier[k] = v;
+  renderROI();
 }
 
 function syncDelay() {

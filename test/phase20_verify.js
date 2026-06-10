@@ -98,6 +98,24 @@ const STEADY  = [20272013.12, 57332527.4, 81867420.8]; // credited steady-state 
   ok('reload reproduces identical tier NPVs (fixpoint)',
      JSON.stringify(comp2.map(t=>t.result.nrv)) === JSON.stringify(npvs));
 
+  // ── 7) Comparison UI: renders, tier selection drives the headline, gating is live.
+  const w3 = loadApp().window; await ready(w3);
+  w3.applyEngagement(data); w3.ensureCosts();
+  w3.eval("document.getElementById('panel-4').classList.add('active')");
+  w3.renderROI();
+  ok('tier-comparison panel is visible', w3.eval("document.getElementById('tier-comparison').style.display") === 'block');
+  const ui = w3.eval("document.getElementById('tier-comparison').innerHTML");
+  ok('comparison shows all three tier names',
+     ['Good (Handheld)','Better (+ Control Points)','Best (Full RTLS)'].every(n => ui.includes(n)));
+  ok('headline defaults to the best-NPV tier (Best)', w3.eval('state.selectedTier') === 2 && w3.eval('state.nrvResult.nrv') === npvs[2]);
+  w3.selectTier(0);
+  ok('selectTier(0) drives the headline to the Good column',
+     w3.eval('state.selectedTier') === 0 && w3.eval('state.nrvResult.nrv') === npvs[0], String(w3.eval('state.nrvResult.nrv')));
+  const beforeG = w3.eval('state.nrvResult.nrv');
+  w3.setGating('MCY-03', 0, 0);   // zero the OOS lever for the Good tier
+  ok('setGating lowers the live NPV and persists on the lever',
+     w3.eval('state.nrvResult.nrv') < beforeG && w3.eval("state.customScenarios.find(s=>s.id==='MCY-03').gatingByTier[0]") === 0);
+
   console.log(`\n${fail ? '✗' : '✓'} ${pass} passed, ${fail} failed`);
   process.exit(fail ? 1 : 0);
 })();
