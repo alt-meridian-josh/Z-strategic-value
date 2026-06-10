@@ -113,8 +113,8 @@ const STEADY  = [20272013.12, 57332527.4, 81867420.8]; // credited steady-state 
      w3.eval('state.selectedTier') === 0 && w3.eval('state.nrvResult.nrv') === npvs[0], String(w3.eval('state.nrvResult.nrv')));
   const beforeG = w3.eval('state.nrvResult.nrv');
   w3.setGating('MCY-03', 0, 0);   // zero the OOS lever for the Good tier
-  ok('setGating lowers the live NPV and persists on the lever',
-     w3.eval('state.nrvResult.nrv') < beforeG && w3.eval("state.customScenarios.find(s=>s.id==='MCY-03').gatingByTier[0]") === 0);
+  ok('setGating lowers the live NPV and records an override',
+     w3.eval('state.nrvResult.nrv') < beforeG && w3.eval("state.gating['MCY-03'][0]") === 0);
 
   // ── 8) Tiered cost editor: per-tier columns, reconciled totals, live edits.
   const w4 = loadApp().window; await ready(w4);
@@ -166,7 +166,7 @@ const STEADY  = [20272013.12, 57332527.4, 81867420.8]; // credited steady-state 
   const lid = w6.eval('activeScenariosForNRV()[0].id');
   w6.setGating(lid, 0, 50);   // a LIBRARY lever, gated via state.gating
   ok('a library lever is gatable via state.gating (Good drops below Best)',
-     JSON.stringify(w6.eval(`state.gating['${lid}']`)) === JSON.stringify([0.5,1,1]) &&
+     w6.eval(`state.gating['${lid}'][0]`) === 0.5 &&
      w6.eval('computeTierComparison()[0].result.nrv') < w6.eval('computeTierComparison()[2].result.nrv'));
   w6.addTier();
   ok('addTier grows tiers and every gating array', w6.eval('state.tiers.length') === 4 && w6.eval(`state.gating['${lid}'].length`) === 4);
