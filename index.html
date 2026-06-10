@@ -1161,6 +1161,8 @@ svg{max-width:100%;height:auto}
     <span>⚠</span>
     <span>You have manual edits in the cost table. Sliders will only update the auto-calculated rows. <button onclick="costRowsEdited=false;costRowsPreset=false;syncCost()" style="margin-left:8px;font-size:10px;padding:2px 8px;border:1px solid #c8830a;border-radius:3px;background:transparent;color:#7a4a10;cursor:pointer;font-family:var(--mono)">↺ Reset &amp; Recalc All</button></span>
   </div>
+  <div id="tier-controls-cost" style="margin:0 0 10px"></div>
+
   <div class="card">
     <div class="card-title">Cost Line Items <span class="badge b-green">EDITABLE &#8212; CLICK ANY VALUE</span></div>
     <div class="cost-table-wrap">
@@ -1241,6 +1243,7 @@ svg{max-width:100%;height:auto}
     <strong>Finance Credit on.</strong> Revenue-recovery benefit types (revenue, working-capital, soft) are credited at <span id="fin-credit-note-rate">40</span>% of modeled value; hard labor/cost benefits at 100%. Rationale: benefit estimates are risk-adjusted downward by likelihood-of-realization and trackability (Forrester <em>Total Economic Impact</em> methodology), and RFID sales uplift — though real at 1.5–5.5% — is the hardest benefit to attribute (Beck/ECR, <em>Measuring the Impact of RFID in Retailing</em>, 2018). The credit rate is a deliberately conservative assumption, not a published constant — adjust it to your finance team's standard.
   </div>
 
+  <div id="tier-controls-roi" style="margin:0 0 12px"></div>
   <div id="tier-comparison" style="display:none;margin:0 0 18px"></div>
   <div id="bcr-banner" class="nrv-bcr-flag" style="display:none;margin:0 0 16px"></div>
   <div id="evidence-conc-flag" style="display:none;margin:0 0 16px"></div>
@@ -3761,6 +3764,8 @@ let state = {
   tiers: [],
   costPerSite: false,
   selectedTier: null,   // which tier the headline KPIs/walkdown reflect (Chunk 20)
+  gating: {},           // per-tier gating keyed by lever id — lets LIBRARY levers (not
+                        // just custom) be gated; merged with a lever's own gatingByTier.
 };
 
 // init inputs
@@ -3983,6 +3988,8 @@ function applyEngagement(p) {
   //       the tool stays a single, non-tiered analysis.
   state.tiers = Array.isArray(p.tiers) ? p.tiers.map(t => Object.assign({}, t)) : [];
   state.costPerSite = !!p.costPerSite;
+  state.gating = (p.gating && typeof p.gating === 'object') ? JSON.parse(JSON.stringify(p.gating)) : {};
+  state.selectedTier = null;
 
   // 5c) Finance Credit — write straight to the controls (the source of truth); no globals.
   if(p.financeCredit) {
@@ -4072,7 +4079,8 @@ function gatherEngagement() {
     // Solution tiers (Chunk 20) — emitted only when present so non-tiered engagements
     // round-trip byte-identical (no empty keys added to the historical schema).
     ...(Array.isArray(state.tiers) && state.tiers.length
-        ? { tiers: state.tiers.map(t => Object.assign({}, t)), costPerSite: !!state.costPerSite }
+        ? { tiers: state.tiers.map(t => Object.assign({}, t)), costPerSite: !!state.costPerSite,
+            ...(state.gating && Object.keys(state.gating).length ? { gating: JSON.parse(JSON.stringify(state.gating)) } : {}) }
         : {})
   };
   // Embedded resolved snapshots of selected pack levers — offline-complete (Chunk 14).
@@ -5026,6 +5034,7 @@ function renderCost() {
   // Show/hide the slider-sync warning
   const editHint = document.getElementById('cost-edit-hint');
   if(editHint) editHint.style.display = costRowsEdited ? 'flex' : 'none';
+  renderTierControls();   // enable-tiers button / tier manager (Chunk 20)
 
   // Tiered engagements get a Good/Better/Best cost editor (per-tier quantity columns).
   if(Array.isArray(state.tiers) && state.tiers.length) { renderCostTiered(); return; }
@@ -5255,6 +5264,8 @@ function removeCostRow(i) {
 function addCostRow() {
   const contIdx = costRows.findIndex(r=>r.contingency);
   const newRow = {label:"New line item", cadence:"one-time", qty:1, unitCost:0, yr0:0, yr1:0, yr2:0, _userEdited:true};
+  // In a tiered analysis seed per-tier quantities so the new row is editable per column.
+  if(tiersActive()) newRow.qtyByTier = Array.from({length: state.tiers.length}, () => 0);
   if(contIdx>=0) costRows.splice(contIdx,0,newRow);
   else costRows.push(newRow);
   costRowsEdited = true;
@@ -5756,13 +5767,25 @@ function calcTiers(tiers, scenarios, costRows, opts) {
   opts = opts || {};
   return (tiers || []).map((tier, k) => {
     const costs = tierCostsFor(costRows, k, opts);
+    // gatingFor(sc,k) lets the caller resolve gating from anywhere (e.g. a live
+    // state.gating map for library levers). Falls back to the lever's own array.
     const gating = sc => {
+      if (typeof opts.gatingFor === 'function') return opts.gatingFor(sc, k);
       const g = sc.gatingByTier;
       return Array.isArray(g) ? (g[k] != null ? g[k] : 1) : 1;
     };
     const result = calcNRV(scenarios, costs, Object.assign({}, opts, { gating }));
     return { id: tier.id, name: tier.name, costs, result };
   });
+}
+
+// Live gating resolver: a lever's per-tier capture, from state.gating[id] (editable for
+// any lever, incl. library) first, then the lever's authored gatingByTier, else 1.
+function tierGateFor(sc, k) {
+  const m = state.gating && state.gating[sc.id];
+  if (Array.isArray(m) && m[k] != null) return m[k];
+  if (Array.isArray(sc.gatingByTier) && sc.gatingByTier[k] != null) return sc.gatingByTier[k];
+  return 1;
 }
 
 // The shared active lever set: selected library levers + active custom levers. One
@@ -5784,7 +5807,8 @@ function computeTierComparison() {
     g: +(document.getElementById('nrv-g')?.value ?? 0.035),
     financeCredit: getFinanceCreditState(),
     costPerSite: !!state.costPerSite, sites,
-    contingencyRate: contingencyRate, attritionRate: attritionRate, annualTraining: annualTraining
+    contingencyRate: contingencyRate, attritionRate: attritionRate, annualTraining: annualTraining,
+    gatingFor: tierGateFor
   });
 }
 
@@ -6249,6 +6273,7 @@ function removeCustomScenario(idx) {
 // ── STEP 5: ROI & VALUE CASE ──
 function renderROI() {
   updateFinanceCreditUI();
+  renderTierControls();   // enable-tiers button / tier manager (Chunk 20)
   const active = activeScenariosForNRV();
   if (!active.length) {
     document.getElementById('kpi-grid').innerHTML = '<div class="muted">No scenarios selected.</div>';
@@ -6282,7 +6307,7 @@ function renderROI() {
     }
     tierIdx = state.selectedTier;
     c = tierComp[tierIdx].costs;
-    gatingOpt = { gating: sc => Array.isArray(sc.gatingByTier) ? (sc.gatingByTier[tierIdx] != null ? sc.gatingByTier[tierIdx] : 1) : 1 };
+    gatingOpt = { gating: sc => tierGateFor(sc, tierIdx) };
   }
   // One engine, one path (Chunk 10): every toolbar knob — WACC, decay, g, finance
   // credit — is gathered here and handed to calcNRV in a single opts object. No
@@ -6760,16 +6785,13 @@ function renderTierComparison(comp, selectedIdx) {
   const gatingBody = levers.map(sc => {
     const gross = Math.max(0, calcSc(sc));
     const fcf = financeCreditFactor(sc, fc);
-    const editable = (state.customScenarios || []).some(s => s.id === sc.id);
     return `<tr>
       <td style="padding:5px 12px;font-size:12px">${sc.name}</td>
       ${comp.map((t, k) => {
-        const g = Array.isArray(sc.gatingByTier) ? (sc.gatingByTier[k] != null ? sc.gatingByTier[k] : 1) : 1;
+        const g = tierGateFor(sc, k);
         const credited = gross * fcf * g;
-        const input = editable
-          ? `<input class="editable-input num-input" value="${+(g*100).toFixed(0)}" style="width:46px;text-align:right"
-               onchange="setGating('${sc.id}',${k},this.value)" title="Gating % for ${t.name}">`
-          : `<span class="mono">${(g*100).toFixed(0)}</span>`;
+        const input = `<input class="editable-input num-input" value="${+(g*100).toFixed(0)}" style="width:46px;text-align:right"
+               onchange="setGating('${sc.id}',${k},this.value)" title="Gating % for ${t.name}">`;
         return `<td class="r" style="padding:5px 12px;${k===selectedIdx?'background:rgba(22,121,76,.06)':''}">
           ${input}<span style="color:var(--muted);font-size:10px">%</span>
           <div class="mono" style="font-size:10px;color:var(--muted)">${fmt(Math.round(credited))}</div></td>`;
@@ -6777,10 +6799,7 @@ function renderTierComparison(comp, selectedIdx) {
     </tr>`;
   }).join('');
   const creditedTotals = comp.map((t, k) => {
-    const tot = levers.reduce((s, sc) => {
-      const g = Array.isArray(sc.gatingByTier) ? (sc.gatingByTier[k] != null ? sc.gatingByTier[k] : 1) : 1;
-      return s + Math.max(0, calcSc(sc)) * financeCreditFactor(sc, fc) * g;
-    }, 0);
+    const tot = levers.reduce((s, sc) => s + Math.max(0, calcSc(sc)) * financeCreditFactor(sc, fc) * tierGateFor(sc, k), 0);
     return `<td class="r mono" style="padding:6px 12px;font-weight:700;${k===selectedIdx?'background:rgba(22,121,76,.06)':''}">${fmt(Math.round(tot))}</td>`;
   }).join('');
 
@@ -6813,15 +6832,127 @@ function selectTier(k) {
   renderROI();
 }
 
-// Edit a lever's gating % for one tier (0..100 → 0..1), seeding the array if absent.
+// Edit a lever's gating % for one tier (0..100 → 0..1). Custom levers keep their own
+// gatingByTier (authored pattern, round-trips via customScenarios); any other lever
+// (e.g. a library lever) is gated through state.gating[id]. Seeds the array if absent.
 function setGating(leverId, k, val) {
-  const sc = (state.customScenarios || []).find(s => s.id === leverId);
-  if (!sc) return;
   const n = state.tiers.length;
-  if (!Array.isArray(sc.gatingByTier)) sc.gatingByTier = Array.from({length:n}, () => 1);
   const v = Math.min(100, Math.max(0, parseFloat(val) || 0)) / 100;
-  sc.gatingByTier[k] = v;
+  const custom = (state.customScenarios || []).find(s => s.id === leverId);
+  if (custom) {
+    if (!Array.isArray(custom.gatingByTier)) custom.gatingByTier = seedGate(leverId, n);
+    custom.gatingByTier[k] = v;
+  } else {
+    if (!state.gating) state.gating = {};
+    if (!Array.isArray(state.gating[leverId])) state.gating[leverId] = seedGate(leverId, n);
+    state.gating[leverId][k] = v;
+  }
   renderROI();
+}
+// Seed a gating array of length n, preserving any already-known per-tier values.
+function seedGate(leverId, n) {
+  const existing = (state.gating && state.gating[leverId]) || null;
+  return Array.from({length:n}, (_,i) => (existing && existing[i] != null) ? existing[i] : 1);
+}
+
+// ── TIER MANAGEMENT (Chunk 20) ───────────────────────────────────────────────
+// Turn ANY single analysis into a Good/Better/Best comparison, and back. Enabling
+// seeds every cost line and lever so all tiers start identical to the current analysis;
+// the analyst then differentiates cost (per-tier quantities) and value (gating %) per
+// tier. Works for library- or custom-lever analyses alike.
+function tiersActive() { return Array.isArray(state.tiers) && state.tiers.length > 0; }
+
+function enableTiers() {
+  if (tiersActive()) return;
+  state.tiers = ['Good','Better','Best'].map(nm => ({ id: nm.toLowerCase(), name: nm }));
+  state.selectedTier = state.tiers.length - 1;
+  state.costPerSite = false;            // legacy line totals are already absolute (no ×sites)
+  const n = state.tiers.length;
+  (costRows || []).forEach(r => {
+    if (r.contingency || Array.isArray(r.qtyByTier) || Array.isArray(r.amountByTier)) return;
+    if (r.unitCost != null && r.unitCost !== '' && r.qty != null && r.qty !== '') {
+      const q = +r.qty || 0; r.qtyByTier = Array.from({length:n}, () => q);
+    } else {
+      const tot = computeRowTotal(r); r.amountByTier = Array.from({length:n}, () => tot);
+    }
+  });
+  rebuildCostState();
+  refreshTierViews();
+}
+
+function disableTiers() {
+  if (!tiersActive()) return;
+  const sel = (state.selectedTier != null && state.selectedTier < state.tiers.length) ? state.selectedTier : 0;
+  const opts = tierCostOpts(); const sites = (opts.costPerSite && opts.sites > 0) ? opts.sites : 1;
+  const cadMap = { upfront:'one-time', recurring:'annual' };
+  (costRows || []).forEach(r => {
+    if (r.contingency) return;
+    if (Array.isArray(r.amountByTier))   { r.unitCost = (r.amountByTier[sel]||0) * sites; r.qty = 1; delete r.amountByTier; }
+    else if (Array.isArray(r.qtyByTier)) { r.qty = r.qtyByTier[sel]||0; r.unitCost = (r.unitCost||0) * sites; delete r.qtyByTier; }
+    if (cadMap[r.cadence]) r.cadence = cadMap[r.cadence];
+    applyBuckets(r);
+  });
+  state.tiers = []; state.gating = {}; state.selectedTier = null; state.costPerSite = false;
+  rebuildCostState();
+  refreshTierViews();
+}
+
+function addTier() {
+  if (!tiersActive() || state.tiers.length >= 4) return;
+  const k = state.tiers.length;
+  state.tiers.push({ id: 'tier' + (k+1), name: 'Tier ' + (k+1) });
+  const grow = a => { if (Array.isArray(a)) a.push(a[a.length-1]); };   // clone the last column
+  (costRows || []).forEach(r => { grow(r.qtyByTier); grow(r.amountByTier); });
+  (state.customScenarios || []).forEach(sc => grow(sc.gatingByTier));
+  Object.values(state.gating || {}).forEach(grow);
+  refreshTierViews();
+}
+
+function removeTier(k) {
+  if (!tiersActive() || state.tiers.length <= 2) return;
+  state.tiers.splice(k, 1);
+  const cut = a => { if (Array.isArray(a)) a.splice(k, 1); };
+  (costRows || []).forEach(r => { cut(r.qtyByTier); cut(r.amountByTier); });
+  (state.customScenarios || []).forEach(sc => cut(sc.gatingByTier));
+  Object.values(state.gating || {}).forEach(cut);
+  if (state.selectedTier != null && state.selectedTier >= state.tiers.length) state.selectedTier = state.tiers.length - 1;
+  refreshTierViews();
+}
+
+function renameTier(k, val) { if (state.tiers[k]) { state.tiers[k].name = val; refreshTierViews(); } }
+
+// Re-render whichever surfaces are showing, plus the controls in both tabs.
+function refreshTierViews() {
+  costRowsEdited = true;
+  try { if (document.getElementById('panel-3')?.classList.contains('active')) renderCost(); } catch(e){}
+  try { if (document.getElementById('panel-4')?.classList.contains('active')) renderROI(); } catch(e){}
+  renderTierControls();
+}
+
+// The enable button (no tiers) or the tier manager (rename / add / remove / turn off),
+// painted into both the Cost and ROI tabs so the control is wherever the analyst is.
+function renderTierControls() {
+  const html = tiersActive() ? tierManagerHTML() : tierEnableHTML();
+  ['tier-controls-cost','tier-controls-roi'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = html; });
+}
+function tierEnableHTML() {
+  return `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px dashed var(--gray-300);border-radius:6px;background:var(--gray-50)">
+    <span class="badge b-green">TIERS</span>
+    <span style="font-size:12px;color:var(--muted)">Compare several solution options (Good / Better / Best) — each with its own cost and how much of each value lever it captures.</span>
+    <button class="btn btn-outline" style="margin-left:auto;height:28px;padding:0 12px;font-size:12px;white-space:nowrap" onclick="enableTiers()">+ Enable solution tiers</button>
+  </div>`;
+}
+function tierManagerHTML() {
+  const chips = state.tiers.map((t,k) => `
+    <span style="display:inline-flex;align-items:center;gap:2px;border:1px solid var(--gray-300);border-radius:14px;padding:2px 4px 2px 10px;background:#fff">
+      <input class="editable-input" value="${(t.name||'').replace(/"/g,'&quot;')}" style="width:${Math.max(64,(t.name||'').length*8)}px;font-size:12px;border:none;background:transparent" onchange="renameTier(${k},this.value)">
+      ${state.tiers.length>2 ? `<span onclick="removeTier(${k})" title="Remove tier" style="cursor:pointer;color:var(--muted);font-size:12px;padding:0 4px">✕</span>` : ''}
+    </span>`).join('');
+  return `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;border:1px solid var(--gray-300);border-radius:6px;background:var(--gray-50)">
+    <span class="badge b-green">TIERS</span>${chips}
+    ${state.tiers.length<4 ? `<button class="btn btn-outline" style="height:26px;padding:0 10px;font-size:12px" onclick="addTier()">+ Tier</button>` : ''}
+    <button class="btn btn-outline" style="margin-left:auto;height:26px;padding:0 10px;font-size:12px" onclick="disableTiers()" title="Collapse back to a single analysis using the selected tier">Turn off</button>
+  </div>`;
 }
 
 function syncDelay() {
