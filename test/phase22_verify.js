@@ -14,10 +14,11 @@ const abs = (...p) => path.resolve(__dirname, ...p);
 const readJSON = p => JSON.parse(fs.readFileSync(p, 'utf8'));
 const EX = abs('..', 'examples', 'macys_deck_read_mechanism.json');
 
-// Computed activation per lever, by tier (Good / Better / Best) — the deck's None/Partial/Full.
+// Computed activation per lever, by tier (Good / Better / Best) — the deck's None/Partial/Full,
+// with partials calibrated so each tier's credited total reconciles to the deck headline.
 const ACT = {
-  'MD-01': [0,1,1],      'MD-02': [0.30,0.65,1], 'MD-03': [0.15,0.55,1], 'MD-04': [0,0.5,1],
-  'MD-05': [0.70,1,1],   'MD-06': [0,1,1],       'MD-07': [0.30,0.5,1],  'MD-08': [0.50,1,1],
+  'MD-01': [0,1,1],      'MD-02': [0.30,0.30,1], 'MD-03': [0.15,0.15,1], 'MD-04': [0,0.39,1],
+  'MD-05': [0.95,1,1],   'MD-06': [0,1,1],       'MD-07': [0.50,0.50,1], 'MD-08': [0.80,1,1],
 };
 const gate = (w, id, k) => w.eval(`tierGateFor(state.customScenarios.find(s=>s.id==='${id}'), ${k})`);
 const credited = (w, k) => w.eval(`(function(){var fc=getFinanceCreditState();return activeScenariosForNRV().reduce((s,sc)=>s+Math.max(0,calcSc(sc))*financeCreditFactor(sc,fc)*tierGateFor(sc,${k}),0);})()`);
@@ -43,11 +44,10 @@ const credited = (w, k) => w.eval(`(function(){var fc=getFinanceCreditState();re
   ok('out-of-stock / BOPIS / safety reach Full only at Best (need continuous stream)',
      gate(w,'MD-03',2) === 1 && gate(w,'MD-03',1) < 1 && gate(w,'MD-04',2) === 1 && gate(w,'MD-04',1) < 1 && gate(w,'MD-07',2) === 1 && gate(w,'MD-07',1) < 1);
 
-  // ── 2) Best steady-state credited reconciles to the deck's $99.0M.
-  const best = credited(w, 2);
-  ok('Best steady-state credited = the deck\'s $99.0M', Math.abs(best - 99.0e6) < 0.15e6, '$' + (best/1e6).toFixed(2) + 'M');
-  ok('credited value rises Good < Better < Best', credited(w,0) < credited(w,1) && credited(w,1) < credited(w,2),
-     [0,1,2].map(k=>'$'+(credited(w,k)/1e6).toFixed(1)+'M').join(' < '));
+  // ── 2) Steady-state credited reconciles to the deck headline on ALL THREE tiers.
+  ok('Good steady-state credited = the deck\'s $23.6M', Math.abs(credited(w,0) - 23.6e6) < 0.1e6, '$' + (credited(w,0)/1e6).toFixed(2) + 'M');
+  ok('Better steady-state credited = the deck\'s $67.3M', Math.abs(credited(w,1) - 67.3e6) < 0.1e6, '$' + (credited(w,1)/1e6).toFixed(2) + 'M');
+  ok('Best steady-state credited = the deck\'s $99.0M', Math.abs(credited(w,2) - 99.0e6) < 0.1e6, '$' + (credited(w,2)/1e6).toFixed(2) + 'M');
 
   // ── 3) Cost aggregates cumulatively from the read-mechanism hardware.
   const cap = k => Math.round(w.eval(`tierCostsFor(costRows,${k},tierCostOpts()).yr0`));
