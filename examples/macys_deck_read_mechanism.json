@@ -77,16 +77,16 @@
       "MD-02": 0.3,
       "MD-03": 0.15,
       "MD-04": 0,
-      "MD-05": 0.7,
+      "MD-05": 0.95,
       "MD-06": 0,
-      "MD-07": 0.3,
-      "MD-08": 0.5
+      "MD-07": 0.5,
+      "MD-08": 0.8
     },
     "event": {
       "MD-01": 1,
-      "MD-02": 0.65,
-      "MD-03": 0.55,
-      "MD-04": 0.5,
+      "MD-02": 0.3,
+      "MD-03": 0.15,
+      "MD-04": 0.39,
       "MD-05": 1,
       "MD-06": 1,
       "MD-07": 0.5,
@@ -313,6 +313,6 @@
     }
   ],
   "annotations": {
-    "engagement": "Value is gated by workflow, not by a different technology: all three tiers are RFID. Good provides snapshot reads (handheld); Better adds event reads at fixed control points; Best adds a continuous RTLS stream. Each tier provides its capabilities cumulatively. Each value lever is served None/Partial/Full by the best read mechanism the tier provides — shrink and chargeback need exit/receiving EVENTS (nothing at Good); out-of-stock, BOPIS and safety stock reach Full only with the CONTINUOUS stream. Cost rolls up from the hardware each mechanism needs. To expand to Machine Vision or BLE, add it as a capability, give each tier the capability, and fill its matrix row."
+    "engagement": "Value is gated by workflow, not by a different technology: all three tiers are RFID. Good provides snapshot reads (handheld); Better adds event reads at fixed control points; Best adds a continuous RTLS stream. Each tier provides its capabilities cumulatively. Each value lever is served None/Partial/Full by the best read mechanism the tier provides — shrink and chargeback need exit/receiving EVENTS (nothing at Good); out-of-stock, BOPIS and safety stock reach Full only with the CONTINUOUS stream. Cost rolls up from the hardware each mechanism needs. The snapshot/event partials are calibrated so the credited steady-state per tier reconciles to the deck headline (Good $23.6M · Better $67.3M · Best $99.0M), consistent with slide 4 (Good captures labor + device; out-of-stock, safety and BOPIS fill in at Best). To expand to Machine Vision or BLE, add it as a capability, give each tier the capability, and fill its matrix row."
   }
 }
