@@ -1,0 +1,246 @@
+{
+  "_type": "strategic-value-engagement",
+  "_version": 2,
+  "_label": "Retail — Solution Comparison (RFID / BLE / Machine Vision)",
+  "_notice": "Worked example of the SOLUTION layer: three parallel technology solutions (not a Good/Better/Best ladder). Each solution bundles technologies; cost aggregates from them and each value lever's activation is computed from the technology×value capability matrix (override any cell). Illustrative benchmark figures.",
+  "mode": "analyst",
+  "engagement": {
+    "company": "Zebra",
+    "customer": "Illustrative Retailer",
+    "title": "Technology Solution Comparison — RFID vs BLE vs Machine Vision",
+    "sites": 1,
+    "partners": "Software Platform",
+    "pain": "Decide which technology solution best fits the value cases that matter — inventory accuracy, out-of-stock, shrink, associate/asset flow, and shelf compliance — each technology serves them differently."
+  },
+  "verticals": [
+    "retail"
+  ],
+  "selectedIds": [],
+  "inputs": {},
+  "technologies": [
+    {
+      "id": "rfid",
+      "label": "RFID"
+    },
+    {
+      "id": "ble",
+      "label": "BLE / Beacons"
+    },
+    {
+      "id": "mv",
+      "label": "Machine Vision"
+    },
+    {
+      "id": "platform",
+      "label": "Software Platform"
+    }
+  ],
+  "tiers": [
+    {
+      "id": "rfid_suite",
+      "name": "RFID Suite",
+      "technologyIds": [
+        "rfid",
+        "platform"
+      ]
+    },
+    {
+      "id": "ble_suite",
+      "name": "BLE / RTLS Suite",
+      "technologyIds": [
+        "ble",
+        "platform"
+      ]
+    },
+    {
+      "id": "mv_suite",
+      "name": "Machine Vision Suite",
+      "technologyIds": [
+        "mv",
+        "platform"
+      ]
+    }
+  ],
+  "costPerSite": false,
+  "capability": {
+    "rfid": {
+      "RC-01": 1.0,
+      "RC-02": 0.8,
+      "RC-03": 0.5,
+      "RC-04": 0.2,
+      "RC-05": 0.1
+    },
+    "ble": {
+      "RC-01": 0.1,
+      "RC-02": 0.2,
+      "RC-03": 0.2,
+      "RC-04": 0.9,
+      "RC-05": 0.1
+    },
+    "mv": {
+      "RC-01": 0.3,
+      "RC-02": 0.5,
+      "RC-03": 0.9,
+      "RC-04": 0.3,
+      "RC-05": 0.9
+    }
+  },
+  "customScenarios": [
+    {
+      "id": "RC-01",
+      "name": "Inventory accuracy — cycle-count labor",
+      "custom": true,
+      "active": true,
+      "theme": "Labor & Human Capacity",
+      "rampType": "hard_labor",
+      "accessibilityTier": "configured",
+      "haircut": 0,
+      "formula": "loss_pool * recovery_rate",
+      "inputs": {
+        "loss_pool": 4000000,
+        "recovery_rate": 0.25
+      }
+    },
+    {
+      "id": "RC-02",
+      "name": "Out-of-stock recovery",
+      "custom": true,
+      "active": true,
+      "theme": "Revenue & Growth",
+      "rampType": "revenue",
+      "accessibilityTier": "configured",
+      "haircut": 0,
+      "formula": "loss_pool * recovery_rate",
+      "inputs": {
+        "loss_pool": 30000000,
+        "recovery_rate": 0.5
+      }
+    },
+    {
+      "id": "RC-03",
+      "name": "Shrink reduction",
+      "custom": true,
+      "active": true,
+      "theme": "Direct Cost & Spend",
+      "rampType": "hard_cost",
+      "accessibilityTier": "configured",
+      "haircut": 0,
+      "formula": "loss_pool * recovery_rate",
+      "inputs": {
+        "loss_pool": 10000000,
+        "recovery_rate": 0.2
+      }
+    },
+    {
+      "id": "RC-04",
+      "name": "Associate & asset flow (location)",
+      "custom": true,
+      "active": true,
+      "theme": "Labor & Human Capacity",
+      "rampType": "soft",
+      "accessibilityTier": "configured",
+      "haircut": 0,
+      "formula": "loss_pool * recovery_rate",
+      "inputs": {
+        "loss_pool": 3000000,
+        "recovery_rate": 0.3
+      }
+    },
+    {
+      "id": "RC-05",
+      "name": "Planogram / shelf compliance",
+      "custom": true,
+      "active": true,
+      "theme": "Revenue & Growth",
+      "rampType": "revenue",
+      "accessibilityTier": "configured",
+      "haircut": 0,
+      "formula": "loss_pool * recovery_rate",
+      "inputs": {
+        "loss_pool": 8000000,
+        "recovery_rate": 0.25
+      }
+    }
+  ],
+  "financeCredit": {
+    "enabled": true,
+    "rate": 0.4
+  },
+  "wacc": 0.1,
+  "decay": {
+    "useDecay": false,
+    "g": 0.035
+  },
+  "costs": {
+    "attritionRate": 0,
+    "annualTraining": 0
+  },
+  "contingencyRate": 0,
+  "costRows": [
+    {
+      "category": "RFID",
+      "label": "RFID fixed readers & handhelds",
+      "cadence": "upfront",
+      "amount": 1800000,
+      "technologyId": "rfid"
+    },
+    {
+      "category": "RFID",
+      "label": "RFID tag replenishment",
+      "cadence": "recurring",
+      "amount": 600000,
+      "technologyId": "rfid"
+    },
+    {
+      "category": "BLE",
+      "label": "BLE beacons & gateways",
+      "cadence": "upfront",
+      "amount": 1200000,
+      "technologyId": "ble"
+    },
+    {
+      "category": "BLE",
+      "label": "BLE maintenance",
+      "cadence": "recurring",
+      "amount": 150000,
+      "technologyId": "ble"
+    },
+    {
+      "category": "MV",
+      "label": "Machine-vision cameras & edge compute",
+      "cadence": "upfront",
+      "amount": 2600000,
+      "technologyId": "mv"
+    },
+    {
+      "category": "MV",
+      "label": "Vision model ops & maintenance",
+      "cadence": "recurring",
+      "amount": 250000,
+      "technologyId": "mv"
+    },
+    {
+      "category": "PLATFORM",
+      "label": "Software platform setup",
+      "cadence": "upfront",
+      "amount": 300000,
+      "technologyId": "platform"
+    },
+    {
+      "category": "PLATFORM",
+      "label": "Software platform subscription",
+      "cadence": "recurring",
+      "amount": 500000,
+      "technologyId": "platform"
+    },
+    {
+      "category": "Shared",
+      "label": "Integration, PM & training",
+      "cadence": "upfront",
+      "amount": 400000
+    }
+  ],
+  "annotations": {
+    "engagement": "Three parallel solutions compared on the SAME value levers. The capability matrix encodes how each technology serves each value case: RFID dominates inventory accuracy and out-of-stock; BLE/RTLS dominates associate & asset flow; Machine Vision dominates shrink and shelf compliance. A solution's activation of a lever = the best-suited technology it includes; its cost = the sum of its technologies' cost lines plus shared lines. Every computed cell is overridable."
+  }
+}
