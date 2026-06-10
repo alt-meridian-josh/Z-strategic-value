@@ -4984,6 +4984,10 @@ function syncCost() {
   setSv('sv-saas', '$'+saas.toLocaleString());
   setSv('sv-tag', '$'+parseFloat(tagUnit).toFixed(2));
   setSv('sv-readers', readers);
+  // Tiered analyses own a per-solution cost model (qtyByTier / amountByTier). The
+  // single-column sliders must never regenerate or re-bucket those rows — just roll
+  // each tier up and re-render. (Chunk 20)
+  if(tiersActive()) { rebuildCostState(); renderCost(); return; }
   // An example preset owns the whole cost model — keep its rows verbatim, never
   // merge in the slider-derived default rows. (Reset & Recalc clears this flag.)
   if(costRowsPreset && costRows && costRows.length > 0) {
