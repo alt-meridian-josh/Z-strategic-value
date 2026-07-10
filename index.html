@@ -877,6 +877,19 @@ svg{max-width:100%;height:auto}
 #customer-footer { display: none; }
 .customer-mode #customer-footer { display: block; }
 @media print { .customer-mode #customer-footer { display: block; } }
+/* ── Value Case Builder (panel-9) ─────────────────────────────── */
+.vc-card{border:1.5px solid var(--gray-200);border-radius:8px;padding:14px 16px;cursor:pointer;transition:border-color .12s,background .12s;margin-bottom:8px;background:var(--brand-white)}
+.vc-card:hover{border-color:var(--gray-400);background:#fafafa}
+.vc-card.selected{border-color:var(--brand-black);background:#f6fbf0;box-shadow:0 0 0 2px rgba(168,249,49,.25)}
+.vc-card.selected .vc-card-title{color:var(--brand-black)}
+.vc-expand-area{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--gray-200)}
+.vc-q-row{display:flex;gap:8px;padding:5px 0;font-size:12px;color:var(--gray-700)}
+.vc-q-num{font-family:var(--mono);color:#A8F931;background:var(--brand-black);padding:1px 6px;border-radius:3px;font-size:10px;font-weight:700;min-width:24px;text-align:center;line-height:18px;flex-shrink:0}
+.vc-input-row{display:flex;justify-content:space-between;padding:4px 0;font-size:11px;border-bottom:1px solid var(--gray-100)}
+.vc-input-row:last-child{border-bottom:none}
+.vc-objection{margin-top:10px;padding:8px 12px;background:#fdf7f0;border-left:3px solid #e65100;border-radius:0 4px 4px 0;font-size:11px;color:#7a3300;line-height:1.55}
+.vc-pitch{padding:8px 12px;background:#f0fdf0;border-left:3px solid #2e7d32;border-radius:0 4px 4px 0;font-size:12px;color:#1b5e20;font-style:italic;margin-bottom:8px}
+.vcb-header-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:12px 16px;background:#f8f8f8;border-radius:8px;border:1px solid var(--gray-200)}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
@@ -924,6 +937,7 @@ svg{max-width:100%;height:auto}
   <div class="sb-item" onclick="go(6)"><div class="sb-num">≡</div><span class="sb-label">Evidence Registry</span><span class="sb-short">Evidence</span></div>
   <div class="sb-item" onclick="go(7)"><div class="sb-num">?</div><span class="sb-label">Help &amp; Reference</span><span class="sb-short">Help</span></div>
   <div class="sb-item" onclick="go(8)"><div class="sb-num">FS</div><span class="sb-label">Forecast Signal</span><span class="sb-short">Forecast</span></div>
+  <div class="sb-item" onclick="go(9)" style="border-left-color:#A8F931 !important" title="Build Value Case — Lead with value-based selling"><div class="sb-num" style="background:rgba(168,249,49,.15);color:#A8F931">◈</div><span class="sb-label">Value Case Builder</span><span class="sb-short">Builder</span></div>
   
   <div class="sb-progress">
     <div class="sb-prog-label">PROGRESS</div>
@@ -940,8 +954,13 @@ svg{max-width:100%;height:auto}
   <div style="max-width:900px;margin:0 auto;padding:64px 24px 48px">
     <div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#A8F931;font-weight:700">Zebra Value Accelerator</div>
     <h1 style="font-size:30px;margin:10px 0 4px;font-weight:800">Start an engagement</h1>
-    <p style="color:rgba(255,255,255,.55);font-size:14px;margin:0 0 28px">Three ways in — all land in the same guided analysis.</p>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+    <p style="color:rgba(255,255,255,.55);font-size:14px;margin:0 0 28px">Four ways in — lead with value or jump straight into the analysis.</p>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;max-width:760px">
+      <button class="entry-door" onclick="chooseValueBuilder()" style="text-align:left;background:#0d1f0a;border:2px solid #A8F931;border-radius:10px;padding:22px 18px;color:#fff;cursor:pointer">
+        <div style="font-size:22px;line-height:1">◈</div>
+        <div style="font-weight:700;margin:10px 0 4px;font-size:15px;color:#A8F931">Build Value Case First</div>
+        <div style="color:rgba(255,255,255,.6);font-size:12px;line-height:1.5">Lead with value. Pick your vertical, select value cases, generate a discovery intake form with questions &amp; solution correlations.</div>
+      </button>
       <button class="entry-door" onclick="chooseStartNew()" style="text-align:left;background:#151517;border:1px solid #2a2a2e;border-radius:10px;padding:22px 18px;color:#fff;cursor:pointer">
         <div style="font-size:22px;line-height:1">＋</div>
         <div style="font-weight:700;margin:10px 0 4px;font-size:15px">Start new</div>
@@ -2015,8 +2034,61 @@ svg{max-width:100%;height:auto}
   </div>
 </div>
 
-<!-- ══ PANEL 9 — SOLUTION COMPARATOR ══════════════════════════════════════ -->
+<!-- ══ PANEL 9 — VALUE CASE BUILDER ════════════════════════════════════════ -->
+<div class="panel" id="panel-9">
+  <div class="step-eyebrow">Value-Based Selling</div>
+  <div class="step-title">Value Case Builder</div>
+  <div class="step-desc">Lead with value. Pick your vertical, select the value cases that match this customer's pain, then generate a printable discovery intake form — questions, solution correlations, and capture fields included.</div>
 
+  <!-- Vertical picker -->
+  <div class="card">
+    <div class="card-label">Industry <span style="font-size:11px;font-weight:400;color:var(--muted);margin-left:6px">Choose vertical to see its value cases</span></div>
+    <div class="vertical-btns" id="vcb-vertical-btns">
+      <button class="vbtn active" data-v="retail"         onclick="vcbSetVertical(this)">Retail</button>
+      <button class="vbtn"        data-v="warehouse"      onclick="vcbSetVertical(this)">Warehouse / 3PL</button>
+      <button class="vbtn"        data-v="manufacturing"  onclick="vcbSetVertical(this)">Manufacturing &amp; MRO</button>
+      <button class="vbtn"        data-v="healthcare"     onclick="vcbSetVertical(this)">Healthcare</button>
+      <button class="vbtn"        data-v="government"     onclick="vcbSetVertical(this)">Government / Federal</button>
+      <button class="vbtn"        data-v="carriers"       onclick="vcbSetVertical(this)">Carriers &amp; Logistics</button>
+      <button class="vbtn"        data-v="aviation"       onclick="vcbSetVertical(this)">Aviation / MRO</button>
+      <button class="vbtn"        data-v="hospitality"    onclick="vcbSetVertical(this)">Hospitality &amp; Venues</button>
+      <button class="vbtn"        data-v="datacenter"     onclick="vcbSetVertical(this)">Data Center / IT</button>
+      <button class="vbtn"        data-v="energy"         onclick="vcbSetVertical(this)">Energy &amp; Industrial</button>
+      <button class="vbtn"        data-v="foodservice"    onclick="vcbSetVertical(this)">Food Service / CPG</button>
+    </div>
+  </div>
+
+  <!-- Value case cards -->
+  <div class="card">
+    <div class="card-label" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span id="vcb-case-label" style="font-weight:700">Value Cases</span>
+      <span style="display:flex;gap:8px;align-items:center">
+        <span style="font-size:11px;color:var(--muted)"><span id="vcb-count">0</span> selected</span>
+        <button class="btn-link" onclick="vcbSelectAll(true)">Select all</button>
+        <button class="btn-link" onclick="vcbSelectAll(false)">Clear all</button>
+      </span>
+    </div>
+    <div id="vcb-grid"></div>
+  </div>
+
+  <!-- Generate action bar -->
+  <div class="vcb-header-actions">
+    <button class="btn btn-primary" onclick="generateIntakeForm()" style="padding:0 20px;height:38px;font-size:13px">
+      ◈ Generate Discovery Intake Form
+    </button>
+    <span style="font-size:12px;color:var(--muted)">Opens a printable form with discovery questions, solution correlations, and input capture fields for your selected value cases.</span>
+  </div>
+
+  <div class="alert a-strategy" style="margin-top:4px">
+    <span>⬡</span>
+    <div><strong>How to use this form</strong> &#8212; Bring the generated intake form to your discovery meeting. Lead with the value pitch, ask the discovery questions in the customer's language, capture their answers, and fill in the quantification inputs. The data you collect here flows directly into the Discovery Inputs step (Step 3) of the analysis.</div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-outline" onclick="go(1)">← Industry &amp; Value Levers</button>
+    <button class="btn btn-primary" onclick="chooseStartNew()">Start Full Analysis →</button>
+  </div>
+</div>
 
 <!-- Customer-lite footer (Phase 4) — shown on every page and in print in customer mode. -->
 <div id="customer-footer" style="margin-top:24px;padding:12px 16px;border-top:2px solid var(--brand-black,#0b0b0c);font-size:11px;color:#555;line-height:1.6"></div>
@@ -4484,7 +4556,7 @@ function go(n) {
     el.classList.remove('active','done');
     if(i===n) el.classList.add('active');
     else if(i<n && n<=5) el.classList.add('done');  // only mark done within workflow (steps 0-5)
-    else if((n===6||n===7||n===8) && i<5) el.classList.add('done'); // Library pages: keep steps 0-4 as done
+    else if((n===6||n===7||n===8||n===9) && i<5) el.classList.add('done'); // Library pages: keep steps 0-4 as done
   });
   document.getElementById('prog-fill').style.width = Math.min(100, Math.round((Math.min(n,5)/5)*100))+'%';
   if(n===2) { renderDisc(); renderCustomScenarios(); }
@@ -4493,6 +4565,7 @@ function go(n) {
   if(n===5) { ensureCosts(); if(!state.benefits || !state.benefits.totAnnual) renderROI(); renderExec(); renderSolutionComparison(); renderDataStatus(); }  // Full Analysis
   if(n===6) renderEvidence();
   if(n===8) initForecastSignal();
+  if(n===9) renderValueCaseWizard();
   document.querySelector('.main').scrollTop = 0;
   syncNav();
 }
@@ -9053,6 +9126,310 @@ function renderFSForecastChart(d, preData, postData) {
 // Register annotation plugin when Chart.js is ready
 if (typeof Chart !== 'undefined' && window['chartjs-plugin-annotation']) {
   Chart.register(window['chartjs-plugin-annotation']);
+}
+
+// ── VALUE CASE BUILDER ────────────────────────────────────────────────────────
+
+const VCB_VERTICAL_LABELS = {
+  retail:'Retail', warehouse:'Warehouse / 3PL', manufacturing:'Manufacturing & MRO',
+  healthcare:'Healthcare', government:'Government / Federal', carriers:'Carriers & Logistics',
+  aviation:'Aviation / MRO', hospitality:'Hospitality & Venues', datacenter:'Data Center / IT',
+  energy:'Energy & Industrial', foodservice:'Food Service / CPG'
+};
+
+const VCB_THEME_COLORS = {
+  'Labor & Human Capacity':'#1565c0','Revenue / Margin':'#2e7d32',
+  'Direct Cost & Spend':'#6a1b9a','Working Capital':'#c84b00',
+  'Operational Efficiency':'#00695c','Regulatory & Compliance':'#b71c1c',
+  'Strategic / AI / Data':'#4527a0'
+};
+
+const VCB_RAMP_LABELS = {
+  hard_labor:'Hard Labor',hard_cost:'Hard Cost',revenue:'Revenue',
+  soft:'Soft Productivity',working_cap:'Working Capital',strategic:'Strategic'
+};
+
+const vcbState = { vertical:'retail', selected: new Set(), expanded: new Set() };
+
+function renderValueCaseWizard() {
+  document.querySelectorAll('#vcb-vertical-btns .vbtn').forEach(b => {
+    b.classList.toggle('active', b.dataset.v === vcbState.vertical);
+  });
+  renderVcbGrid();
+}
+
+function vcbSetVertical(btn) {
+  vcbState.vertical = btn.dataset.v;
+  document.querySelectorAll('#vcb-vertical-btns .vbtn').forEach(b => {
+    b.classList.toggle('active', b.dataset.v === vcbState.vertical);
+  });
+  renderVcbGrid();
+}
+
+function renderVcbGrid() {
+  const scenarios = SCENARIOS.filter(sc => sc.verticalKey === vcbState.vertical);
+  const grid = document.getElementById('vcb-grid');
+  const label = document.getElementById('vcb-case-label');
+  if (!grid) return;
+  const vertLabel = VCB_VERTICAL_LABELS[vcbState.vertical] || vcbState.vertical;
+  label.textContent = `Value Cases — ${vertLabel}  (${scenarios.length} levers)`;
+
+  if (!scenarios.length) {
+    grid.innerHTML = `<div style="padding:18px;text-align:center;color:var(--muted);font-size:12px;border:1px dashed var(--gray-300);border-radius:8px">No bundled value cases for this vertical yet.</div>`;
+    return;
+  }
+
+  // Group by theme
+  const groups = {};
+  scenarios.forEach(sc => { const g = sc.theme || 'General'; (groups[g] = groups[g] || []).push(sc); });
+
+  let html = '';
+  for (const [theme, scs] of Object.entries(groups)) {
+    const tc = VCB_THEME_COLORS[theme] || '#555';
+    html += `<div style="margin-bottom:16px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:${tc};border-left:3px solid ${tc};padding-left:8px;margin-bottom:6px">${theme}</div>`;
+    scs.forEach(sc => {
+      const sel = vcbState.selected.has(sc.id);
+      const exp = vcbState.expanded.has(sc.id);
+      const evColor = sc.evidence === 'Strong' ? '#2e7d32' : '#c84b00';
+      const inputs = Object.entries(sc.inputs || {});
+      html += `<div class="vc-card${sel ? ' selected' : ''}" id="vccard-${sc.id}" onclick="vcbToggle('${sc.id}')">
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <div style="padding-top:1px;flex-shrink:0">
+            <input type="checkbox" ${sel ? 'checked' : ''} onclick="event.stopPropagation();vcbToggle('${sc.id}')"
+              style="width:15px;height:15px;cursor:pointer;accent-color:var(--brand-black)">
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:3px">
+              <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">${sc.id}</span>
+              <span style="font-size:13px;font-weight:700;color:var(--brand-black)">${sc.name}</span>
+            </div>
+            ${sc.oneLiner ? `<div style="font-size:12px;color:var(--gray-700);font-style:italic;margin-bottom:6px">${sc.oneLiner}</div>` : ''}
+            <div style="display:flex;gap:5px;flex-wrap:wrap">
+              <span style="font-size:10px;padding:1px 7px;border-radius:10px;background:${evColor}15;color:${evColor};font-weight:700;font-family:var(--mono)">${sc.evidence || ''} evidence</span>
+              <span style="font-size:10px;padding:1px 7px;border-radius:10px;background:var(--gray-100);color:var(--gray-600);font-family:var(--mono)">${VCB_RAMP_LABELS[sc.rampType] || sc.rampType || ''}</span>
+              ${(sc.techKeys||[]).slice(0,2).map(t=>`<span style="font-size:10px;padding:1px 7px;border-radius:10px;background:#e8eaf6;color:#3949ab;font-family:var(--mono)">${t}</span>`).join('')}
+            </div>
+          </div>
+          <button onclick="event.stopPropagation();vcbExpand('${sc.id}')" id="vcexp-btn-${sc.id}"
+            style="background:none;border:1px solid var(--gray-200);border-radius:4px;padding:3px 10px;font-size:11px;cursor:pointer;color:var(--gray-700);white-space:nowrap;flex-shrink:0">
+            ${exp ? 'Hide ▴' : 'Questions ▾'}
+          </button>
+        </div>
+        <div id="vcexp-${sc.id}" class="vc-expand-area" style="display:${exp ? 'block' : 'none'}">
+          ${sc.oneLiner ? `<div class="vc-pitch">"${sc.oneLiner}"</div>` : ''}
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px">Discovery Questions</div>
+          ${(sc.discoveryQuestions||[]).map((q,i)=>`<div class="vc-q-row"><span class="vc-q-num">Q${i+1}</span><span>${q}</span></div>`).join('')}
+          ${!sc.discoveryQuestions?.length ? '<div style="font-size:11px;color:var(--muted);font-style:italic">Use the inputs table below to guide the conversation.</div>' : ''}
+          ${inputs.length ? `
+          <div style="margin-top:10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px">Inputs to Collect from Customer</div>
+          ${inputs.map(([k,inp])=>`<div class="vc-input-row"><span>${inp.label||k} <span style="color:var(--muted)">(${inp.unit||''})</span></span><span style="color:var(--muted);font-family:var(--mono);font-size:10px">Default: ${inp.value!==undefined?inp.value.toLocaleString():'—'}</span></div>`).join('')}` : ''}
+          ${sc.challenge ? `<div class="vc-objection"><strong>Objection Prep:</strong> ${sc.challenge}</div>` : ''}
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+  grid.innerHTML = html;
+  updateVcbCount();
+}
+
+function vcbToggle(id) {
+  if (vcbState.selected.has(id)) vcbState.selected.delete(id);
+  else vcbState.selected.add(id);
+  const card = document.getElementById(`vccard-${id}`);
+  if (card) {
+    card.classList.toggle('selected', vcbState.selected.has(id));
+    const cb = card.querySelector('input[type=checkbox]');
+    if (cb) cb.checked = vcbState.selected.has(id);
+  }
+  updateVcbCount();
+}
+
+function vcbExpand(id) {
+  const el = document.getElementById(`vcexp-${id}`);
+  const btn = document.getElementById(`vcexp-btn-${id}`);
+  if (!el) return;
+  const nowOpen = el.style.display !== 'none';
+  el.style.display = nowOpen ? 'none' : 'block';
+  if (nowOpen) vcbState.expanded.delete(id); else vcbState.expanded.add(id);
+  if (btn) btn.textContent = nowOpen ? 'Questions ▾' : 'Hide ▴';
+}
+
+function vcbSelectAll(on) {
+  SCENARIOS.filter(sc => sc.verticalKey === vcbState.vertical).forEach(sc => {
+    if (on) vcbState.selected.add(sc.id); else vcbState.selected.delete(sc.id);
+  });
+  renderVcbGrid();
+}
+
+function updateVcbCount() {
+  const el = document.getElementById('vcb-count');
+  if (el) el.textContent = vcbState.selected.size;
+}
+
+function chooseValueBuilder() {
+  hideChooser();
+  go(9);
+}
+
+function generateIntakeForm() {
+  const selected = [...vcbState.selected];
+  if (!selected.length) {
+    alert('Select at least one value case to generate the intake form.');
+    return;
+  }
+  const customer = document.getElementById('i-customer')?.value || '_______________________________';
+  const company  = document.getElementById('i-company')?.value  || 'Zebra Technologies';
+  const seller   = document.getElementById('i-seller')?.value   || '_______________________________';
+  const today    = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const vertLabel = VCB_VERTICAL_LABELS[vcbState.vertical] || vcbState.vertical;
+  const scenarios = selected.map(id => SCENARIOS.find(sc => sc.id === id)).filter(Boolean);
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Value Case Intake — ${customer}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Helvetica Neue',Arial,sans-serif;font-size:12px;color:#1a1a1a;background:#fff}
+.page{max-width:880px;margin:0 auto;padding:36px 44px}
+.hdr{border-bottom:3px solid #0b0b0c;padding-bottom:18px;margin-bottom:22px;display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
+.brand{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#888;margin-bottom:4px}
+h1{font-size:22px;font-weight:800;color:#0b0b0c;margin-bottom:2px}
+.sub{font-size:11px;color:#666}
+.badge-count{font-size:11px;font-weight:700;color:#A8F931;background:#0b0b0c;padding:5px 12px;border-radius:4px;white-space:nowrap}
+.meta{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:16px;border:1px solid #e0e0e0;border-radius:5px;overflow:hidden}
+.mc{padding:8px 12px;border-right:1px solid #e0e0e0;border-bottom:1px solid #e0e0e0}
+.mc:nth-child(even){border-right:none}
+.mc:nth-last-child(-n+2){border-bottom:none}
+.ml{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#999;margin-bottom:2px}
+.mv{font-size:13px;font-weight:600}
+.toc{margin:18px 0;padding:12px 16px;background:#f7f7f7;border-radius:6px}
+.toc-h{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#999;margin-bottom:8px}
+.ti{font-size:11px;color:#333;display:flex;gap:8px;margin-bottom:3px}
+.vc{margin-bottom:36px;page-break-inside:avoid}
+.vc-hdr{background:#0b0b0c;color:#fff;border-radius:6px 6px 0 0;padding:13px 16px}
+.vc-tag{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#A8F931;margin-bottom:3px}
+.vc-name{font-size:17px;font-weight:800;margin-bottom:2px}
+.vc-id{font-size:10px;color:rgba(255,255,255,.45);font-family:'Courier New',monospace}
+.vc-chips{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:9px;padding:2px 8px;border-radius:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.chip-theme{background:rgba(255,255,255,.12);color:rgba(255,255,255,.85)}
+.chip-ev-strong{background:#e8f5e9;color:#2e7d32}
+.chip-ev-medium{background:#fff3e0;color:#c84b00}
+.chip-ramp{background:#e8eaf6;color:#3949ab}
+.vc-body{border:1px solid #e0e0e0;border-top:none;border-radius:0 0 6px 6px}
+.pitch{padding:12px 16px;background:#f0fdf0;border-bottom:1px solid #e0e0e0}
+.pitch-l{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#2e7d32;margin-bottom:4px}
+.pitch-t{font-size:13px;font-weight:600;font-style:italic;color:#1a1a1a;line-height:1.4}
+.section{padding:13px 16px;border-bottom:1px solid #e0e0e0}
+.section:last-child{border-bottom:none}
+.sh{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#999;margin-bottom:10px}
+.qrow{margin-bottom:14px}
+.qrow:last-child{margin-bottom:0}
+.qn{font-size:10px;font-weight:700;background:#0b0b0c;color:#A8F931;padding:1px 7px;border-radius:3px;font-family:'Courier New';margin-right:6px}
+.qt{font-size:12px;font-weight:600;color:#1a1a1a;margin-bottom:6px}
+.aline{border-bottom:1px dashed #ccc;height:18px;margin:4px 0}
+table.inputs{width:100%;border-collapse:collapse;font-size:11px}
+table.inputs th{background:#f5f5f5;padding:6px 10px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:#999;font-weight:700;border-bottom:1px solid #e0e0e0}
+table.inputs td{padding:6px 10px;border-bottom:1px solid #f2f2f2;vertical-align:top}
+table.inputs tr:last-child td{border-bottom:none}
+.cf{width:100%;border:none;border-bottom:1px dashed #ccc;font-size:11px;padding:2px 0;background:transparent}
+.sol{padding:10px 12px;background:#e8f5e9;border-left:3px solid #2e7d32;font-size:11px;color:#1b5e20;line-height:1.55;margin-bottom:8px}
+.obj{padding:10px 12px;background:#fff3e0;border-left:3px solid #c84b00;font-size:11px;color:#7a3300;line-height:1.55}
+.notes-box{margin-top:20px;padding:16px;border:1px dashed #ccc;border-radius:6px}
+.notes-l{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#999;margin-bottom:10px}
+.nl{border-bottom:1px dashed #ccc;height:20px;margin-bottom:8px}
+.footer{margin-top:28px;padding-top:14px;border-top:1px solid #e0e0e0;font-size:10px;color:#bbb;display:flex;justify-content:space-between}
+.toolbar{position:fixed;bottom:22px;right:22px;display:flex;gap:10px;z-index:100}
+.tbtn{background:#0b0b0c;color:#fff;border:none;padding:10px 20px;border-radius:5px;font-size:13px;font-weight:600;cursor:pointer}
+.tbtn.sec{background:#555}
+@media print{.toolbar{display:none}.vc{page-break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="hdr">
+    <div>
+      <div class="brand">Zebra Technologies · Value-Based Selling</div>
+      <h1>Value Case Discovery Intake Form</h1>
+      <div class="sub">Pre-meeting discovery guide — bring to the customer conversation</div>
+    </div>
+    <div class="badge-count">${scenarios.length} Value Case${scenarios.length!==1?'s':''}</div>
+  </div>
+  <div class="meta">
+    <div class="mc"><div class="ml">Customer / Prospect</div><div class="mv">${customer}</div></div>
+    <div class="mc"><div class="ml">Industry</div><div class="mv">${vertLabel}</div></div>
+    <div class="mc"><div class="ml">Seller / SE</div><div class="mv">${seller}</div></div>
+    <div class="mc"><div class="ml">Meeting Date</div><div class="mv">_______________________________</div></div>
+  </div>
+  <div class="toc">
+    <div class="toc-h">Value Cases in This Form</div>
+    ${scenarios.map((sc,i)=>`<div class="ti"><strong>${i+1}.</strong><span><strong>${sc.id}</strong> &mdash; ${sc.name} <span style="color:#888">(${sc.theme})</span></span></div>`).join('')}
+  </div>
+  ${scenarios.map((sc,i)=>{
+    const evClass = sc.evidence==='Strong'?'chip-ev-strong':'chip-ev-medium';
+    const techList = (sc.techKeys||['RFID item-level tracking']).join(', ');
+    const inputs = Object.entries(sc.inputs||{});
+    return `<div class="vc">
+      <div class="vc-hdr">
+        <div class="vc-tag">Value Case ${i+1} of ${scenarios.length}</div>
+        <div class="vc-name">${sc.name}</div>
+        <div class="vc-id">${sc.id} &middot; ${VCB_VERTICAL_LABELS[sc.verticalKey]||sc.verticalKey}</div>
+        <div class="vc-chips">
+          <span class="chip chip-theme">${sc.theme}</span>
+          <span class="chip ${evClass}">${sc.evidence} Evidence</span>
+          <span class="chip chip-ramp">${VCB_RAMP_LABELS[sc.rampType]||sc.rampType}</span>
+        </div>
+      </div>
+      <div class="vc-body">
+        ${sc.oneLiner?`<div class="pitch"><div class="pitch-l">The RFID Value Pitch</div><div class="pitch-t">&ldquo;${sc.oneLiner}&rdquo;</div></div>`:''}
+        <div class="section">
+          <div class="sh">Discovery Questions &mdash; Confirm This Value Case Applies</div>
+          ${(sc.discoveryQuestions||[]).map((q,qi)=>`<div class="qrow"><div class="qt"><span class="qn">Q${qi+1}</span>${q}</div><div class="aline"></div><div class="aline"></div></div>`).join('')}
+          ${!sc.discoveryQuestions?.length?'<div style="color:#999;font-size:11px;font-style:italic">Use the quantification inputs below to guide the conversation.</div>':''}
+        </div>
+        ${inputs.length?`<div class="section">
+          <div class="sh">Quantification Inputs &mdash; Collect These Numbers from the Customer</div>
+          <table class="inputs">
+            <thead><tr><th>Data Point</th><th>Unit</th><th>Benchmark Default</th><th>Customer Value</th></tr></thead>
+            <tbody>${inputs.map(([k,inp])=>`<tr>
+              <td><strong>${inp.label||k}</strong>${inp.hint?`<div style="font-size:10px;color:#999;margin-top:2px">${inp.hint}</div>`:''}</td>
+              <td style="color:#888">${inp.unit||''}</td>
+              <td style="font-family:'Courier New';color:#666">${inp.value!==undefined?Number(inp.value).toLocaleString():'&mdash;'}</td>
+              <td><input class="cf" type="text" placeholder="enter value" /></td>
+            </tr>`).join('')}</tbody>
+          </table>
+        </div>`:''}
+        <div class="section">
+          <div class="sh">Solution Correlation &mdash; What Zebra RFID Solves</div>
+          <div class="sol"><strong>Technology:</strong> ${techList}.<br>${sc.oneLiner||sc.name}${sc.annualBenefit?`<br><span style="font-size:10px;color:#2e7d32;margin-top:4px;display:inline-block">Benchmark annual value: <strong>$${Number(sc.annualBenefit).toLocaleString()}</strong></span>`:''}</div>
+          ${sc.challenge?`<div class="obj"><strong>Objection Handling:</strong> ${sc.challenge}</div>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('')}
+  <div class="notes-box">
+    <div class="notes-l">Meeting Notes &amp; Next Steps</div>
+    <div class="nl"></div><div class="nl"></div><div class="nl"></div><div class="nl"></div>
+  </div>
+  <div class="footer">
+    <span>${company} &mdash; Confidential and Proprietary</span>
+    <span>Generated by Zebra Value Accelerator &middot; ${today}</span>
+  </div>
+</div>
+<div class="toolbar">
+  <button class="tbtn" onclick="window.print()">&#9113; Print / Save PDF</button>
+  <button class="tbtn sec" onclick="window.close()">&#10005; Close</button>
+</div>
+</body></html>`;
+
+  const win = window.open('', '_blank', 'width=960,height=800');
+  if (!win) { alert('Pop-up was blocked. Please allow pop-ups for this page to generate the intake form.'); return; }
+  win.document.write(html);
+  win.document.close();
 }
 </script>
 </body>
