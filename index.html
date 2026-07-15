@@ -9816,15 +9816,12 @@ const VCB_VERTICAL_LABELS = {
 
 const VCB_THEME_COLORS = {
   'Labor & Human Capacity':'#1565c0',
-  'Inventory Accuracy':'#2e7d32',
-  'Revenue & Sales Lift':'#6a1b9a',
-  'Compliance & Risk':'#c62828',
-  'Asset Utilization':'#e65100',
-  'Customer Experience':'#00695c',
-  'Supply Chain Efficiency':'#0277bd',
-  'Quality & Traceability':'#558b2f',
-  'Operations & Maintenance':'#4527a0',
-  'Security & Loss Prevention':'#37474f',
+  'Revenue / Margin':'#2e7d32',
+  'Direct Cost & Spend':'#c62828',
+  'Operational Efficiency':'#e65100',
+  'Working Capital':'#6a1b9a',
+  'Regulatory & Compliance':'#00695c',
+  'Strategic / AI / Data':'#4527a0',
   'Other':'#5d4037'
 };
 
@@ -9858,7 +9855,7 @@ function renderVcbGrid() {
   const grid = document.getElementById('vcb-grid');
   if (!grid) return;
 
-  const scenarios = (window.SCENARIOS || []).filter(sc => sc.verticalKey === vcbState.vertical && !sc.custom);
+  const scenarios = (SCENARIOS).filter(sc => sc.verticalKey === vcbState.vertical && !sc.custom);
   if (!scenarios.length) {
     grid.innerHTML = '<p style="color:var(--muted);font-size:13px">No value cases available for this vertical.</p>';
     updateVcbCount();
@@ -9926,7 +9923,7 @@ function vcbExpand(id) {
 }
 
 function vcbSelectAll(on) {
-  const scenarios = (window.SCENARIOS || []).filter(sc => sc.verticalKey === vcbState.vertical && !sc.custom);
+  const scenarios = (SCENARIOS).filter(sc => sc.verticalKey === vcbState.vertical && !sc.custom);
   scenarios.forEach(sc => { if (on) vcbState.selected.add(sc.id); else vcbState.selected.delete(sc.id); });
   renderVcbGrid();
 }
@@ -9943,7 +9940,7 @@ function generateIntakeForm() {
   const selected = [...vcbState.selected];
   if (!selected.length) { alert('Please select at least one value case first.'); return; }
 
-  const scenarios = (window.SCENARIOS || []).filter(sc => selected.includes(sc.id));
+  const scenarios = (SCENARIOS).filter(sc => selected.includes(sc.id));
   const customer = (document.getElementById('i-customer')?.value || '').trim() || 'Customer';
   const company  = (document.getElementById('i-company')?.value  || '').trim() || 'Zebra Technologies';
   const seller   = (document.getElementById('i-seller')?.value   || '').trim() || '';
