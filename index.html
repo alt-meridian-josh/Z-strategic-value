@@ -875,6 +875,28 @@ svg{max-width:100%;height:auto}
 #customer-footer { display: none; }
 .customer-mode #customer-footer { display: block; }
 @media print { .customer-mode #customer-footer { display: block; } }
+/* ── Value Case Builder (VCB) ── */
+.vc-card { background:#1a1a1e; border:1px solid #2e2e34; border-radius:8px; padding:14px 16px; cursor:pointer; transition:border .15s,background .15s; }
+.vc-card:hover { border-color:#4a4a54; }
+.vc-card.selected { border-color:#A8F931; background:#0d1f0a; }
+.vc-card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+.vc-card-name { font-weight:700; font-size:13px; color:#fff; line-height:1.4; flex:1; }
+.vc-card-check { width:18px; height:18px; border-radius:50%; border:2px solid #555; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:10px; transition:background .15s,border-color .15s; }
+.vc-card.selected .vc-card-check { background:#A8F931; border-color:#A8F931; color:#000; }
+.vc-card-oneliner { font-size:11px; color:rgba(255,255,255,.5); margin:4px 0 8px; line-height:1.5; }
+.vc-card-meta { display:flex; gap:8px; flex-wrap:wrap; }
+.vc-badge { font-size:10px; padding:2px 7px; border-radius:20px; font-weight:600; letter-spacing:.02em; }
+.vc-expand-area { border-top:1px solid #2e2e34; margin-top:10px; padding-top:10px; display:none; }
+.vc-expand-area.open { display:block; }
+.vc-expand-link { font-size:11px; color:#A8F931; cursor:pointer; text-decoration:underline; background:none; border:none; padding:0; margin-top:4px; }
+.vc-q-row { display:flex; gap:8px; margin-bottom:6px; font-size:12px; color:rgba(255,255,255,.75); }
+.vc-q-num { width:18px; flex-shrink:0; color:#A8F931; font-weight:700; }
+.vc-theme-group { margin-bottom:24px; }
+.vc-theme-label { font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:rgba(255,255,255,.4); margin-bottom:10px; }
+.vc-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; }
+.vcb-header-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:16px; }
+.vcb-vbtn { background:#1a1a1e; border:1px solid #333; color:rgba(255,255,255,.7); border-radius:20px; padding:6px 14px; font-size:12px; cursor:pointer; transition:all .15s; }
+.vcb-vbtn.active { background:#A8F931; border-color:#A8F931; color:#000; font-weight:700; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
@@ -921,6 +943,7 @@ svg{max-width:100%;height:auto}
   <div class="sb-section">Library</div>
   <div class="sb-item" onclick="go(6)"><div class="sb-num">≡</div><span class="sb-label">Evidence Registry</span><span class="sb-short">Evidence</span></div>
   <div class="sb-item" onclick="go(7)"><div class="sb-num">?</div><span class="sb-label">Help &amp; Reference</span><span class="sb-short">Help</span></div>
+  <div class="sb-item" onclick="go(8)"><div class="sb-num">◈</div><span class="sb-label">Value Case Builder</span><span class="sb-short">VCB</span></div>
   
   <div class="sb-progress">
     <div class="sb-prog-label">PROGRESS</div>
@@ -937,8 +960,8 @@ svg{max-width:100%;height:auto}
   <div style="max-width:900px;margin:0 auto;padding:64px 24px 48px">
     <div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#A8F931;font-weight:700">Zebra Value Accelerator</div>
     <h1 style="font-size:30px;margin:10px 0 4px;font-weight:800">Start an engagement</h1>
-    <p style="color:rgba(255,255,255,.55);font-size:14px;margin:0 0 28px">Three ways in — all land in the same guided analysis.</p>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+    <p style="color:rgba(255,255,255,.55);font-size:14px;margin:0 0 28px">Four ways in — all land in the same guided analysis.</p>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px">
       <button class="entry-door" onclick="chooseStartNew()" style="text-align:left;background:#151517;border:1px solid #2a2a2e;border-radius:10px;padding:22px 18px;color:#fff;cursor:pointer">
         <div style="font-size:22px;line-height:1">＋</div>
         <div style="font-weight:700;margin:10px 0 4px;font-size:15px">Start new</div>
@@ -953,6 +976,11 @@ svg{max-width:100%;height:auto}
         <div style="font-size:22px;line-height:1">↥</div>
         <div style="font-weight:700;margin:10px 0 4px;font-size:15px">Open a JSON</div>
         <div style="color:rgba(255,255,255,.5);font-size:12px;line-height:1.5">Reload a saved engagement from a .json file.</div>
+      </button>
+      <button class="entry-door" onclick="chooseValueBuilder()" style="text-align:left;background:#0d1f0a;border:2px solid #A8F931;border-radius:10px;padding:22px 18px;color:#fff;cursor:pointer">
+        <div style="font-size:22px;line-height:1">◈</div>
+        <div style="font-weight:700;margin:10px 0 4px;font-size:15px">Build Value Case First</div>
+        <div style="color:rgba(255,255,255,.5);font-size:12px;line-height:1.5">Pick your vertical, select value cases, generate a discovery intake form.</div>
       </button>
     </div>
     <div id="entry-profiles" style="display:none;margin-top:28px"></div>
@@ -1997,6 +2025,27 @@ svg{max-width:100%;height:auto}
   </div>
 </div>
 
+
+<!-- == PANEL 8: VALUE CASE BUILDER == -->
+<div class="panel" id="panel-8">
+  <div class="step-eyebrow">Value Selling</div>
+  <div class="step-title">Value Case Builder</div>
+  <div class="step-desc">Pick your vertical, select the value cases that match your customer's pain, then generate a discovery intake form with questions, inputs to capture, and objection handling.</div>
+
+  <div style="margin-bottom:16px">
+    <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Select Vertical</div>
+    <div id="vcb-vertical-btns" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+  </div>
+
+  <div class="vcb-header-actions">
+    <span id="vcb-count-label" style="font-size:12px;color:var(--muted);flex:1"></span>
+    <button class="btn btn-outline" style="height:30px;padding:0 12px;font-size:12px" onclick="vcbSelectAll(true)">Select All</button>
+    <button class="btn btn-outline" style="height:30px;padding:0 12px;font-size:12px" onclick="vcbSelectAll(false)">Clear</button>
+    <button class="btn" style="height:30px;padding:0 14px;font-size:12px;background:#A8F931;color:#000;font-weight:700;border:none" onclick="generateIntakeForm()">Generate Intake Form ↗</button>
+  </div>
+
+  <div id="vcb-grid"></div>
+</div>
 
 <!-- Customer-lite footer (Phase 4) — shown on every page and in print in customer mode. -->
 <div id="customer-footer" style="margin-top:24px;padding:12px 16px;border-top:2px solid var(--brand-black,#0b0b0c);font-size:11px;color:#555;line-height:1.6"></div>
@@ -4446,6 +4495,7 @@ function go(n) {
   if(n===4) { ensureCosts(); renderROI(); }   // ROI
   if(n===5) { ensureCosts(); if(!state.benefits || !state.benefits.totAnnual) renderROI(); renderExec(); renderDataStatus(); }  // Full Analysis
   if(n===6) renderEvidence();
+  if(n===8) renderValueCaseWizard();
   document.querySelector('.main').scrollTop = 0;
   syncNav();
 }
@@ -9751,6 +9801,284 @@ document.addEventListener('DOMContentLoaded', () => {
 // Register annotation plugin when Chart.js is ready
 if (typeof Chart !== 'undefined' && window['chartjs-plugin-annotation']) {
   Chart.register(window['chartjs-plugin-annotation']);
+}
+
+// ═══════════════════════════════════════════════════════
+//  VALUE CASE BUILDER  (panel-8)
+// ═══════════════════════════════════════════════════════
+
+const VCB_VERTICAL_LABELS = {
+  retail:'Retail', warehouse:'Warehouse / 3PL', manufacturing:'Manufacturing',
+  healthcare:'Healthcare', government:'Government / Public Sector',
+  carriers:'Carriers & Logistics', aviation:'Aviation', hospitality:'Hospitality',
+  datacenter:'Data Center', energy:'Energy & Utilities', foodservice:'Food Service'
+};
+
+const VCB_THEME_COLORS = {
+  'Labor & Human Capacity':'#1565c0',
+  'Inventory Accuracy':'#2e7d32',
+  'Revenue & Sales Lift':'#6a1b9a',
+  'Compliance & Risk':'#c62828',
+  'Asset Utilization':'#e65100',
+  'Customer Experience':'#00695c',
+  'Supply Chain Efficiency':'#0277bd',
+  'Quality & Traceability':'#558b2f',
+  'Operations & Maintenance':'#4527a0',
+  'Security & Loss Prevention':'#37474f',
+  'Other':'#5d4037'
+};
+
+const VCB_RAMP_LABELS = {
+  hard_labor:'Hard Labor', hard_cost:'Hard Cost', revenue:'Revenue',
+  soft:'Soft Benefit', working_cap:'Working Capital', strategic:'Strategic'
+};
+
+const vcbState = { vertical: 'retail', selected: new Set(), expanded: new Set() };
+
+function chooseValueBuilder() { hideChooser(); go(8); }
+
+function renderValueCaseWizard() {
+  // Build vertical picker
+  const vBtns = document.getElementById('vcb-vertical-btns');
+  if (vBtns) {
+    vBtns.innerHTML = Object.entries(VCB_VERTICAL_LABELS).map(([k,v]) =>
+      `<button class="vcb-vbtn${vcbState.vertical===k?' active':''}" onclick="vcbSetVertical(this,'${k}')">${v}</button>`
+    ).join('');
+  }
+  renderVcbGrid();
+}
+
+function vcbSetVertical(btn, key) {
+  vcbState.vertical = key;
+  document.querySelectorAll('.vcb-vbtn').forEach(b => b.classList.toggle('active', b===btn));
+  renderVcbGrid();
+}
+
+function renderVcbGrid() {
+  const grid = document.getElementById('vcb-grid');
+  if (!grid) return;
+
+  const scenarios = (window.SCENARIOS || []).filter(sc => sc.verticalKey === vcbState.vertical && !sc.custom);
+  if (!scenarios.length) {
+    grid.innerHTML = '<p style="color:var(--muted);font-size:13px">No value cases available for this vertical.</p>';
+    updateVcbCount();
+    return;
+  }
+
+  // Group by theme
+  const byTheme = {};
+  scenarios.forEach(sc => {
+    const t = sc.theme || 'Other';
+    if (!byTheme[t]) byTheme[t] = [];
+    byTheme[t].push(sc);
+  });
+
+  grid.innerHTML = Object.entries(byTheme).map(([theme, scs]) => {
+    const color = VCB_THEME_COLORS[theme] || '#555';
+    return `<div class="vc-theme-group">
+      <div class="vc-theme-label" style="color:${color}">${theme}</div>
+      <div class="vc-grid">${scs.map(sc => renderVcCard(sc)).join('')}</div>
+    </div>`;
+  }).join('');
+
+  updateVcbCount();
+}
+
+function renderVcCard(sc) {
+  const sel = vcbState.selected.has(sc.id);
+  const exp = vcbState.expanded.has(sc.id);
+  const rampLabel = VCB_RAMP_LABELS[sc.rampType] || sc.rampType || '';
+  const qs = (sc.discoveryQuestions || []).slice(0, 5);
+  return `<div class="vc-card${sel?' selected':''}" id="vccard-${sc.id}" onclick="vcbToggle('${sc.id}')">
+    <div class="vc-card-head">
+      <div class="vc-card-name">${sc.name}</div>
+      <div class="vc-card-check">${sel?'✓':''}</div>
+    </div>
+    <div class="vc-card-oneliner">${sc.oneLiner||''}</div>
+    <div class="vc-card-meta">
+      ${rampLabel?`<span class="vc-badge" style="background:rgba(168,249,49,.12);color:#A8F931">${rampLabel}</span>`:''}
+      ${sc.evidence?`<span class="vc-badge" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.6)">${sc.evidence}</span>`:''}
+    </div>
+    ${qs.length?`<button class="vc-expand-link" onclick="event.stopPropagation();vcbExpand('${sc.id}')">
+      ${exp?'▲ Hide':'▼ Show'} discovery questions
+    </button>
+    <div class="vc-expand-area${exp?' open':''}">
+      ${qs.map((q,i)=>`<div class="vc-q-row"><span class="vc-q-num">${i+1}.</span><span>${q}</span></div>`).join('')}
+    </div>`:''}
+  </div>`;
+}
+
+function vcbToggle(id) {
+  if (vcbState.selected.has(id)) vcbState.selected.delete(id);
+  else vcbState.selected.add(id);
+  const card = document.getElementById('vccard-'+id);
+  if (!card) return;
+  const sel = vcbState.selected.has(id);
+  card.classList.toggle('selected', sel);
+  card.querySelector('.vc-card-check').textContent = sel ? '✓' : '';
+  updateVcbCount();
+}
+
+function vcbExpand(id) {
+  if (vcbState.expanded.has(id)) vcbState.expanded.delete(id);
+  else vcbState.expanded.add(id);
+  renderVcbGrid(); // re-render to reflect expand state
+}
+
+function vcbSelectAll(on) {
+  const scenarios = (window.SCENARIOS || []).filter(sc => sc.verticalKey === vcbState.vertical && !sc.custom);
+  scenarios.forEach(sc => { if (on) vcbState.selected.add(sc.id); else vcbState.selected.delete(sc.id); });
+  renderVcbGrid();
+}
+
+function updateVcbCount() {
+  const lbl = document.getElementById('vcb-count-label');
+  if (lbl) {
+    const n = vcbState.selected.size;
+    lbl.textContent = n ? `${n} value case${n>1?'s':''} selected` : 'Select value cases to build an intake form';
+  }
+}
+
+function generateIntakeForm() {
+  const selected = [...vcbState.selected];
+  if (!selected.length) { alert('Please select at least one value case first.'); return; }
+
+  const scenarios = (window.SCENARIOS || []).filter(sc => selected.includes(sc.id));
+  const customer = (document.getElementById('i-customer')?.value || '').trim() || 'Customer';
+  const company  = (document.getElementById('i-company')?.value  || '').trim() || 'Zebra Technologies';
+  const seller   = (document.getElementById('i-seller')?.value   || '').trim() || '';
+  const today    = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+
+  const tocItems = scenarios.map((sc,i) =>
+    `<li><a href="#vc-${sc.id}" style="color:#1565c0">${i+1}. ${sc.name}</a></li>`
+  ).join('');
+
+  const sections = scenarios.map((sc, idx) => {
+    const qs = (sc.discoveryQuestions || []);
+    const inputs = sc.inputs ? Object.entries(sc.inputs) : [];
+    const challenge = sc.challenge || '';
+    const rampLabel = VCB_RAMP_LABELS[sc.rampType] || sc.rampType || '';
+    const evidence = sc.evidence || '';
+
+    const qRows = qs.map((q, qi) => `
+      <tr>
+        <td style="width:28px;padding:8px 4px 8px 0;vertical-align:top;color:#1565c0;font-weight:700">${qi+1}.</td>
+        <td style="padding:8px 0;vertical-align:top;color:#222">${q}</td>
+        <td style="width:220px;padding:8px 0 8px 12px;vertical-align:top;border-left:1px solid #e0e0e0">
+          <div style="min-height:36px;border-bottom:1px solid #bdbdbd;margin-bottom:2px"></div>
+          <div style="min-height:36px;border-bottom:1px solid #bdbdbd"></div>
+        </td>
+      </tr>`).join('');
+
+    const inputRows = inputs.map(([key, def]) => {
+      const label = def.label || key;
+      const unit  = def.unit  || '';
+      const benchmark = def.value !== undefined ? def.value : '';
+      const hint  = def.hint  || '';
+      return `<tr>
+        <td style="padding:6px 8px;border:1px solid #e0e0e0;font-size:12px;color:#444">${label}${unit?` <span style="color:#999">(${unit})</span>`:''}</td>
+        <td style="padding:6px 8px;border:1px solid #e0e0e0;font-size:12px;color:#888;text-align:center">${benchmark !== '' ? Number(benchmark).toLocaleString() : '—'}</td>
+        <td style="padding:6px 8px;border:1px solid #e0e0e0;"></td>
+        <td style="padding:6px 8px;border:1px solid #e0e0e0;font-size:11px;color:#aaa">${hint}</td>
+      </tr>`;
+    }).join('');
+
+    return `<div id="vc-${sc.id}" style="margin-bottom:48px;page-break-inside:avoid">
+      <div style="background:#f5f5f5;border-left:4px solid #1565c0;padding:12px 16px;margin-bottom:16px;border-radius:0 6px 6px 0">
+        <div style="font-size:11px;color:#888;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px">Value Case ${idx+1}${rampLabel?` · ${rampLabel}`:''}${evidence?` · ${evidence}`:''}</div>
+        <div style="font-size:18px;font-weight:800;color:#111;margin-bottom:4px">${sc.name}</div>
+        <div style="font-size:13px;color:#444;font-style:italic">${sc.oneLiner||''}</div>
+      </div>
+
+      ${sc.annualBenefit ? `<div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#2e7d32">
+        <strong>Typical annual benefit range:</strong> ${sc.annualBenefit}
+      </div>` : ''}
+
+      <div style="margin-bottom:16px">
+        <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#222">Discovery Questions</div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead><tr>
+            <th colspan="2" style="text-align:left;padding:6px 0;border-bottom:2px solid #1565c0;color:#1565c0;font-size:11px;text-transform:uppercase;letter-spacing:.06em">Question</th>
+            <th style="text-align:left;padding:6px 0 6px 12px;border-bottom:2px solid #1565c0;color:#1565c0;font-size:11px;text-transform:uppercase;letter-spacing:.06em;border-left:1px solid #e0e0e0">Customer Answer</th>
+          </tr></thead>
+          <tbody>${qRows}</tbody>
+        </table>
+      </div>
+
+      ${inputs.length ? `<div style="margin-bottom:16px">
+        <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#222">Quantification Inputs to Capture</div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr>
+            <th style="text-align:left;padding:6px 8px;border:1px solid #e0e0e0;background:#fafafa;color:#555">Input</th>
+            <th style="text-align:center;padding:6px 8px;border:1px solid #e0e0e0;background:#fafafa;color:#555;width:110px">Benchmark</th>
+            <th style="text-align:left;padding:6px 8px;border:1px solid #e0e0e0;background:#fafafa;color:#555;width:130px">Customer Value</th>
+            <th style="text-align:left;padding:6px 8px;border:1px solid #e0e0e0;background:#fafafa;color:#555">Notes / Source</th>
+          </tr></thead>
+          <tbody>${inputRows}</tbody>
+        </table>
+      </div>` : ''}
+
+      ${challenge ? `<div style="border:1px solid #ffcc80;background:#fff8e1;border-radius:6px;padding:10px 14px;margin-bottom:8px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#e65100;margin-bottom:4px">Common Objection / Challenge</div>
+        <div style="font-size:12px;color:#555;line-height:1.6">${challenge}</div>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Value Case Intake Form — ${customer}</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin:0; padding:32px 40px; color:#222; background:#fff; font-size:13px; }
+  @media print {
+    body { padding:16px 24px; }
+    .no-print { display:none !important; }
+    div[id^="vc-"] { page-break-inside:avoid; }
+  }
+  a { color:#1565c0; }
+</style>
+</head>
+<body>
+<div class="no-print" style="background:#1565c0;color:#fff;padding:10px 16px;margin:-32px -40px 24px;display:flex;justify-content:space-between;align-items:center">
+  <span style="font-weight:700">Value Case Intake Form — Preview</span>
+  <button onclick="window.print()" style="background:#fff;color:#1565c0;border:none;border-radius:4px;padding:6px 14px;font-weight:700;cursor:pointer">Print / Save PDF</button>
+</div>
+
+<div style="border-bottom:3px solid #111;padding-bottom:16px;margin-bottom:24px">
+  <div style="font-size:11px;color:#888;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px">Zebra Technologies — Value Case Discovery</div>
+  <h1 style="margin:0 0 6px;font-size:24px;font-weight:800">${customer}</h1>
+  <div style="display:flex;gap:24px;flex-wrap:wrap;font-size:12px;color:#555">
+    ${seller?`<span><strong>Seller:</strong> ${seller}</span>`:''}
+    <span><strong>Company:</strong> ${company}</span>
+    <span><strong>Date:</strong> ${today}</span>
+    <span><strong>Value Cases:</strong> ${scenarios.length}</span>
+  </div>
+</div>
+
+<div style="margin-bottom:32px">
+  <div style="font-weight:700;font-size:13px;margin-bottom:8px">Contents</div>
+  <ol style="margin:0;padding-left:20px;color:#444;font-size:13px;line-height:1.8">${tocItems}</ol>
+</div>
+
+${sections}
+
+<div style="margin-top:40px;padding-top:16px;border-top:1px solid #e0e0e0">
+  <div style="font-weight:700;font-size:13px;margin-bottom:10px;color:#222">Meeting Notes</div>
+  <div style="min-height:120px;border:1px solid #e0e0e0;border-radius:4px;padding:8px"></div>
+</div>
+
+<div style="margin-top:24px;font-size:10px;color:#aaa;text-align:center">
+  Generated by Zebra Value Accelerator · ${today} · Confidential — for internal planning use only
+</div>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank', 'width=1000,height=800,scrollbars=yes');
+  if (!win) { alert('Pop-up blocked. Please allow pop-ups for this page and try again.'); return; }
+  win.document.write(html);
+  win.document.close();
 }
 </script>
 </body>
