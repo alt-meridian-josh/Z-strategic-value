@@ -888,15 +888,52 @@ svg{max-width:100%;height:auto}
 .vc-badge { font-size:10px; padding:2px 7px; border-radius:20px; font-weight:600; letter-spacing:.02em; }
 .vc-expand-area { border-top:1px solid #2e2e34; margin-top:10px; padding-top:10px; display:none; }
 .vc-expand-area.open { display:block; }
-.vc-expand-link { font-size:11px; color:#A8F931; cursor:pointer; text-decoration:underline; background:none; border:none; padding:0; margin-top:4px; }
+.vc-expand-link { font-size:11px; color:#A8F931; cursor:pointer; text-decoration:none; background:none; border:none; padding:0; margin-top:6px; display:block; }
 .vc-q-row { display:flex; gap:8px; margin-bottom:6px; font-size:12px; color:rgba(255,255,255,.75); }
 .vc-q-num { width:18px; flex-shrink:0; color:#A8F931; font-weight:700; }
 .vc-theme-group { margin-bottom:24px; }
 .vc-theme-label { font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:rgba(255,255,255,.4); margin-bottom:10px; }
-.vc-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; }
-.vcb-header-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:16px; }
+.vc-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:12px; }
+.vcb-header-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
 .vcb-vbtn { background:#1a1a1e; border:1px solid #333; color:rgba(255,255,255,.7); border-radius:20px; padding:6px 14px; font-size:12px; cursor:pointer; transition:all .15s; }
 .vcb-vbtn.active { background:#A8F931; border-color:#A8F931; color:#000; font-weight:700; }
+/* VCB accordions */
+.vcb-accordion { border:1px solid #2a2a2e; border-radius:8px; margin-bottom:12px; overflow:hidden; }
+.vcb-acc-toggle { display:flex; align-items:center; gap:8px; padding:10px 14px; cursor:pointer; background:#141416; font-size:13px; font-weight:600; color:#fff; border:none; width:100%; text-align:left; }
+.vcb-acc-toggle:hover { background:#1c1c20; }
+.vcb-acc-arrow { font-size:10px; color:rgba(255,255,255,.4); transition:transform .15s; }
+.vcb-acc-body { padding:14px 16px; border-top:1px solid #2a2a2e; display:none; }
+.vcb-acc-body.open { display:block; }
+/* VCB form fields */
+.vcb-field-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+.vcb-field-row.w1 { grid-template-columns:1fr; }
+.vcb-field-row.w3 { grid-template-columns:1fr 1fr 1fr; }
+.vcb-fg { display:flex; flex-direction:column; gap:4px; }
+.vcb-label { font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:rgba(255,255,255,.4); }
+.vcb-inp { background:#0d0d0f; border:1px solid #2e2e34; border-radius:5px; padding:7px 10px; color:#fff; font-size:13px; width:100%; box-sizing:border-box; }
+.vcb-inp:focus { outline:none; border-color:#A8F931; }
+.vcb-sel { background:#0d0d0f; border:1px solid #2e2e34; border-radius:5px; padding:7px 10px; color:#fff; font-size:12px; width:100%; }
+.vcb-ta { background:#0d0d0f; border:1px solid #2e2e34; border-radius:5px; padding:7px 10px; color:#fff; font-size:12px; width:100%; box-sizing:border-box; resize:vertical; min-height:60px; }
+/* Confidence flag selects */
+.vcb-conf-sel { background:#0d0d0f; border-radius:4px; font-size:10px; font-weight:700; padding:3px 6px; cursor:pointer; }
+/* Per-lever input rows inside expanded card */
+.vc-lever-hd { font-size:10px; font-weight:700; letter-spacing:.06em; color:rgba(255,255,255,.35); text-transform:uppercase; margin:10px 0 6px; }
+.vc-lever-row { display:grid; grid-template-columns:1fr 72px 62px 1fr; gap:5px; align-items:center; padding:5px 0; border-bottom:1px solid rgba(255,255,255,.05); }
+.vc-lever-row:last-child { border-bottom:none; }
+.vc-lever-name { font-size:11px; color:rgba(255,255,255,.7); line-height:1.3; }
+.vc-lever-bench { font-size:11px; color:rgba(255,255,255,.35); font-family:var(--mono); text-align:right; }
+.vc-lever-src { background:#0d0d0f; border:1px solid #2a2a2e; border-radius:4px; color:rgba(255,255,255,.6); font-size:10px; padding:3px 6px; width:100%; box-sizing:border-box; }
+/* Narrative panel */
+.vcb-narrative { background:rgba(168,249,49,.05); border:1px solid rgba(168,249,49,.18); border-radius:8px; padding:13px 16px; margin-bottom:14px; }
+.vcb-narrative-eyebrow { font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#A8F931; margin-bottom:5px; }
+.vcb-narrative-text { font-size:13px; color:rgba(255,255,255,.8); line-height:1.7; }
+/* Scope gate */
+.vcb-scope-gate { background:#141416; border:1px solid #2a2a2e; border-radius:8px; padding:16px; margin-top:20px; margin-bottom:16px; }
+.vcb-scope-title { font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:rgba(255,255,255,.4); margin-bottom:12px; }
+/* Tech chips */
+.vcb-tech-chips { display:flex; flex-wrap:wrap; gap:6px; }
+.vcb-tech-chip { background:#1a1a1e; border:1px solid #333; border-radius:4px; padding:5px 11px; font-size:11px; cursor:pointer; color:rgba(255,255,255,.55); transition:all .12s; }
+.vcb-tech-chip.active { background:rgba(168,249,49,.1); border-color:#A8F931; color:#A8F931; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
@@ -2030,21 +2067,137 @@ svg{max-width:100%;height:auto}
 <div class="panel" id="panel-8">
   <div class="step-eyebrow">Value Selling</div>
   <div class="step-title">Value Case Builder</div>
-  <div class="step-desc">Pick your vertical, select the value cases that match your customer's pain, then generate a discovery intake form with questions, inputs to capture, and objection handling.</div>
+  <div class="step-desc">Pick your vertical and value cases, set confidence on every input, then generate a discovery intake form with questions, objection handling, TCO inputs, and an open-items rollup.</div>
 
-  <div style="margin-bottom:16px">
-    <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Select Vertical</div>
-    <div id="vcb-vertical-btns" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+  <!-- 1. ENGAGEMENT CONTEXT (collapsed accordion) -->
+  <div class="vcb-accordion">
+    <button class="vcb-acc-toggle" onclick="vcbToggleAcc('ctx')">
+      <span class="vcb-acc-arrow" id="vcb-ctx-arrow">▶</span>
+      Engagement Context
+      <span id="vcb-ctx-summary" style="font-size:11px;font-weight:400;color:rgba(255,255,255,.4);margin-left:6px"></span>
+    </button>
+    <div class="vcb-acc-body" id="vcb-ctx-body">
+      <div class="vcb-field-row">
+        <div class="vcb-fg">
+          <label class="vcb-label">Customer Name</label>
+          <input class="vcb-inp" id="vcb-ctx-customer" placeholder="e.g. Acme Retail Group" oninput="vcbCtxChange()">
+        </div>
+        <div class="vcb-fg">
+          <label class="vcb-label">Partner(s)</label>
+          <input class="vcb-inp" id="vcb-ctx-partners" placeholder="SI, reseller, consultant…">
+        </div>
+      </div>
+      <div class="vcb-field-row">
+        <div class="vcb-fg">
+          <label class="vcb-label">Zebra Team</label>
+          <input class="vcb-inp" id="vcb-ctx-team" placeholder="AE, value engineer…">
+        </div>
+        <div class="vcb-fg" style="display:none"><!-- spacer --></div>
+      </div>
+      <div class="vcb-field-row w1">
+        <div class="vcb-fg">
+          <label class="vcb-label">Environment Notes <span style="font-weight:400;text-transform:none;letter-spacing:0;color:rgba(255,255,255,.3)">(sites, current systems, what triggered this)</span></label>
+          <textarea class="vcb-ta" id="vcb-ctx-envnotes" rows="3" placeholder="e.g. 5 DCs, currently on barcode scan-each, triggered by inventory accuracy miss in Q1 audit…"></textarea>
+        </div>
+      </div>
+    </div>
   </div>
 
+  <!-- 2. VERTICAL PICKER -->
+  <div style="margin-bottom:14px">
+    <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:8px">Select Vertical</div>
+    <div id="vcb-vertical-btns" style="display:flex;flex-wrap:wrap;gap:7px"></div>
+  </div>
+
+  <!-- 3. CLASSIFICATION (collapsed accordion) -->
+  <div class="vcb-accordion">
+    <button class="vcb-acc-toggle" onclick="vcbToggleAcc('class')">
+      <span class="vcb-acc-arrow" id="vcb-class-arrow">▶</span>
+      Classification &amp; Technology Scope
+    </button>
+    <div class="vcb-acc-body" id="vcb-class-body">
+      <div class="vcb-field-row">
+        <div class="vcb-fg">
+          <label class="vcb-label">Sub-vertical / Format</label>
+          <input class="vcb-inp" id="vcb-class-subvertical" placeholder="e.g. Apparel, General Merch, Specialty…">
+        </div>
+      </div>
+      <div class="vcb-fg" style="margin-bottom:10px">
+        <label class="vcb-label">Technology in Scope</label>
+        <div class="vcb-tech-chips" id="vcb-tech-chips"></div>
+      </div>
+      <div class="vcb-fg">
+        <label class="vcb-label">Process Being Fixed <span style="font-weight:400;text-transform:none;letter-spacing:0;color:rgba(255,255,255,.3)">(customer's own words)</span></label>
+        <textarea class="vcb-ta" id="vcb-class-processnotes" rows="2" placeholder="e.g. 'We spend 3 days a month on cycle counts and still can't trust the number'"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. RFID NARRATIVE (auto-generated) -->
+  <div id="vcb-narrative"></div>
+
+  <!-- 5. CARD GRID -->
   <div class="vcb-header-actions">
     <span id="vcb-count-label" style="font-size:12px;color:var(--muted);flex:1"></span>
-    <button class="btn btn-outline" style="height:30px;padding:0 12px;font-size:12px" onclick="vcbSelectAll(true)">Select All</button>
-    <button class="btn btn-outline" style="height:30px;padding:0 12px;font-size:12px" onclick="vcbSelectAll(false)">Clear</button>
-    <button class="btn" style="height:30px;padding:0 14px;font-size:12px;background:#A8F931;color:#000;font-weight:700;border:none" onclick="generateIntakeForm()">Generate Intake Form ↗</button>
+    <button class="btn btn-outline" style="height:28px;padding:0 11px;font-size:12px" onclick="vcbSelectAll(true)">Select All</button>
+    <button class="btn btn-outline" style="height:28px;padding:0 11px;font-size:12px" onclick="vcbSelectAll(false)">Clear</button>
+  </div>
+  <div id="vcb-grid"></div>
+
+  <!-- 6. SCOPE GATING TRIO -->
+  <div class="vcb-scope-gate">
+    <div class="vcb-scope-title">Scope &amp; Model Parameters — set these before generating</div>
+    <div class="vcb-field-row w3">
+      <div class="vcb-fg">
+        <label class="vcb-label">Sites in Scope</label>
+        <div style="display:flex;gap:5px">
+          <input class="vcb-inp" id="vcb-scope-sites" type="number" min="1" placeholder="e.g. 5" style="flex:1">
+          <select class="vcb-sel vcb-conf-sel" id="vcb-scope-sites-conf" style="width:48px;color:#90caf9;border-color:#1565c0" title="Confidence: A=Customer confirmed, B=Benchmark, C=Estimate">
+            <option value="A">A</option><option value="B" selected>B</option><option value="C">C</option>
+          </select>
+        </div>
+        <div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:3px">A=confirmed · B=benchmark · C=estimate</div>
+      </div>
+      <div class="vcb-fg">
+        <label class="vcb-label">Discount Rate (WACC)</label>
+        <div style="display:flex;gap:5px;align-items:center">
+          <input class="vcb-inp" id="vcb-scope-wacc" type="number" min="1" max="30" value="10" style="flex:1"> <span style="color:rgba(255,255,255,.4);font-size:12px">%</span>
+          <select class="vcb-sel vcb-conf-sel" id="vcb-scope-wacc-conf" style="width:48px;color:#90caf9;border-color:#1565c0" title="Confidence">
+            <option value="A">A</option><option value="B" selected>B</option><option value="C">C</option>
+          </select>
+        </div>
+      </div>
+      <div class="vcb-fg">
+        <label class="vcb-label">Software Basis</label>
+        <select class="vcb-sel" id="vcb-scope-softwarebasis">
+          <option value="saas">Annual SaaS</option>
+          <option value="multi-year">Multi-year term</option>
+          <option value="one-time">One-time perpetual</option>
+        </select>
+      </div>
+    </div>
+    <div class="vcb-field-row">
+      <div class="vcb-fg">
+        <label class="vcb-label">Tag Application Point</label>
+        <select class="vcb-sel" id="vcb-scope-tagpoint">
+          <option value="in-store">Applied in-store / at DC</option>
+          <option value="source">Source-tagged by supplier</option>
+        </select>
+      </div>
+      <div class="vcb-fg">
+        <label class="vcb-label">Tag Cost Ownership</label>
+        <select class="vcb-sel" id="vcb-scope-tagowner">
+          <option value="customer">Customer-owned cost</option>
+          <option value="supplier">Supplier-owned cost</option>
+        </select>
+      </div>
+    </div>
   </div>
 
-  <div id="vcb-grid"></div>
+  <!-- 7. GENERATE BUTTON -->
+  <div style="text-align:right">
+    <button class="btn" style="height:38px;padding:0 22px;font-size:13px;background:#A8F931;color:#000;font-weight:700;border:none;border-radius:6px" onclick="generateIntakeForm()">Generate Intake Form ↗</button>
+  </div>
 </div>
 
 <!-- Customer-lite footer (Phase 4) — shown on every page and in print in customer mode. -->
@@ -2359,7 +2512,7 @@ const SCENARIOS = [
   { id:"RET-07", name:"Omnichannel Fulfillment — BOPIS Accuracy",
     theme:"Revenue / Margin", verticalKey:"retail",
     facilityKeys:["Store / Branch"], techKeys:["RFID Core","Fixed RFID Infrastructure"],
-    themeKeys:["Revenue / Margin","Operational Efficiency"], annualBenefit:162000, rampType:"working_cap", accessibilityTier:"configured", haircut:0.10,
+    themeKeys:["Revenue / Margin","Operational Efficiency"], annualBenefit:162000, rampType:"revenue", accessibilityTier:"configured", haircut:0.10,
     oneLiner:"Reduce BOPIS cancellations 60% and improve pick accuracy to 99%+ — protect omnichannel margin",
     formula:"annual_omni_orders * cancellation_rate_baseline * cancellation_reduction_pct * avg_order_value * gm_pct",  // Chunk 15: retired from switch
     evidenceIds:["EV-RET-OMNI-01","EV-RET-ACC-01"],
@@ -9815,14 +9968,10 @@ const VCB_VERTICAL_LABELS = {
 };
 
 const VCB_THEME_COLORS = {
-  'Labor & Human Capacity':'#1565c0',
-  'Revenue / Margin':'#2e7d32',
-  'Direct Cost & Spend':'#c62828',
-  'Operational Efficiency':'#e65100',
-  'Working Capital':'#6a1b9a',
-  'Regulatory & Compliance':'#00695c',
-  'Strategic / AI / Data':'#4527a0',
-  'Other':'#5d4037'
+  'Labor & Human Capacity':'#1565c0', 'Revenue / Margin':'#2e7d32',
+  'Direct Cost & Spend':'#c62828', 'Operational Efficiency':'#e65100',
+  'Working Capital':'#6a1b9a', 'Regulatory & Compliance':'#00695c',
+  'Strategic / AI / Data':'#4527a0', 'Other':'#5d4037'
 };
 
 const VCB_RAMP_LABELS = {
@@ -9830,46 +9979,216 @@ const VCB_RAMP_LABELS = {
   soft:'Soft Benefit', working_cap:'Working Capital', strategic:'Strategic'
 };
 
-const vcbState = { vertical: 'retail', selected: new Set(), expanded: new Set() };
+// One mechanism clause per scenario — drives the "What RFID does here" narrative.
+// Add an entry for any new scenario; missing IDs are silently skipped.
+const VCB_MECHANISM_CLAUSES = {
+  'RET-01':'cuts cycle-count labor from minutes to seconds per item',
+  'RET-02':'recovers lost sales from stockouts the system couldn\'t see',
+  'RET-03':'ties exit events to shrink investigation and deters internal theft',
+  'RET-04':'catches phantom overstock before it forces clearance markdowns',
+  'RET-05':'removes manual scan-each at inbound receiving',
+  'RET-06':'recovers the hours associates spend searching racks and back-rooms',
+  'RET-07':'keeps the online availability signal accurate enough to fill BOPIS orders without cancellations',
+  'RET-08':'shrinks safety stock because the system can trust what\'s actually on hand',
+  'RET-09':'turns every tag read into a structured data event the AI layer can act on',
+  'RET-10':'gives vendors a verifiable ASN-to-receipt record that eliminates chargeback disputes',
+  'RET-11':'links exit-gate reads to LP investigation, closing the loop from loss to evidence',
+  'WH-01':'cuts cycle-count labor to seconds per pallet location across the DC',
+  'WH-02':'eliminates manual scan-each at the inbound dock',
+  'WH-03':'reduces pick errors and the rework cost behind each mis-ship',
+  'WH-04':'closes SLA gaps by giving the 3PL a timestamped proof-of-receipt for every pallet',
+  'WH-05':'shrinks safety-stock carrying cost because the DC can trust its perpetual inventory',
+  'WH-06':'collapses outbound verification from a line-by-line scan to a bulk read at the dock door',
+  'WH-07':'creates the real-time inventory signal that robotics and AI demand-planning require',
+  'HC-01':'eliminates equipment search time across units and floors and cuts rental spend',
+  'HC-02':'surfaces sterile instrument location before the case starts to prevent OR delays',
+  'HC-03':'tracks patient flow through the ED in real time without manual status updates',
+  'HC-04':'closes the dispensing loop so every medication administration is verified',
+  'HC-05':'turns a multi-day audit into an automated read across all tagged assets',
+  'HC-06':'triggers replenishment before expiry occurs and before the stockout empties the cart',
+  'HC-07':'creates an unbroken chain of custody for controlled substances from receipt to waste',
+  'HC-08':'provides the real-time asset and location data that predictive maintenance and AI ops require',
+  'MTL-01':'eliminates tool search time and closes the loop between loss and recovery',
+  'MTL-02':'gives the line real-time WIP location visibility without manual barcode scan gates',
+  'MTL-03':'auto-generates the traceability record at each stage instead of hand-keying it',
+  'MTL-04':'narrows a recall to the exact lot and serial range, avoiding a full-fleet pull',
+  'MTL-05':'optimizes MRO reorder points because the system can see actual on-hand in real time',
+  'MTL-06':'gives the shipper a verifiable unit-level pack list that eliminates chargeback disputes',
+  'MTL-07':'tracks fixtures and tooling through the value chain so utilization is visible and procurement is deferred',
+  'MTL-08':'creates the serialized unit history an AI digital twin or predictive quality system needs',
+  'GOV-01':'accelerates audit prep from days to hours by automating the physical asset count',
+  'GOV-02':'replaces the annual physical inventory walk with a continuous automated tally',
+  'GOV-03':'surfaces ghost assets before the next budget cycle triggers redundant procurement',
+  'GOV-04':'reduces the staff overhead of maintaining property accountability records manually',
+  'GOV-05':'creates a real-time loss detection signal for controlled and sensitive items',
+  'GOV-06':'closes the loop between on-hand surplus and new purchase orders before they raise',
+  'CAR-01':'gives the yard real-time trailer location so dock scheduling is based on data, not radio calls',
+  'CAR-02':'provides a unit-level load manifest the carrier can prove at delivery, cutting OS&D claims',
+  'CAR-03':'replaces slow barcode sortation scan rates with a bulk-read portal that doubles throughput',
+  'CAR-04':'catches misroutes at the scan point before the package rides the wrong belt',
+  'CAR-05':'eliminates trailer search walks by surfacing yard dwell time on a live map',
+  'CAR-06':'answers WISMO calls with a real-time location event instead of routing them to an agent',
+  'CAR-07':'creates the auditable chain-of-custody regulated mail and high-value parcels require',
+  'AVN-01':'reduces baggage mishandling by closing the gap between check-in tag and aircraft belly read',
+  'AVN-02':'locates tools before they go missing and closes the FOD risk loop',
+  'AVN-03':'reduces MRO cycle time by surfacing part location and status without a bench search',
+  'AVN-04':'auto-generates the component traceability record regulators require at each maintenance stage',
+  'AVN-05':'automates safety equipment inspection check-off, removing the paper-based audit burden',
+  'AVN-06':'speeds boarding by reading the boarding pass RFID chip in the jetway without stopping',
+  'HOS-01':'tracks linen through the laundry cycle so losses are caught at the department, not the write-off',
+  'HOS-02':'gives the kitchen a live count of F&B stock so over-ordering and spoilage losses shrink',
+  'HOS-03':'converts every wristband touch into a cashless revenue event or access control gate',
+  'HOS-04':'tracks event assets through setup and teardown so loss and overtime are caught before they compound',
+  'DC-01':'accelerates the physical audit of every rack-mounted asset from days to hours',
+  'DC-02':'surfaces stranded and ghost servers before the next procurement cycle adds capacity that isn\'t needed',
+  'DC-03':'closes the gap between what the CMDB says is deployed and what\'s physically in the cage',
+  'DC-04':'provides the asset-level evidence trail SOC2, PCI, and ISO 27001 auditors require',
+  'DC-05':'closes the physical access and chain-of-custody gap that barcodes leave open',
+  'DC-06':'finds the affected asset faster when an incident fires, cutting MTTR',
+  'IE-01':'eliminates equipment search time on the field and yard and closes the loss-recovery loop',
+  'IE-02':'automates the PPE compliance check-out record so safety audits aren\'t manual sign-off sheets',
+  'IE-03':'gives maintenance planners a live spare-parts count so NPT from stock-outs is preventable',
+  'IE-04':'tracks tubular and downhole assets through the supply chain so field shrink and billing disputes are caught',
+  'IE-05':'auto-generates the inspection compliance record at each asset touchpoint',
+  'FS-01':'triggers FEFO rotation at the pick face so older stock moves before it expires',
+  'FS-02':'narrows a recall to the exact lot and prep-date range, avoiding a full-menu pull',
+  'FS-03':'creates the temperature excursion record HACCP requires without manual logging',
+  'FS-04':'provides a serialized chain-of-custody from farm gate to plate for recall and compliance',
+  'FS-05':'closes the gap between physical count and POS for high-value proteins and premium inventory',
+  'FS-06':'gives the prep team a real-time on-hand number so over-prep and waste shrink together',
+  'FS-07':'verifies every order item at the pass before it leaves the kitchen',
+  'FS-08':'auto-generates the scope-3 food-waste and cold-chain data ESG reporting requires'
+};
 
+const VCB_TECH_OPTIONS = [
+  {id:'rfid-item', label:'RFID Item-Level'},
+  {id:'handheld',  label:'Handheld RFID'},
+  {id:'fixed',     label:'Fixed Sensors / Portals'},
+  {id:'software',  label:'Software Platform'},
+  {id:'ble',       label:'BLE / RTLS'},
+  {id:'vision',    label:'Computer Vision'}
+];
+
+const vcbState = {
+  vertical: 'retail',
+  selected: new Set(),
+  expanded: new Set(),
+  ctx:   { customer:'', partners:'', team:'', envNotes:'' },
+  scope: { sites:'', sitesConf:'B', tagPoint:'in-store', tagOwner:'customer', softwareBasis:'saas', wacc:10, waccConf:'B' },
+  classify: { subVertical:'', techScope: new Set(['rfid-item']), processNotes:'' },
+  leverInputs: {}  // { [scenarioId]: { [inputKey]: { conf:'B', source:'' } } }
+};
+
+// ── Accordions ──────────────────────────────────────────
+function vcbToggleAcc(key) {
+  const body  = document.getElementById('vcb-'+key+'-body');
+  const arrow = document.getElementById('vcb-'+key+'-arrow');
+  if (!body) return;
+  const open = body.classList.toggle('open');
+  if (arrow) arrow.textContent = open ? '▼' : '▶';
+}
+
+// ── Entry point ─────────────────────────────────────────
 function chooseValueBuilder() { hideChooser(); go(8); }
 
 function renderValueCaseWizard() {
-  // Build vertical picker
+  // Vertical buttons
   const vBtns = document.getElementById('vcb-vertical-btns');
   if (vBtns) {
     vBtns.innerHTML = Object.entries(VCB_VERTICAL_LABELS).map(([k,v]) =>
       `<button class="vcb-vbtn${vcbState.vertical===k?' active':''}" onclick="vcbSetVertical(this,'${k}')">${v}</button>`
     ).join('');
   }
+  // Restore context fields from state
+  ['customer','partners','team'].forEach(f => {
+    const el = document.getElementById('vcb-ctx-'+f);
+    if (el) el.value = vcbState.ctx[f] || '';
+  });
+  const envEl = document.getElementById('vcb-ctx-envnotes');
+  if (envEl) envEl.value = vcbState.ctx.envNotes || '';
+  updateCtxSummary();
+  // Restore scope fields
+  const sf = vcbState.scope;
+  const sid = el => document.getElementById(el);
+  if (sid('vcb-scope-sites'))         sid('vcb-scope-sites').value = sf.sites || '';
+  if (sid('vcb-scope-sites-conf'))    sid('vcb-scope-sites-conf').value = sf.sitesConf || 'B';
+  if (sid('vcb-scope-wacc'))          sid('vcb-scope-wacc').value = sf.wacc || 10;
+  if (sid('vcb-scope-wacc-conf'))     sid('vcb-scope-wacc-conf').value = sf.waccConf || 'B';
+  if (sid('vcb-scope-tagpoint'))      sid('vcb-scope-tagpoint').value = sf.tagPoint || 'in-store';
+  if (sid('vcb-scope-tagowner'))      sid('vcb-scope-tagowner').value = sf.tagOwner || 'customer';
+  if (sid('vcb-scope-softwarebasis')) sid('vcb-scope-softwarebasis').value = sf.softwareBasis || 'saas';
+  // Restore classification
+  const svEl = document.getElementById('vcb-class-subvertical');
+  if (svEl) svEl.value = vcbState.classify.subVertical || '';
+  const pnEl = document.getElementById('vcb-class-processnotes');
+  if (pnEl) pnEl.value = vcbState.classify.processNotes || '';
+  renderTechChips();
   renderVcbGrid();
 }
 
+function vcbCtxChange() {
+  vcbState.ctx.customer = document.getElementById('vcb-ctx-customer')?.value || '';
+  updateCtxSummary();
+}
+
+function updateCtxSummary() {
+  const el = document.getElementById('vcb-ctx-summary');
+  if (el) el.textContent = vcbState.ctx.customer ? '— ' + vcbState.ctx.customer : '';
+}
+
+// ── Vertical picker ─────────────────────────────────────
 function vcbSetVertical(btn, key) {
   vcbState.vertical = key;
   document.querySelectorAll('.vcb-vbtn').forEach(b => b.classList.toggle('active', b===btn));
   renderVcbGrid();
+  renderVcbNarrative();
 }
 
+// ── Tech chips ──────────────────────────────────────────
+function renderTechChips() {
+  const el = document.getElementById('vcb-tech-chips');
+  if (!el) return;
+  el.innerHTML = VCB_TECH_OPTIONS.map(o =>
+    `<button class="vcb-tech-chip${vcbState.classify.techScope.has(o.id)?' active':''}" onclick="vcbToggleTech('${o.id}')">${o.label}</button>`
+  ).join('');
+}
+
+function vcbToggleTech(id) {
+  if (vcbState.classify.techScope.has(id)) vcbState.classify.techScope.delete(id);
+  else vcbState.classify.techScope.add(id);
+  renderTechChips();
+}
+
+// ── Narrative panel ─────────────────────────────────────
+function renderVcbNarrative() {
+  const el = document.getElementById('vcb-narrative');
+  if (!el) return;
+  const scenarios = SCENARIOS.filter(sc => vcbState.selected.has(sc.id));
+  if (!scenarios.length) { el.innerHTML = ''; return; }
+  const clauses = scenarios.map(sc => VCB_MECHANISM_CLAUSES[sc.id]).filter(Boolean);
+  if (!clauses.length) { el.innerHTML = ''; return; }
+  const vLabel = VCB_VERTICAL_LABELS[vcbState.vertical] || vcbState.vertical;
+  const clauseStr = clauses.length === 1
+    ? clauses[0]
+    : clauses.slice(0,-1).join(', ') + ', and ' + clauses[clauses.length-1];
+  el.innerHTML = `<div class="vcb-narrative">
+    <div class="vcb-narrative-eyebrow">What RFID does here</div>
+    <div class="vcb-narrative-text">In ${vLabel}, item-level RFID puts a serialized identity on each unit so the site knows its true on-hand without a manual count. That ${clauseStr}.</div>
+  </div>`;
+}
+
+// ── Card grid ───────────────────────────────────────────
 function renderVcbGrid() {
   const grid = document.getElementById('vcb-grid');
   if (!grid) return;
-
-  const scenarios = (SCENARIOS).filter(sc => sc.verticalKey === vcbState.vertical && !sc.custom);
+  const scenarios = SCENARIOS.filter(sc => sc.verticalKey === vcbState.vertical && !sc.custom);
   if (!scenarios.length) {
-    grid.innerHTML = '<p style="color:var(--muted);font-size:13px">No value cases available for this vertical.</p>';
+    grid.innerHTML = '<p style="color:var(--muted);font-size:13px;padding:8px 0">No value cases available for this vertical.</p>';
     updateVcbCount();
     return;
   }
-
-  // Group by theme
   const byTheme = {};
-  scenarios.forEach(sc => {
-    const t = sc.theme || 'Other';
-    if (!byTheme[t]) byTheme[t] = [];
-    byTheme[t].push(sc);
-  });
-
+  scenarios.forEach(sc => { const t=sc.theme||'Other'; if(!byTheme[t]) byTheme[t]=[]; byTheme[t].push(sc); });
   grid.innerHTML = Object.entries(byTheme).map(([theme, scs]) => {
     const color = VCB_THEME_COLORS[theme] || '#555';
     return `<div class="vc-theme-group">
@@ -9877,15 +10196,48 @@ function renderVcbGrid() {
       <div class="vc-grid">${scs.map(sc => renderVcCard(sc)).join('')}</div>
     </div>`;
   }).join('');
-
   updateVcbCount();
+}
+
+function buildLeverInputRows(sc) {
+  const inputs = sc.inputs ? Object.entries(sc.inputs) : [];
+  if (!inputs.length) return '';
+  const rows = inputs.map(([key, def]) => {
+    const li = (vcbState.leverInputs[sc.id]||{})[key] || {conf:'B', source:''};
+    const confColor = {A:'#81c784', B:'#90caf9', C:'#ffcc80'}[li.conf] || '#90caf9';
+    const v = def.value;
+    const benchFmt = v === undefined ? '—'
+      : (typeof v === 'number' && v > 0 && v < 1) ? (v*100).toFixed(1)+'%'
+      : typeof v === 'number' ? v.toLocaleString() : String(v);
+    const srcEsc = (li.source||'').replace(/"/g,'&quot;');
+    return `<div class="vc-lever-row">
+      <div class="vc-lever-name">${def.label||key}${def.unit?' <span style="color:rgba(255,255,255,.3)">('+def.unit+')</span>':''}</div>
+      <div class="vc-lever-bench">${benchFmt}</div>
+      <select class="vcb-conf-sel" style="background:#0d0d0f;border:1px solid ${confColor};color:${confColor};font-size:10px;font-weight:700;border-radius:4px;padding:3px 4px;cursor:pointer"
+        onchange="vcbSetConf('${sc.id}','${key}',this)" onclick="event.stopPropagation()">
+        <option value="A"${li.conf==='A'?' selected':''}>A — confirmed</option>
+        <option value="B"${li.conf==='B'?' selected':''}>B — benchmark</option>
+        <option value="C"${li.conf==='C'?' selected':''}>C — estimate</option>
+      </select>
+      <input class="vc-lever-src" placeholder="${(def.hint||'Source / notes').replace(/"/g,'')}"
+        value="${srcEsc}"
+        oninput="vcbSetSource('${sc.id}','${key}',this.value)"
+        onclick="event.stopPropagation()">
+    </div>`;
+  }).join('');
+  return `<div class="vc-lever-hd">Inputs to Collect <span style="font-weight:400;font-size:9px;color:rgba(255,255,255,.25)">— set confidence + source</span></div>${rows}`;
 }
 
 function renderVcCard(sc) {
   const sel = vcbState.selected.has(sc.id);
   const exp = vcbState.expanded.has(sc.id);
   const rampLabel = VCB_RAMP_LABELS[sc.rampType] || sc.rampType || '';
-  const qs = (sc.discoveryQuestions || []).slice(0, 5);
+  const qs = sc.discoveryQuestions || [];
+  const hasDetail = qs.length || (sc.inputs && Object.keys(sc.inputs).length);
+  const leverRows = exp ? buildLeverInputRows(sc) : '';
+  const qHtml = exp && qs.length
+    ? `<div class="vc-lever-hd">Discovery Questions</div>${qs.map((q,i)=>`<div class="vc-q-row"><span class="vc-q-num">${i+1}.</span><span>${q}</span></div>`).join('')}`
+    : '';
   return `<div class="vc-card${sel?' selected':''}" id="vccard-${sc.id}" onclick="vcbToggle('${sc.id}')">
     <div class="vc-card-head">
       <div class="vc-card-name">${sc.name}</div>
@@ -9893,14 +10245,12 @@ function renderVcCard(sc) {
     </div>
     <div class="vc-card-oneliner">${sc.oneLiner||''}</div>
     <div class="vc-card-meta">
-      ${rampLabel?`<span class="vc-badge" style="background:rgba(168,249,49,.12);color:#A8F931">${rampLabel}</span>`:''}
-      ${sc.evidence?`<span class="vc-badge" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.6)">${sc.evidence}</span>`:''}
+      ${rampLabel?`<span class="vc-badge" style="background:rgba(168,249,49,.1);color:#A8F931">${rampLabel}</span>`:''}
+      ${sc.evidence?`<span class="vc-badge" style="background:rgba(255,255,255,.07);color:rgba(255,255,255,.5)">${sc.evidence}</span>`:''}
     </div>
-    ${qs.length?`<button class="vc-expand-link" onclick="event.stopPropagation();vcbExpand('${sc.id}')">
-      ${exp?'▲ Hide':'▼ Show'} discovery questions
-    </button>
+    ${hasDetail?`<button class="vc-expand-link" onclick="event.stopPropagation();vcbExpand('${sc.id}')">${exp?'▲ Hide details':'▼ Questions &amp; inputs'}</button>
     <div class="vc-expand-area${exp?' open':''}">
-      ${qs.map((q,i)=>`<div class="vc-q-row"><span class="vc-q-num">${i+1}.</span><span>${q}</span></div>`).join('')}
+      ${qHtml}${leverRows}
     </div>`:''}
   </div>`;
 }
@@ -9914,18 +10264,24 @@ function vcbToggle(id) {
   card.classList.toggle('selected', sel);
   card.querySelector('.vc-card-check').textContent = sel ? '✓' : '';
   updateVcbCount();
+  renderVcbNarrative();
 }
 
 function vcbExpand(id) {
   if (vcbState.expanded.has(id)) vcbState.expanded.delete(id);
   else vcbState.expanded.add(id);
-  renderVcbGrid(); // re-render to reflect expand state
+  // Re-render just this card to preserve other cards' input state
+  const sc = SCENARIOS.find(s => s.id === id);
+  if (!sc) return;
+  const card = document.getElementById('vccard-'+id);
+  if (card) card.outerHTML = renderVcCard(sc);
 }
 
 function vcbSelectAll(on) {
-  const scenarios = (SCENARIOS).filter(sc => sc.verticalKey === vcbState.vertical && !sc.custom);
+  const scenarios = SCENARIOS.filter(sc => sc.verticalKey === vcbState.vertical && !sc.custom);
   scenarios.forEach(sc => { if (on) vcbState.selected.add(sc.id); else vcbState.selected.delete(sc.id); });
   renderVcbGrid();
+  renderVcbNarrative();
 }
 
 function updateVcbCount() {
@@ -9936,143 +10292,315 @@ function updateVcbCount() {
   }
 }
 
+function vcbSetConf(scId, key, sel) {
+  if (!vcbState.leverInputs[scId]) vcbState.leverInputs[scId] = {};
+  if (!vcbState.leverInputs[scId][key]) vcbState.leverInputs[scId][key] = {conf:'B', source:''};
+  vcbState.leverInputs[scId][key].conf = sel.value;
+  // Update just this select's color in-place
+  const color = {A:'#81c784', B:'#90caf9', C:'#ffcc80'}[sel.value] || '#90caf9';
+  sel.style.borderColor = color; sel.style.color = color;
+}
+
+function vcbSetSource(scId, key, val) {
+  if (!vcbState.leverInputs[scId]) vcbState.leverInputs[scId] = {};
+  if (!vcbState.leverInputs[scId][key]) vcbState.leverInputs[scId][key] = {conf:'B', source:''};
+  vcbState.leverInputs[scId][key].source = val;
+}
+
+function vcbReadScope() {
+  const g = id => document.getElementById(id);
+  vcbState.scope.sites         = g('vcb-scope-sites')?.value || '';
+  vcbState.scope.sitesConf     = g('vcb-scope-sites-conf')?.value || 'B';
+  vcbState.scope.wacc          = parseFloat(g('vcb-scope-wacc')?.value || '10');
+  vcbState.scope.waccConf      = g('vcb-scope-wacc-conf')?.value || 'B';
+  vcbState.scope.tagPoint      = g('vcb-scope-tagpoint')?.value || 'in-store';
+  vcbState.scope.tagOwner      = g('vcb-scope-tagowner')?.value || 'customer';
+  vcbState.scope.softwareBasis = g('vcb-scope-softwarebasis')?.value || 'saas';
+  vcbState.ctx.customer   = g('vcb-ctx-customer')?.value || '';
+  vcbState.ctx.partners   = g('vcb-ctx-partners')?.value || '';
+  vcbState.ctx.team       = g('vcb-ctx-team')?.value || '';
+  vcbState.ctx.envNotes   = g('vcb-ctx-envnotes')?.value || '';
+  vcbState.classify.subVertical   = g('vcb-class-subvertical')?.value || '';
+  vcbState.classify.processNotes  = g('vcb-class-processnotes')?.value || '';
+}
+
+// ── Intake form generator ───────────────────────────────
 function generateIntakeForm() {
+  vcbReadScope();
   const selected = [...vcbState.selected];
   if (!selected.length) { alert('Please select at least one value case first.'); return; }
 
-  const scenarios = (SCENARIOS).filter(sc => selected.includes(sc.id));
-  const customer = (document.getElementById('i-customer')?.value || '').trim() || 'Customer';
-  const company  = (document.getElementById('i-company')?.value  || '').trim() || 'Zebra Technologies';
-  const seller   = (document.getElementById('i-seller')?.value   || '').trim() || '';
+  const scenarios = SCENARIOS.filter(sc => selected.includes(sc.id));
+  const ctx = vcbState.ctx;
+  const scope = vcbState.scope;
+  const classify = vcbState.classify;
+
+  const customer = ctx.customer || (document.getElementById('i-customer')?.value||'').trim() || 'Customer';
+  const company  = (document.getElementById('i-company')?.value||'').trim() || 'Zebra Technologies';
+  const seller   = ctx.team || (document.getElementById('i-seller')?.value||'').trim() || '';
   const today    = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const siteCount = parseInt(scope.sites) || 1;
+
+  // Mechanism narrative
+  const vLabel = VCB_VERTICAL_LABELS[vcbState.vertical] || vcbState.vertical;
+  const clauses = scenarios.map(sc => VCB_MECHANISM_CLAUSES[sc.id]).filter(Boolean);
+  const narrative = clauses.length
+    ? 'In ' + vLabel + ', item-level RFID puts a serialized identity on each unit so the site knows its true on-hand without a manual count. That '
+      + (clauses.length===1 ? clauses[0] : clauses.slice(0,-1).join(', ')+', and '+clauses[clauses.length-1]) + '.'
+    : '';
+
+  const techLabels = {};
+  VCB_TECH_OPTIONS.forEach(o => { techLabels[o.id] = o.label; });
+  const techStr = [...classify.techScope].map(t => techLabels[t]||t).join(', ');
+
+  const CONF_COLOR = {A:'#2e7d32', B:'#1565c0', C:'#c62828'};
+  const CONF_LABEL = {A:'A — Customer confirmed', B:'B — Published benchmark', C:'C — Estimate'};
+  const SW_LABEL   = {'one-time':'One-time perpetual', 'saas':'Annual SaaS', 'multi-year':'Multi-year term'};
 
   const tocItems = scenarios.map((sc,i) =>
     `<li><a href="#vc-${sc.id}" style="color:#1565c0">${i+1}. ${sc.name}</a></li>`
   ).join('');
 
+  // Per-value-case sections
   const sections = scenarios.map((sc, idx) => {
-    const qs = (sc.discoveryQuestions || []);
+    const qs = sc.discoveryQuestions || [];
     const inputs = sc.inputs ? Object.entries(sc.inputs) : [];
     const challenge = sc.challenge || '';
-    const rampLabel = VCB_RAMP_LABELS[sc.rampType] || sc.rampType || '';
-    const evidence = sc.evidence || '';
+    const rampLabel = VCB_RAMP_LABELS[sc.rampType] || '';
+    const evidence  = sc.evidence || '';
 
-    const qRows = qs.map((q, qi) => `
-      <tr>
-        <td style="width:28px;padding:8px 4px 8px 0;vertical-align:top;color:#1565c0;font-weight:700">${qi+1}.</td>
-        <td style="padding:8px 0;vertical-align:top;color:#222">${q}</td>
-        <td style="width:220px;padding:8px 0 8px 12px;vertical-align:top;border-left:1px solid #e0e0e0">
-          <div style="min-height:36px;border-bottom:1px solid #bdbdbd;margin-bottom:2px"></div>
-          <div style="min-height:36px;border-bottom:1px solid #bdbdbd"></div>
-        </td>
-      </tr>`).join('');
+    const qRows = qs.map((q, qi) => `<tr>
+      <td style="width:22px;padding:7px 4px 7px 0;vertical-align:top;color:#1565c0;font-weight:700;font-size:12px">${qi+1}.</td>
+      <td style="padding:7px 0;vertical-align:top;color:#222;font-size:12px;line-height:1.5">${q}</td>
+      <td style="width:210px;padding:7px 0 7px 10px;vertical-align:top;border-left:1px solid #e8e8e8">
+        <div style="min-height:32px;border-bottom:1px solid #ccc;margin-bottom:3px"></div>
+        <div style="min-height:32px;border-bottom:1px solid #ccc"></div>
+      </td></tr>`).join('');
 
     const inputRows = inputs.map(([key, def]) => {
-      const label = def.label || key;
-      const unit  = def.unit  || '';
-      const benchmark = def.value !== undefined ? def.value : '';
-      const hint  = def.hint  || '';
+      const li = (vcbState.leverInputs[sc.id]||{})[key] || {conf:'B', source:''};
+      const v = def.value;
+      const benchFmt = v === undefined ? '—'
+        : (typeof v==='number' && v>0 && v<1) ? (v*100).toFixed(1)+'%'
+        : typeof v==='number' ? v.toLocaleString() : String(v);
+      const scaledNote = typeof v==='number' && v>=1 && siteCount>1
+        ? '<br><span style="font-size:10px;color:#1565c0">× '+siteCount+' sites = '+(v*siteCount).toLocaleString()+'</span>' : '';
+      const cc = CONF_COLOR[li.conf] || CONF_COLOR.B;
+      const src = li.source || def.hint || '';
       return `<tr>
-        <td style="padding:6px 8px;border:1px solid #e0e0e0;font-size:12px;color:#444">${label}${unit?` <span style="color:#999">(${unit})</span>`:''}</td>
-        <td style="padding:6px 8px;border:1px solid #e0e0e0;font-size:12px;color:#888;text-align:center">${benchmark !== '' ? Number(benchmark).toLocaleString() : '—'}</td>
-        <td style="padding:6px 8px;border:1px solid #e0e0e0;"></td>
-        <td style="padding:6px 8px;border:1px solid #e0e0e0;font-size:11px;color:#aaa">${hint}</td>
+        <td style="padding:6px 8px;border:1px solid #e0e0e0;font-size:12px;color:#333">${def.label||key}${def.unit?' <span style="font-size:10px;color:#999">('+def.unit+')</span>':''}</td>
+        <td style="padding:6px 8px;border:1px solid #e0e0e0;font-size:11px;text-align:center;font-family:monospace;color:#555">${benchFmt}${scaledNote}</td>
+        <td style="padding:6px 8px;border:1px solid #e0e0e0;min-width:90px"></td>
+        <td style="padding:6px 8px;border:1px solid #e0e0e0;text-align:center;width:44px">
+          <span style="font-size:10px;font-weight:800;color:${cc};background:${cc}1a;border:1px solid ${cc};padding:1px 5px;border-radius:3px">${li.conf}</span>
+        </td>
+        <td style="padding:6px 8px;border:1px solid #e0e0e0;font-size:11px;color:#888">${src}</td>
       </tr>`;
     }).join('');
 
-    return `<div id="vc-${sc.id}" style="margin-bottom:48px;page-break-inside:avoid">
-      <div style="background:#f5f5f5;border-left:4px solid #1565c0;padding:12px 16px;margin-bottom:16px;border-radius:0 6px 6px 0">
-        <div style="font-size:11px;color:#888;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px">Value Case ${idx+1}${rampLabel?` · ${rampLabel}`:''}${evidence?` · ${evidence}`:''}</div>
-        <div style="font-size:18px;font-weight:800;color:#111;margin-bottom:4px">${sc.name}</div>
-        <div style="font-size:13px;color:#444;font-style:italic">${sc.oneLiner||''}</div>
+    const annualBenStr = sc.annualBenefit
+      ? '$' + Math.round(sc.annualBenefit/1000) + 'K/yr per site'
+        + (siteCount>1 ? ' — ' + siteCount + ' sites: $' + Math.round(sc.annualBenefit*siteCount/1000) + 'K/yr' : '')
+      : '';
+
+    return `<div id="vc-${sc.id}" style="margin-bottom:44px">
+      <div style="background:#f0f4ff;border-left:4px solid #1565c0;padding:11px 15px;margin-bottom:13px;border-radius:0 6px 6px 0">
+        <div style="font-size:10px;color:#666;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px">Value Case ${idx+1}${rampLabel?' · '+rampLabel:''}${evidence?' · '+evidence:''}</div>
+        <div style="font-size:17px;font-weight:800;color:#111;margin-bottom:3px">${sc.name}</div>
+        <div style="font-size:12px;color:#444;font-style:italic;line-height:1.4">${sc.oneLiner||''}</div>
+        ${annualBenStr?`<div style="font-size:11px;color:#1565c0;font-weight:600;margin-top:4px">${annualBenStr}</div>`:''}
       </div>
-
-      ${sc.annualBenefit ? `<div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#2e7d32">
-        <strong>Typical annual benefit range:</strong> ${sc.annualBenefit}
-      </div>` : ''}
-
-      <div style="margin-bottom:16px">
-        <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#222">Discovery Questions</div>
-        <table style="width:100%;border-collapse:collapse;font-size:13px">
+      ${qs.length?`<div style="margin-bottom:14px">
+        <div style="font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#444;margin-bottom:7px">Discovery Questions</div>
+        <table style="width:100%;border-collapse:collapse">
           <thead><tr>
-            <th colspan="2" style="text-align:left;padding:6px 0;border-bottom:2px solid #1565c0;color:#1565c0;font-size:11px;text-transform:uppercase;letter-spacing:.06em">Question</th>
-            <th style="text-align:left;padding:6px 0 6px 12px;border-bottom:2px solid #1565c0;color:#1565c0;font-size:11px;text-transform:uppercase;letter-spacing:.06em;border-left:1px solid #e0e0e0">Customer Answer</th>
+            <th colspan="2" style="text-align:left;padding:4px 0;border-bottom:2px solid #1565c0;color:#1565c0;font-size:10px;text-transform:uppercase;letter-spacing:.06em">Question</th>
+            <th style="text-align:left;padding:4px 0 4px 10px;border-bottom:2px solid #1565c0;color:#1565c0;font-size:10px;text-transform:uppercase;letter-spacing:.06em;border-left:1px solid #e0e0e0">Customer Answer</th>
           </tr></thead>
           <tbody>${qRows}</tbody>
         </table>
-      </div>
-
-      ${inputs.length ? `<div style="margin-bottom:16px">
-        <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#222">Quantification Inputs to Capture</div>
-        <table style="width:100%;border-collapse:collapse;font-size:12px">
+      </div>`:''}
+      ${inputs.length?`<div style="margin-bottom:14px">
+        <div style="font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#444;margin-bottom:7px">Quantification Inputs</div>
+        <table style="width:100%;border-collapse:collapse">
           <thead><tr>
-            <th style="text-align:left;padding:6px 8px;border:1px solid #e0e0e0;background:#fafafa;color:#555">Input</th>
-            <th style="text-align:center;padding:6px 8px;border:1px solid #e0e0e0;background:#fafafa;color:#555;width:110px">Benchmark</th>
-            <th style="text-align:left;padding:6px 8px;border:1px solid #e0e0e0;background:#fafafa;color:#555;width:130px">Customer Value</th>
-            <th style="text-align:left;padding:6px 8px;border:1px solid #e0e0e0;background:#fafafa;color:#555">Notes / Source</th>
+            <th style="padding:5px 8px;border:1px solid #e0e0e0;background:#f7f7f7;font-size:10px;color:#555;text-align:left">Input</th>
+            <th style="padding:5px 8px;border:1px solid #e0e0e0;background:#f7f7f7;font-size:10px;color:#555;text-align:center;width:110px">Benchmark</th>
+            <th style="padding:5px 8px;border:1px solid #e0e0e0;background:#f7f7f7;font-size:10px;color:#555;width:95px">Customer Value</th>
+            <th style="padding:5px 8px;border:1px solid #e0e0e0;background:#f7f7f7;font-size:10px;color:#555;text-align:center;width:44px">Conf</th>
+            <th style="padding:5px 8px;border:1px solid #e0e0e0;background:#f7f7f7;font-size:10px;color:#555;text-align:left">Source / Notes</th>
           </tr></thead>
           <tbody>${inputRows}</tbody>
         </table>
-      </div>` : ''}
-
-      ${challenge ? `<div style="border:1px solid #ffcc80;background:#fff8e1;border-radius:6px;padding:10px 14px;margin-bottom:8px">
-        <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#e65100;margin-bottom:4px">Common Objection / Challenge</div>
+      </div>`:''}
+      ${challenge?`<div style="border:1px solid #ffe0b2;background:#fff8f0;border-radius:5px;padding:9px 13px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#e65100;margin-bottom:3px">Objection / Challenge</div>
         <div style="font-size:12px;color:#555;line-height:1.6">${challenge}</div>
-      </div>` : ''}
+      </div>`:''}
     </div>`;
   }).join('');
 
+  // Open items rollup
+  const openItems = [];
+  scenarios.forEach(sc => {
+    const inputs = sc.inputs ? Object.entries(sc.inputs) : [];
+    inputs.forEach(([key, def]) => {
+      const li = (vcbState.leverInputs[sc.id]||{})[key] || {conf:'B', source:''};
+      if (li.conf === 'C' || (li.conf !== 'A' && !li.source)) {
+        const owner = li.conf==='C' ? 'Customer — confirm value'
+          : li.source ? 'Benchmark — source noted' : 'Customer — confirm benchmark';
+        openItems.push({ scName:sc.name, input:def.label||key, conf:li.conf, source:li.source||'', owner });
+      }
+    });
+  });
+  if (!scope.sites) openItems.push({scName:'Scope', input:'Site Count', conf:'C', source:'', owner:'Customer — Operations'});
+
+  const openItemsHtml = openItems.length ? `
+    <div style="margin-top:36px;padding:14px 16px;background:#fffbf0;border:1px solid #f0c36d;border-radius:7px">
+      <div style="font-weight:800;font-size:13px;color:#7a5200;margin-bottom:10px">Open Items — Data Still Needed</div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead><tr>
+          <th style="padding:5px 8px;border:1px solid #f0c36d;background:#fff3cd;color:#7a5200;text-align:left">Value Case</th>
+          <th style="padding:5px 8px;border:1px solid #f0c36d;background:#fff3cd;color:#7a5200;text-align:left">Input Needed</th>
+          <th style="padding:5px 8px;border:1px solid #f0c36d;background:#fff3cd;color:#7a5200;text-align:center;width:40px">Conf</th>
+          <th style="padding:5px 8px;border:1px solid #f0c36d;background:#fff3cd;color:#7a5200;text-align:left">Action / Owner</th>
+        </tr></thead>
+        <tbody>${openItems.map(oi=>`<tr>
+          <td style="padding:5px 8px;border:1px solid #f0c36d;color:#555">${oi.scName}</td>
+          <td style="padding:5px 8px;border:1px solid #f0c36d;color:#333;font-weight:600">${oi.input}</td>
+          <td style="padding:5px 8px;border:1px solid #f0c36d;text-align:center">
+            <span style="color:${CONF_COLOR[oi.conf]||CONF_COLOR.B};font-weight:800;font-size:10px">${oi.conf}</span>
+          </td>
+          <td style="padding:5px 8px;border:1px solid #f0c36d;color:#666">${oi.owner}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>` : '';
+
+  // TCO block
+  const tcoHtml = `
+    <div style="margin-top:44px;padding-top:16px;border-top:2px solid #111">
+      <div style="font-weight:800;font-size:16px;margin-bottom:16px;color:#111">Cost Model — Inputs to Collect</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px">
+        <thead><tr>
+          <th colspan="4" style="padding:6px 8px;border:1px solid #e0e0e0;background:#f0f4ff;color:#1a237e;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Hardware</th>
+        </tr><tr>
+          <th style="padding:5px 8px;border:1px solid #e0e0e0;background:#f7f7f7;font-size:10px;color:#555;text-align:left">Line Item</th>
+          <th style="padding:5px 8px;border:1px solid #e0e0e0;background:#f7f7f7;font-size:10px;color:#555;text-align:center;width:60px">Qty</th>
+          <th style="padding:5px 8px;border:1px solid #e0e0e0;background:#f7f7f7;font-size:10px;color:#555;text-align:center;width:80px">Unit Cost</th>
+          <th style="padding:5px 8px;border:1px solid #e0e0e0;background:#f7f7f7;font-size:10px;color:#555;text-align:left">Source / Quote</th>
+        </tr></thead>
+        <tbody>
+          <tr><td style="padding:7px 8px;border:1px solid #e0e0e0">Fixed RFID readers</td><td style="padding:7px 8px;border:1px solid #e0e0e0"></td><td style="padding:7px 8px;border:1px solid #e0e0e0"></td><td style="padding:7px 8px;border:1px solid #e0e0e0;color:#aaa;font-size:10px">Quote in hand? ☐ Yes  ☐ No — use benchmark</td></tr>
+          <tr><td style="padding:7px 8px;border:1px solid #e0e0e0">Handheld units</td><td style="padding:7px 8px;border:1px solid #e0e0e0"></td><td style="padding:7px 8px;border:1px solid #e0e0e0"></td><td style="padding:7px 8px;border:1px solid #e0e0e0"></td></tr>
+          <tr><td style="padding:7px 8px;border:1px solid #e0e0e0">Mounting / installation</td><td style="padding:7px 8px;border:1px solid #e0e0e0"></td><td style="padding:7px 8px;border:1px solid #e0e0e0"></td><td style="padding:7px 8px;border:1px solid #e0e0e0"></td></tr>
+        </tbody>
+      </table>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px">
+        <thead><tr><th colspan="2" style="padding:6px 8px;border:1px solid #e0e0e0;background:#f0f4ff;color:#1a237e;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Tags</th></tr></thead>
+        <tbody>
+          <tr><td style="padding:7px 8px;border:1px solid #e0e0e0;width:220px">Application point</td>
+              <td style="padding:7px 8px;border:1px solid #e0e0e0">${scope.tagPoint==='source'?'☑ Source-tagged by supplier&nbsp;&nbsp;☐ Applied in-store':'☐ Source-tagged by supplier&nbsp;&nbsp;☑ Applied in-store'}</td></tr>
+          <tr><td style="padding:7px 8px;border:1px solid #e0e0e0">Tag cost owner</td>
+              <td style="padding:7px 8px;border:1px solid #e0e0e0">${scope.tagOwner==='supplier'?'☑ Supplier&nbsp;&nbsp;☐ Customer':'☐ Supplier&nbsp;&nbsp;☑ Customer'}</td></tr>
+          <tr><td style="padding:7px 8px;border:1px solid #e0e0e0">Coverage % (items tagged)</td><td style="padding:7px 8px;border:1px solid #e0e0e0"></td></tr>
+          <tr><td style="padding:7px 8px;border:1px solid #e0e0e0">Unit tag cost ($)</td><td style="padding:7px 8px;border:1px solid #e0e0e0"></td></tr>
+          <tr><td style="padding:7px 8px;border:1px solid #e0e0e0">Annual tag volume</td><td style="padding:7px 8px;border:1px solid #e0e0e0"></td></tr>
+        </tbody>
+      </table>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px">
+        <thead><tr><th colspan="2" style="padding:6px 8px;border:1px solid #e0e0e0;background:#f0f4ff;color:#1a237e;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Software</th></tr></thead>
+        <tbody>
+          <tr><td style="padding:7px 8px;border:1px solid #e0e0e0;width:220px">Basis</td><td style="padding:7px 8px;border:1px solid #e0e0e0">${SW_LABEL[scope.softwareBasis]||scope.softwareBasis}</td></tr>
+          <tr><td style="padding:7px 8px;border:1px solid #e0e0e0">Annual platform fee ($)</td><td style="padding:7px 8px;border:1px solid #e0e0e0"></td></tr>
+          <tr><td style="padding:7px 8px;border:1px solid #e0e0e0">Deal term (years)</td><td style="padding:7px 8px;border:1px solid #e0e0e0"></td></tr>
+        </tbody>
+      </table>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr><th colspan="2" style="padding:6px 8px;border:1px solid #e0e0e0;background:#f0f4ff;color:#1a237e;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Integration, Services &amp; Contingency</th></tr></thead>
+        <tbody>
+          <tr><td style="padding:7px 8px;border:1px solid #e0e0e0;width:220px">Integration scope</td><td style="padding:7px 8px;border:1px solid #e0e0e0;min-height:44px"></td></tr>
+          <tr><td style="padding:7px 8px;border:1px solid #e0e0e0">Prof. services estimate ($)</td><td style="padding:7px 8px;border:1px solid #e0e0e0"></td></tr>
+          <tr><td style="padding:7px 8px;border:1px solid #e0e0e0">Internal FTE time (hrs)</td><td style="padding:7px 8px;border:1px solid #e0e0e0"></td></tr>
+          <tr><td style="padding:7px 8px;border:1px solid #e0e0e0">Contingency (20–30% of HW + integration)</td><td style="padding:7px 8px;border:1px solid #e0e0e0"></td></tr>
+        </tbody>
+      </table>
+    </div>`;
+
   const html = `<!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<title>Value Case Intake Form — ${customer}</title>
+<head><meta charset="utf-8">
+<title>Value Case Intake — ${customer}</title>
 <style>
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin:0; padding:32px 40px; color:#222; background:#fff; font-size:13px; }
-  @media print {
-    body { padding:16px 24px; }
-    .no-print { display:none !important; }
-    div[id^="vc-"] { page-break-inside:avoid; }
-  }
-  a { color:#1565c0; }
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;margin:0;padding:32px 40px;color:#222;background:#fff;font-size:13px;line-height:1.5}
+  @media print{body{padding:16px 22px;font-size:11px}.no-print{display:none!important}}
+  a{color:#1565c0}
 </style>
 </head>
 <body>
-<div class="no-print" style="background:#1565c0;color:#fff;padding:10px 16px;margin:-32px -40px 24px;display:flex;justify-content:space-between;align-items:center">
-  <span style="font-weight:700">Value Case Intake Form — Preview</span>
-  <button onclick="window.print()" style="background:#fff;color:#1565c0;border:none;border-radius:4px;padding:6px 14px;font-weight:700;cursor:pointer">Print / Save PDF</button>
+<div class="no-print" style="background:#1a237e;color:#fff;padding:10px 16px;margin:-32px -40px 24px;display:flex;justify-content:space-between;align-items:center">
+  <span style="font-weight:700">Value Case Intake Form — ${customer}</span>
+  <button onclick="window.print()" style="background:#fff;color:#1a237e;border:none;border-radius:4px;padding:6px 14px;font-weight:700;cursor:pointer">Print / Save PDF</button>
 </div>
-
-<div style="border-bottom:3px solid #111;padding-bottom:16px;margin-bottom:24px">
-  <div style="font-size:11px;color:#888;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px">Zebra Technologies — Value Case Discovery</div>
-  <h1 style="margin:0 0 6px;font-size:24px;font-weight:800">${customer}</h1>
-  <div style="display:flex;gap:24px;flex-wrap:wrap;font-size:12px;color:#555">
-    ${seller?`<span><strong>Seller:</strong> ${seller}</span>`:''}
+<div style="border-bottom:3px solid #111;padding-bottom:14px;margin-bottom:22px">
+  <div style="font-size:10px;color:#999;letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px">Zebra Technologies — Value Case Discovery</div>
+  <h1 style="margin:0 0 5px;font-size:24px;font-weight:800;color:#111">${customer}</h1>
+  <div style="display:flex;gap:20px;flex-wrap:wrap;font-size:12px;color:#555">
+    ${seller?`<span><strong>Team:</strong> ${seller}</span>`:''}
+    ${ctx.partners?`<span><strong>Partner(s):</strong> ${ctx.partners}</span>`:''}
     <span><strong>Company:</strong> ${company}</span>
     <span><strong>Date:</strong> ${today}</span>
-    <span><strong>Value Cases:</strong> ${scenarios.length}</span>
+    <span><strong>Value cases:</strong> ${scenarios.length}</span>
+  </div>
+  ${ctx.envNotes?`<div style="background:#f7f7f7;border-left:3px solid #ccc;padding:7px 11px;font-size:12px;color:#555;border-radius:0 4px 4px 0;margin-top:10px">${ctx.envNotes}</div>`:''}
+</div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px">
+  <div style="background:#f0f4ff;border-radius:6px;padding:9px 12px">
+    <div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1px">Sites in Scope</div>
+    <div style="font-size:20px;font-weight:800;color:#1a237e">${scope.sites||'—'}</div>
+    <div style="font-size:10px;color:#1565c0">${CONF_LABEL[scope.sitesConf]||''}</div>
+  </div>
+  <div style="background:#f0f4ff;border-radius:6px;padding:9px 12px">
+    <div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1px">Tag Application</div>
+    <div style="font-size:13px;font-weight:700;color:#1a237e">${scope.tagPoint==='source'?'Source-tagged':'Applied in-store'}</div>
+    <div style="font-size:10px;color:#555">Cost owner: ${scope.tagOwner==='supplier'?'Supplier':'Customer'}</div>
+  </div>
+  <div style="background:#f0f4ff;border-radius:6px;padding:9px 12px">
+    <div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1px">Software Basis</div>
+    <div style="font-size:13px;font-weight:700;color:#1a237e">${SW_LABEL[scope.softwareBasis]||scope.softwareBasis}</div>
+  </div>
+  <div style="background:#f0f4ff;border-radius:6px;padding:9px 12px">
+    <div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1px">Discount Rate (WACC)</div>
+    <div style="font-size:20px;font-weight:800;color:#1a237e">${scope.wacc||10}%</div>
+    <div style="font-size:10px;color:#1565c0">${CONF_LABEL[scope.waccConf]||''}</div>
   </div>
 </div>
-
-<div style="margin-bottom:32px">
-  <div style="font-weight:700;font-size:13px;margin-bottom:8px">Contents</div>
-  <ol style="margin:0;padding-left:20px;color:#444;font-size:13px;line-height:1.8">${tocItems}</ol>
+${narrative?`<div style="background:#e8f5e9;border-left:4px solid #2e7d32;padding:11px 15px;margin-bottom:20px;border-radius:0 6px 6px 0">
+  <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#2e7d32;margin-bottom:4px">What RFID Does Here</div>
+  <div style="font-size:13px;color:#333;line-height:1.7">${narrative}</div>
+</div>`:''}
+${classify.processNotes?`<div style="background:#f5f5f5;border-radius:5px;padding:10px 14px;margin-bottom:18px">
+  <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#777;margin-bottom:3px">Process Being Fixed (Customer's Words)</div>
+  <div style="font-size:13px;color:#333">${classify.processNotes}</div>
+</div>`:''}
+${techStr?`<div style="font-size:12px;color:#555;margin-bottom:18px">${classify.subVertical?`<strong>Sub-vertical:</strong> ${classify.subVertical} &nbsp;·&nbsp; `:''}<strong>Technology in scope:</strong> ${techStr}</div>`:''}
+<div style="margin-bottom:28px">
+  <div style="font-weight:700;font-size:12px;margin-bottom:7px;color:#333">Value Cases in This Form</div>
+  <ol style="margin:0;padding-left:18px;color:#444;font-size:12px;line-height:2">${tocItems}</ol>
 </div>
-
 ${sections}
-
-<div style="margin-top:40px;padding-top:16px;border-top:1px solid #e0e0e0">
-  <div style="font-weight:700;font-size:13px;margin-bottom:10px;color:#222">Meeting Notes</div>
-  <div style="min-height:120px;border:1px solid #e0e0e0;border-radius:4px;padding:8px"></div>
+${tcoHtml}
+${openItemsHtml}
+<div style="margin-top:36px;padding-top:14px;border-top:1px solid #e0e0e0">
+  <div style="font-weight:700;font-size:12px;margin-bottom:8px;color:#333">Meeting Notes</div>
+  <div style="min-height:130px;border:1px solid #e0e0e0;border-radius:4px;padding:8px"></div>
 </div>
-
-<div style="margin-top:24px;font-size:10px;color:#aaa;text-align:center">
+<div style="margin-top:20px;font-size:10px;color:#bbb;text-align:center;padding-top:8px;border-top:1px solid #f0f0f0">
   Generated by Zebra Value Accelerator · ${today} · Confidential — for internal planning use only
 </div>
-</body>
-</html>`;
+</body></html>`;
 
-  const win = window.open('', '_blank', 'width=1000,height=800,scrollbars=yes');
+  const win = window.open('', '_blank', 'width=1060,height=860,scrollbars=yes');
   if (!win) { alert('Pop-up blocked. Please allow pop-ups for this page and try again.'); return; }
   win.document.write(html);
   win.document.close();
