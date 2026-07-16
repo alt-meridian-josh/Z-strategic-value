@@ -945,6 +945,10 @@ svg{max-width:100%;height:auto}
 .vcb-tech-chips { display:flex; flex-wrap:wrap; gap:6px; }
 .vcb-tech-chip { background:#1a1a1e; border:1px solid #333; border-radius:4px; padding:5px 11px; font-size:11px; cursor:pointer; color:rgba(255,255,255,.55); transition:all .12s; }
 .vcb-tech-chip.active { background:rgba(168,249,49,.1); border-color:#A8F931; color:#A8F931; }
+/* Output mode toggle */
+.vcb-mode-btn { font-size:10px; font-weight:700; border-radius:4px; padding:5px 12px; cursor:pointer; border:1px solid; transition:all .15s; letter-spacing:.03em; }
+.vcb-mode-internal { background:rgba(21,101,192,.15); color:#90caf9; border-color:rgba(21,101,192,.3); }
+.vcb-mode-customer { background:rgba(46,125,50,.15); color:#81c784; border-color:rgba(46,125,50,.3); }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
@@ -2095,13 +2099,13 @@ svg{max-width:100%;height:auto}
         </div>
         <div class="vcb-fg">
           <label class="vcb-label">Partner(s)</label>
-          <input class="vcb-inp" id="vcb-ctx-partners" placeholder="SI, reseller, consultant…">
+          <input class="vcb-inp" id="vcb-ctx-partners" placeholder="SI, reseller, consultant…" oninput="updateCtxSummary()">
         </div>
       </div>
       <div class="vcb-field-row">
         <div class="vcb-fg">
           <label class="vcb-label">Zebra Team</label>
-          <input class="vcb-inp" id="vcb-ctx-team" placeholder="AE, value engineer…">
+          <input class="vcb-inp" id="vcb-ctx-team" placeholder="AE, value engineer…" oninput="updateCtxSummary()">
         </div>
         <div class="vcb-fg" style="display:none"><!-- spacer --></div>
       </div>
@@ -2207,8 +2211,12 @@ svg{max-width:100%;height:auto}
     </div>
   </div>
 
-  <!-- 7. GENERATE BUTTON -->
-  <div style="text-align:right">
+  <!-- 7. GENERATE ACTIONS -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.35)">Output mode</span>
+      <button id="vcb-mode-btn" class="vcb-mode-btn vcb-mode-internal" onclick="vcbToggleMode()" title="Internal: shows A/B/C confidence, sources, open-items. Customer: clean output only.">🔒 Internal</button>
+    </div>
     <button class="btn" style="height:38px;padding:0 22px;font-size:13px;background:#A8F931;color:#000;font-weight:700;border:none;border-radius:6px" onclick="generateIntakeForm()">Generate Intake Form ↗</button>
   </div>
 </div>
@@ -10099,6 +10107,18 @@ const vcbState = {
   leverInputs: {}  // { [scenarioId]: { [inputKey]: { value:'', conf:'B', source:'' } } }
 };
 
+// ── Output mode (internal = full analyst view, customer = stripped clean output) ──
+let vcbOutputMode = 'internal';
+
+function vcbToggleMode() {
+  vcbOutputMode = vcbOutputMode === 'internal' ? 'customer' : 'internal';
+  const btn = document.getElementById('vcb-mode-btn');
+  if (!btn) return;
+  const isInt = vcbOutputMode === 'internal';
+  btn.textContent = isInt ? '🔒 Internal' : '👤 Customer';
+  btn.className = 'vcb-mode-btn ' + (isInt ? 'vcb-mode-internal' : 'vcb-mode-customer');
+}
+
 // ── Accordions ──────────────────────────────────────────
 function vcbToggleAcc(key) {
   const body  = document.getElementById('vcb-'+key+'-body');
@@ -10155,7 +10175,12 @@ function vcbCtxChange() {
 
 function updateCtxSummary() {
   const el = document.getElementById('vcb-ctx-summary');
-  if (el) el.textContent = vcbState.ctx.customer ? '— ' + vcbState.ctx.customer : '';
+  if (!el) return;
+  const customer = document.getElementById('vcb-ctx-customer')?.value || '';
+  const partners = document.getElementById('vcb-ctx-partners')?.value || '';
+  const team     = document.getElementById('vcb-ctx-team')?.value || '';
+  const parts = [customer, partners, team].filter(Boolean);
+  el.textContent = parts.length ? '— ' + parts.join(' · ') : '';
 }
 
 // ── Vertical picker ─────────────────────────────────────
@@ -10377,6 +10402,7 @@ function generateIntakeForm() {
   const ctx = vcbState.ctx;
   const scope = vcbState.scope;
   const classify = vcbState.classify;
+  const isInternal = vcbOutputMode === 'internal';
 
   const customer = ctx.customer || (document.getElementById('i-customer')?.value||'').trim() || 'Customer';
   const company  = (document.getElementById('i-company')?.value||'').trim() || 'Zebra Technologies';
@@ -10410,7 +10436,7 @@ function generateIntakeForm() {
     const inputs = sc.inputs ? Object.entries(sc.inputs) : [];
     const challenge = sc.challenge || '';
     const rampLabel = VCB_RAMP_LABELS[sc.rampType] || '';
-    const evidence  = sc.evidence || '';
+    const mechanism = VCB_MECHANISM_CLAUSES[sc.id] || '';
 
     const qRows = qs.map((q, qi) => `<tr>
       <td style="width:22px;padding:7px 4px 7px 0;vertical-align:top;color:#1565c0;font-weight:700;font-size:12px">${qi+1}.</td>
@@ -10426,32 +10452,45 @@ function generateIntakeForm() {
       const benchFmt = v === undefined ? '—'
         : (typeof v==='number' && v>0 && v<1) ? (v*100).toFixed(1)+'%'
         : typeof v==='number' ? v.toLocaleString() : String(v);
-      const scaledNote = typeof v==='number' && v>=1 && siteCount>1
+      // scaled note for internal only (exposes internal math)
+      const scaledNote = isInternal && typeof v==='number' && v>=1 && siteCount>1
         ? '<br><span style="font-size:10px;color:#1565c0">× '+siteCount+' sites = '+(v*siteCount).toLocaleString()+'</span>' : '';
       const cc = CONF_COLOR[li.conf] || CONF_COLOR.B;
-      const src = li.source || def.hint || '';
-      return `<tr>
-        <td style="padding:6px 8px;border:1px solid #e0e0e0;font-size:12px;color:#333">${def.label||key}${def.unit?' <span style="font-size:10px;color:#999">('+def.unit+')</span>':''}</td>
-        <td style="padding:6px 8px;border:1px solid #e0e0e0;font-size:11px;text-align:center;font-family:monospace;color:#555">${benchFmt}${scaledNote}</td>
-        <td style="padding:6px 8px;border:1px solid #e0e0e0;min-width:90px"></td>
-        <td style="padding:6px 8px;border:1px solid #e0e0e0;text-align:center;width:44px">
-          <span style="font-size:10px;font-weight:800;color:${cc};background:${cc}1a;border:1px solid ${cc};padding:1px 5px;border-radius:3px">${li.conf}</span>
-        </td>
-        <td style="padding:6px 8px;border:1px solid #e0e0e0;font-size:11px;color:#888">${src}</td>
-      </tr>`;
+      const src = li.source || (isInternal ? (def.hint || '') : '');
+      if (isInternal) {
+        return `<tr>
+          <td style="padding:6px 8px;border:1px solid #e0e0e0;font-size:12px;color:#333">${def.label||key}${def.unit?' <span style="font-size:10px;color:#999">('+def.unit+')</span>':''}</td>
+          <td style="padding:6px 8px;border:1px solid #e0e0e0;font-size:11px;text-align:center;font-family:monospace;color:#555">${benchFmt}${scaledNote}</td>
+          <td style="padding:6px 8px;border:1px solid #e0e0e0;min-width:90px"></td>
+          <td style="padding:6px 8px;border:1px solid #e0e0e0;text-align:center;width:44px">
+            <span style="font-size:10px;font-weight:800;color:${cc};background:${cc}1a;border:1px solid ${cc};padding:1px 5px;border-radius:3px">${li.conf}</span>
+          </td>
+          <td style="padding:6px 8px;border:1px solid #e0e0e0;font-size:11px;color:#888">${src}</td>
+        </tr>`;
+      } else {
+        return `<tr>
+          <td style="padding:6px 8px;border:1px solid #e0e0e0;font-size:12px;color:#333">${def.label||key}${def.unit?' <span style="font-size:10px;color:#999">('+def.unit+')</span>':''}</td>
+          <td style="padding:6px 8px;border:1px solid #e0e0e0;font-size:11px;text-align:center;font-family:monospace;color:#777">${benchFmt}</td>
+          <td style="padding:6px 8px;border:1px solid #e0e0e0;min-width:110px"></td>
+        </tr>`;
+      }
     }).join('');
 
-    const annualBenStr = sc.annualBenefit
-      ? '$' + Math.round(sc.annualBenefit/1000) + 'K/yr per site'
-        + (siteCount>1 ? ' — ' + siteCount + ' sites: $' + Math.round(sc.annualBenefit*siteCount/1000) + 'K/yr' : '')
-      : '';
+    const inputTableHdr = isInternal
+      ? `<th style="padding:5px 8px;border:1px solid #e0e0e0;background:#f7f7f7;font-size:10px;color:#555;text-align:left">Input</th>
+         <th style="padding:5px 8px;border:1px solid #e0e0e0;background:#f7f7f7;font-size:10px;color:#555;text-align:center;width:110px">Industry Reference</th>
+         <th style="padding:5px 8px;border:1px solid #e0e0e0;background:#f7f7f7;font-size:10px;color:#555;width:95px">Your Number</th>
+         <th style="padding:5px 8px;border:1px solid #e0e0e0;background:#f7f7f7;font-size:10px;color:#555;text-align:center;width:44px">Conf</th>
+         <th style="padding:5px 8px;border:1px solid #e0e0e0;background:#f7f7f7;font-size:10px;color:#555;text-align:left">Source / Notes</th>`
+      : `<th style="padding:5px 8px;border:1px solid #e0e0e0;background:#f7f7f7;font-size:10px;color:#555;text-align:left">Input</th>
+         <th style="padding:5px 8px;border:1px solid #e0e0e0;background:#f7f7f7;font-size:10px;color:#555;text-align:center;width:110px">Industry Reference</th>
+         <th style="padding:5px 8px;border:1px solid #e0e0e0;background:#f7f7f7;font-size:10px;color:#555;width:110px">Your Number</th>`;
 
     return `<div id="vc-${sc.id}" style="margin-bottom:44px">
       <div style="background:#f0f4ff;border-left:4px solid #1565c0;padding:11px 15px;margin-bottom:13px;border-radius:0 6px 6px 0">
-        <div style="font-size:10px;color:#666;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px">Value Case ${idx+1}${rampLabel?' · '+rampLabel:''}${evidence?' · '+evidence:''}</div>
+        <div style="font-size:10px;color:#666;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px">Value Case ${idx+1}${isInternal && rampLabel ? ' · '+rampLabel : ''}</div>
         <div style="font-size:17px;font-weight:800;color:#111;margin-bottom:3px">${sc.name}</div>
-        <div style="font-size:12px;color:#444;font-style:italic;line-height:1.4">${sc.oneLiner||''}</div>
-        ${annualBenStr?`<div style="font-size:11px;color:#1565c0;font-weight:600;margin-top:4px">${annualBenStr}</div>`:''}
+        ${mechanism?`<div style="font-size:12px;color:#444;line-height:1.5;margin-top:3px">${mechanism.charAt(0).toUpperCase()+mechanism.slice(1)}.</div>`:''}
       </div>
       ${qs.length?`<div style="margin-bottom:14px">
         <div style="font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#444;margin-bottom:7px">Discovery Questions</div>
@@ -10466,37 +10505,39 @@ function generateIntakeForm() {
       ${inputs.length?`<div style="margin-bottom:14px">
         <div style="font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#444;margin-bottom:7px">Quantification Inputs</div>
         <table style="width:100%;border-collapse:collapse">
-          <thead><tr>
-            <th style="padding:5px 8px;border:1px solid #e0e0e0;background:#f7f7f7;font-size:10px;color:#555;text-align:left">Input</th>
-            <th style="padding:5px 8px;border:1px solid #e0e0e0;background:#f7f7f7;font-size:10px;color:#555;text-align:center;width:110px">Benchmark</th>
-            <th style="padding:5px 8px;border:1px solid #e0e0e0;background:#f7f7f7;font-size:10px;color:#555;width:95px">Customer Value</th>
-            <th style="padding:5px 8px;border:1px solid #e0e0e0;background:#f7f7f7;font-size:10px;color:#555;text-align:center;width:44px">Conf</th>
-            <th style="padding:5px 8px;border:1px solid #e0e0e0;background:#f7f7f7;font-size:10px;color:#555;text-align:left">Source / Notes</th>
-          </tr></thead>
+          <thead><tr>${inputTableHdr}</tr></thead>
           <tbody>${inputRows}</tbody>
         </table>
       </div>`:''}
-      ${challenge?`<div style="border:1px solid #ffe0b2;background:#fff8f0;border-radius:5px;padding:9px 13px">
+      ${isInternal && challenge?`<div style="border:1px solid #ffe0b2;background:#fff8f0;border-radius:5px;padding:9px 13px">
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#e65100;margin-bottom:3px">Objection / Challenge</div>
         <div style="font-size:12px;color:#555;line-height:1.6">${challenge}</div>
       </div>`:''}
     </div>`;
   }).join('');
 
-  // Open items rollup
+  // Open items rollup (internal only)
   const openItems = [];
-  scenarios.forEach(sc => {
-    const inputs = sc.inputs ? Object.entries(sc.inputs) : [];
-    inputs.forEach(([key, def]) => {
-      const li = (vcbState.leverInputs[sc.id]||{})[key] || {conf:'B', source:''};
-      if (li.conf === 'C' || (li.conf !== 'A' && !li.source)) {
-        const owner = li.conf==='C' ? 'Customer — confirm value'
-          : li.source ? 'Benchmark — source noted' : 'Customer — confirm benchmark';
-        openItems.push({ scName:sc.name, input:def.label||key, conf:li.conf, source:li.source||'', owner });
-      }
+  if (isInternal) {
+    const ownerOf = (key, def, li) => {
+      const k = key.toLowerCase();
+      const finKeys = ['rate','revenue','margin','cost','spend','value','fee','wacc','pct','margin'];
+      const isFinance = finKeys.some(f => k.includes(f));
+      if (li.conf === 'C') return isFinance ? 'Customer — Finance' : 'Customer — Operations';
+      if (li.conf === 'A') return 'Customer — Document source';
+      return isFinance ? 'Customer Finance — validate benchmark' : 'Customer Ops — validate benchmark';
+    };
+    scenarios.forEach(sc => {
+      const inputs = sc.inputs ? Object.entries(sc.inputs) : [];
+      inputs.forEach(([key, def]) => {
+        const li = (vcbState.leverInputs[sc.id]||{})[key] || {conf:'B', source:''};
+        if (li.conf === 'C' || !li.source) {
+          openItems.push({ scName:sc.name, input:def.label||key, conf:li.conf, source:li.source||'', owner:ownerOf(key,def,li) });
+        }
+      });
     });
-  });
-  if (!scope.sites.value) openItems.push({scName:'Scope', input:'Site Count', conf:'C', source:'', owner:'Customer — Operations'});
+    if (!scope.sites.value) openItems.push({scName:'Scope', input:'Site Count', conf:'C', source:'', owner:'Customer — Operations'});
+  }
 
   const openItemsHtml = openItems.length ? `
     <div style="margin-top:36px;padding:14px 16px;background:#fffbf0;border:1px solid #f0c36d;border-radius:7px">
@@ -10581,9 +10622,12 @@ function generateIntakeForm() {
 </style>
 </head>
 <body>
-<div class="no-print" style="background:#1a237e;color:#fff;padding:10px 16px;margin:-32px -40px 24px;display:flex;justify-content:space-between;align-items:center">
-  <span style="font-weight:700">Value Case Intake Form — ${customer}</span>
-  <button onclick="window.print()" style="background:#fff;color:#1a237e;border:none;border-radius:4px;padding:6px 14px;font-weight:700;cursor:pointer">Print / Save PDF</button>
+<div class="no-print" style="background:${isInternal?'#1a237e':'#000'};color:#fff;padding:10px 16px;margin:-32px -40px 24px;display:flex;justify-content:space-between;align-items:center">
+  <span style="font-weight:700">${isInternal?'[INTERNAL] ':''}Value Case Intake — ${customer}</span>
+  <div style="display:flex;gap:10px;align-items:center">
+    ${isInternal?'<span style="font-size:10px;background:rgba(255,255,255,.15);border-radius:3px;padding:3px 8px;letter-spacing:.05em">ANALYST VIEW</span>':''}
+    <button onclick="window.print()" style="background:#fff;color:#000;border:none;border-radius:4px;padding:6px 14px;font-weight:700;cursor:pointer">Print / Save PDF</button>
+  </div>
 </div>
 <div style="border-bottom:3px solid #111;padding-bottom:14px;margin-bottom:22px">
   <div style="font-size:10px;color:#999;letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px">Zebra Technologies — Value Case Discovery</div>
@@ -10601,7 +10645,7 @@ function generateIntakeForm() {
   <div style="background:#f0f4ff;border-radius:6px;padding:9px 12px">
     <div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1px">Sites in Scope</div>
     <div style="font-size:20px;font-weight:800;color:#1a237e">${scope.sites.value||'—'}</div>
-    <div style="font-size:10px;color:#1565c0">${CONF_LABEL[scope.sites.conf]||''}</div>
+    ${isInternal?`<div style="font-size:10px;color:#1565c0">${CONF_LABEL[scope.sites.conf]||''}</div>`:''}
   </div>
   <div style="background:#f0f4ff;border-radius:6px;padding:9px 12px">
     <div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1px">Tag Application</div>
@@ -10615,7 +10659,7 @@ function generateIntakeForm() {
   <div style="background:#f0f4ff;border-radius:6px;padding:9px 12px">
     <div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1px">Discount Rate (WACC)</div>
     <div style="font-size:20px;font-weight:800;color:#1a237e">${scope.wacc.value||10}%</div>
-    <div style="font-size:10px;color:#1565c0">${CONF_LABEL[scope.wacc.conf]||''}</div>
+    ${isInternal?`<div style="font-size:10px;color:#1565c0">${CONF_LABEL[scope.wacc.conf]||''}</div>`:''}
   </div>
 </div>
 ${narrative?`<div style="background:#e8f5e9;border-left:4px solid #2e7d32;padding:11px 15px;margin-bottom:20px;border-radius:0 6px 6px 0">
@@ -10639,7 +10683,7 @@ ${openItemsHtml}
   <div style="min-height:130px;border:1px solid #e0e0e0;border-radius:4px;padding:8px"></div>
 </div>
 <div style="margin-top:20px;font-size:10px;color:#bbb;text-align:center;padding-top:8px;border-top:1px solid #f0f0f0">
-  Generated by Zebra Value Accelerator · ${today} · Confidential — for internal planning use only
+  Generated by Zebra Value Accelerator · ${today}${isInternal?' · Confidential — analyst working document':' · Zebra Technologies'}
 </div>
 </body></html>`;
 
