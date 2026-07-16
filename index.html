@@ -952,6 +952,7 @@ svg{max-width:100%;height:auto}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -2217,7 +2218,10 @@ svg{max-width:100%;height:auto}
       <span style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.35)">Output mode</span>
       <button id="vcb-mode-btn" class="vcb-mode-btn vcb-mode-internal" onclick="vcbToggleMode()" title="Internal: shows A/B/C confidence, sources, open-items. Customer: clean output only.">🔒 Internal</button>
     </div>
-    <button class="btn" style="height:38px;padding:0 22px;font-size:13px;background:#A8F931;color:#000;font-weight:700;border:none;border-radius:6px" onclick="generateIntakeForm()">Generate Intake Form ↗</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn" style="height:38px;padding:0 16px;font-size:13px;background:rgba(168,249,49,.12);color:#A8F931;font-weight:700;border:1px solid rgba(168,249,49,.35);border-radius:6px" onclick="generateExcelModel()" title="Export 6-tab Excel model (Inputs, Value Cases, Cost Model, 5yr Cashflow, Summary, Evidence)">Export Excel ↓</button>
+      <button class="btn" style="height:38px;padding:0 22px;font-size:13px;background:#A8F931;color:#000;font-weight:700;border:none;border-radius:6px" onclick="generateIntakeForm()">Generate Intake Form ↗</button>
+    </div>
   </div>
 </div>
 
@@ -10691,6 +10695,334 @@ ${openItemsHtml}
   if (!win) { alert('Pop-up blocked. Please allow pop-ups for this page and try again.'); return; }
   win.document.write(html);
   win.document.close();
+}
+
+// ── Excel Model Export ──────────────────────────────────────────────────────
+function generateExcelModel() {
+  if (typeof XLSX === 'undefined') {
+    alert('Excel library not loaded yet. Please wait a moment and try again.');
+    return;
+  }
+
+  vcbReadScope();
+
+  const scope    = vcbState.scope;
+  const ctx      = vcbState.ctx;
+  const classify = vcbState.classify;
+  const customer = ctx.customer || 'Prospect';
+  const sites    = parseFloat(scope.sites.value) || 0;
+  const wacc     = (parseFloat(scope.wacc.value) || 10) / 100;
+  const today    = new Date().toISOString().slice(0, 10);
+
+  const scenarios = SCENARIOS.filter(sc => vcbState.selected.has(sc.id));
+  if (!scenarios.length) {
+    alert('Select at least one value case before exporting.');
+    return;
+  }
+
+  const CONF_LABEL = {
+    A: 'A — Customer confirmed',
+    B: 'B — Published benchmark',
+    C: 'C — Estimate needed'
+  };
+
+  const RAMP = {
+    hard_labor:  [0, 0.90, 1.00, 1.00, 1.00, 1.00],
+    hard_cost:   [0, 0.90, 1.00, 1.00, 1.00, 1.00],
+    revenue:     [0, 0.60, 0.80, 1.00, 1.00, 1.00],
+    working_cap: [0, 0.50, 0.80, 1.00, 1.00, 1.00],
+    soft:        [0, 0.30, 0.60, 1.00, 1.00, 1.00],
+    strategic:   [0, 0.20, 0.40, 0.70, 1.00, 1.00]
+  };
+
+  function getLeverData(sc) {
+    const state = vcbState.leverInputs[sc.id] || {};
+    return Object.entries(sc.inputs || {}).map(([key, def]) => {
+      const li = state[key] || { value: '', conf: 'B', source: '' };
+      return {
+        key,
+        label:   def.label || key,
+        unit:    def.unit  || '',
+        bench:   def.value,
+        custVal: li.value !== '' ? li.value : null,
+        hint:    def.hint  || '',
+        conf:    li.conf,
+        source:  li.source || ''
+      };
+    });
+  }
+
+  const wb = XLSX.utils.book_new();
+
+  // ── Tab 1: Inputs ────────────────────────────────────────────────────────
+  (function() {
+    const rows = [
+      ['Value Case Builder — Engagement Inputs', '', '', '', ''],
+      [`Customer: ${customer}`, '', `Date: ${today}`, '', ''],
+      [],
+      ['FIELD', 'VALUE', 'CONFIDENCE', 'SOURCE', 'NOTES'],
+      ['— Engagement Context —'],
+      ['Customer / Prospect',  customer],
+      ['Partner(s)',           ctx.partners  || ''],
+      ['Zebra Team',           ctx.team      || ''],
+      ['Environment Notes',   ctx.envNotes  || ''],
+      [],
+      ['— Scope —'],
+      ['Sites in Scope',         scope.sites.value || '', CONF_LABEL[scope.sites.conf] || '', scope.sites.source || ''],
+      ['Discount Rate (WACC %)', scope.wacc.value  || 10, CONF_LABEL[scope.wacc.conf]  || '', scope.wacc.source  || ''],
+      ['Tag Application Point',  scope.tagPoint.value      || 'in-store'],
+      ['Tag Cost Owner',         scope.tagOwner.value      || 'customer'],
+      ['Software Basis',         scope.softwareBasis.value || 'saas'],
+      [],
+      ['— Classification —'],
+      ['Sub-Vertical',       classify.subVertical  || ''],
+      ['Tech Scope',         [...(classify.techScope || [])].join(', ')],
+      ['Process Being Fixed', classify.processNotes || '']
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:32},{wch:28},{wch:32},{wch:36},{wch:24}];
+    XLSX.utils.book_append_sheet(wb, ws, 'Inputs');
+  })();
+
+  // ── Tab 2: Loss Pools + Recovery Rates ──────────────────────────────────
+  (function() {
+    const CONF_NOTE = { A: 'A — Confirmed', B: 'B — Benchmark', C: 'C — ESTIMATE NEEDED' };
+    const rows = [
+      ['Loss Pools & Recovery Rates', '', '', '', '', '', ''],
+      [`Customer: ${customer}  |  ${scenarios.length} value case(s) selected`, '', '', '', '', '', ''],
+      ['Confidence: A = Customer confirmed  |  B = Published benchmark  |  C = Customer estimate needed (mark yellow)'],
+      []
+    ];
+
+    scenarios.forEach((sc, idx) => {
+      const rampLabel = VCB_RAMP_LABELS[sc.rampType] || sc.rampType || '';
+      const mechanism = VCB_MECHANISM_CLAUSES[sc.id]  || sc.oneLiner || '';
+      const levers    = getLeverData(sc);
+      const benefit   = sc.annualBenefit * (1 - (sc.haircut || 0));
+
+      rows.push([`${idx + 1}. ${sc.name}`]);
+      rows.push([`Mechanism: ${mechanism}`]);
+      rows.push([`Ramp type: ${rampLabel}  |  Benefit basis: $${Math.round(benefit).toLocaleString()}/yr (benchmark, per site)`]);
+      rows.push(['INPUT', 'UNIT', 'BENCHMARK', 'YOUR VALUE', 'CONF', 'SOURCE', 'CITED REFERENCE']);
+
+      levers.forEach(l => {
+        rows.push([
+          l.label,
+          l.unit,
+          l.bench,
+          l.custVal !== null ? l.custVal : '',
+          CONF_NOTE[l.conf] || l.conf,
+          l.source,
+          l.hint
+        ]);
+      });
+
+      if (sites > 0) {
+        const scaled = Math.round(benefit * sites);
+        rows.push([]);
+        rows.push([`→ Scaled total (${sites} sites)`, 'USD/yr', '', scaled, '', '', 'Benchmark × site count']);
+      }
+      rows.push([]);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:36},{wch:10},{wch:16},{wch:16},{wch:24},{wch:28},{wch:44}];
+    XLSX.utils.book_append_sheet(wb, ws, 'Value Cases');
+  })();
+
+  // ── Tab 3: Cost Model / TCO ──────────────────────────────────────────────
+  (function() {
+    const swBasis = scope.softwareBasis.value || 'saas';
+    const rows = [
+      ['Cost Model / TCO', '', '', '', '', ''],
+      ['Fill in YOUR VALUE column with customer-specific figures. Rows with blank YOUR VALUE need data before NPV can be computed.'],
+      [],
+      ['COST CATEGORY', 'ITEM', 'QTY', 'UNIT COST ($)', 'YOUR VALUE ($)', 'NOTES'],
+      ['— Hardware —'],
+      ['Hardware', 'Fixed RFID Readers',                  '', '', '', ''],
+      ['Hardware', 'Handheld RFID Devices',               '', '', '', ''],
+      ['Hardware', 'Network / Infrastructure Upgrades',   '', '', '', ''],
+      ['Hardware', 'Servers / Edge Compute',              '', '', '', ''],
+      [],
+      ['— Tags —'],
+      ['Tags', 'Tag Unit Cost (each)',     '', '', '', ''],
+      ['Tags', 'Annual Tag Volume',        '', '', '', ''],
+      ['Tags', 'Annual Tag Spend (calc)',  '', '', '', 'QTY × unit cost'],
+      [],
+      ['— Software —'],
+      ['Software', `License / SaaS (${swBasis})`,        '', '', '', ''],
+      ['Software', 'Implementation / Onboarding',        '', '', '', ''],
+      ['Software', 'Integration / API Development',      '', '', '', ''],
+      [],
+      ['— Services —'],
+      ['Services', 'Professional Services (deploy)',      '', '', '', ''],
+      ['Services', 'Internal IT Time (est.)',             '', '', '', ''],
+      ['Services', 'Training',                            '', '', '', ''],
+      [],
+      ['— Ongoing (Yr 2+) —'],
+      ['Ongoing', 'Maintenance & Support',                '', '', '', ''],
+      ['Ongoing', 'Software Renewal',                     '', '', '', ''],
+      ['Ongoing', 'Tag Refresh / Attrition',              '', '', '', ''],
+      [],
+      ['TOTAL INITIAL INVESTMENT',           '', '', '', '', 'Sum Hardware + Tags (Yr1) + Software + Services'],
+      ['TOTAL ANNUAL OPERATING COST (Yr 2+)', '', '', '', '', 'Sum Ongoing + tag refresh + license renewal']
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:20},{wch:36},{wch:12},{wch:16},{wch:18},{wch:44}];
+    XLSX.utils.book_append_sheet(wb, ws, 'Cost Model');
+  })();
+
+  // ── Tab 4: 5-Year Cashflow ───────────────────────────────────────────────
+  const siteCount = sites > 0 ? sites : 1;
+  const yearlyBenefitTotals = [0, 0, 0, 0, 0];
+
+  (function() {
+    const rows = [
+      ['5-Year Cashflow Model', '', '', '', '', '', ''],
+      [`Customer: ${customer}  |  Sites: ${sites || 'TBD'}  |  WACC: ${scope.wacc.value || 10}%`],
+      ['Benefits are benchmark-based; ramp schedule applied per case type. Complete Cost Model tab to compute net cashflows.'],
+      [],
+      ['VALUE CASE', 'RAMP TYPE', 'YR 1', 'YR 2', 'YR 3', 'YR 4', 'YR 5']
+    ];
+
+    scenarios.forEach(sc => {
+      const ramp    = RAMP[sc.rampType] || RAMP.soft;
+      const benefit = sc.annualBenefit * (1 - (sc.haircut || 0)) * siteCount;
+      const rampLabel = VCB_RAMP_LABELS[sc.rampType] || sc.rampType || '';
+      const yrs = [1,2,3,4,5].map(yr => Math.round(benefit * ramp[yr]));
+      yrs.forEach((v, i) => { yearlyBenefitTotals[i] += v; });
+      rows.push([sc.name, rampLabel, ...yrs]);
+    });
+
+    rows.push([]);
+    rows.push(['TOTAL GROSS BENEFIT', '', ...yearlyBenefitTotals]);
+    rows.push(['TOTAL COST (from Cost Model)', '', ...Array(5).fill('—')]);
+    rows.push(['NET CASHFLOW', '', ...Array(5).fill('—')]);
+
+    let cumBenefit = 0;
+    let grossNPV = 0;
+    const cumulativeRow = yearlyBenefitTotals.map((v, i) => {
+      cumBenefit += v;
+      grossNPV   += v / Math.pow(1 + wacc, i + 1);
+      return Math.round(cumBenefit);
+    });
+
+    rows.push([]);
+    rows.push(['CUMULATIVE GROSS BENEFIT', '', ...cumulativeRow]);
+    rows.push([]);
+    rows.push(['Gross benefit NPV (pre-cost):', '', Math.round(grossNPV), '', '', '', '']);
+    rows.push(['Net NPV requires cost figures from Cost Model tab.']);
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:42},{wch:18},{wch:16},{wch:16},{wch:16},{wch:16},{wch:16}];
+    XLSX.utils.book_append_sheet(wb, ws, '5yr Cashflow');
+  })();
+
+  // ── Tab 5: Summary ───────────────────────────────────────────────────────
+  (function() {
+    let grossNPV   = 0;
+    let cumBenefit = 0;
+    let paybackYr  = null;
+    const total5yr = yearlyBenefitTotals.reduce((s, v) => s + v, 0);
+
+    yearlyBenefitTotals.forEach((v, i) => {
+      grossNPV   += v / Math.pow(1 + wacc, i + 1);
+      cumBenefit += v;
+      if (paybackYr === null && cumBenefit > 0) paybackYr = i + 1;
+    });
+
+    const rows = [
+      ['Executive Summary', '', ''],
+      [`Customer: ${customer}  |  Date: ${today}  |  ${scenarios.length} value case(s)`],
+      ['Gross benefit only — complete Cost Model tab for net NPV, BCR, MIRR, and payback.'],
+      [],
+      ['METRIC', 'VALUE', 'NOTES'],
+      ['Value Cases in Scope',    scenarios.length,         ''],
+      ['Sites in Scope',          sites || 'TBD',           CONF_LABEL[scope.sites.conf] || ''],
+      ['Discount Rate (WACC)',    `${scope.wacc.value || 10}%`, CONF_LABEL[scope.wacc.conf] || ''],
+      [],
+      ['— Gross Benefit (benchmark basis, before costs) —'],
+      ['5-Year Total Benefit',   Math.round(total5yr),     'USD, ramp-adjusted across all cases'],
+      ['Gross Benefit NPV',      Math.round(grossNPV),     `Discounted at ${scope.wacc.value || 10}%`],
+      ['First Benefit Year',     paybackYr ? `Year ${paybackYr}` : 'Year 1', 'First year with positive benefit cashflow'],
+      [],
+      ['— Net Metrics (complete Cost Model tab to populate) —'],
+      ['Net NPV (benefit − cost)',      'Requires Cost Model', ''],
+      ['Discounted Payback Period',     'Requires Cost Model', ''],
+      ['Benefit-Cost Ratio (BCR)',      'Requires Cost Model', 'Total benefit / total cost'],
+      ['Modified IRR (MIRR)',           'Requires Cost Model', ''],
+      [],
+      ['— Breakdown by Value Case —'],
+      ['CASE', 'RAMP TYPE', '5YR BENEFIT (USD)']
+    ];
+
+    scenarios.forEach(sc => {
+      const ramp    = RAMP[sc.rampType] || RAMP.soft;
+      const benefit = sc.annualBenefit * (1 - (sc.haircut || 0)) * siteCount;
+      const total   = Math.round([1,2,3,4,5].reduce((s, yr) => s + benefit * ramp[yr], 0));
+      rows.push([sc.name, VCB_RAMP_LABELS[sc.rampType] || sc.rampType, total]);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:36},{wch:24},{wch:36}];
+    XLSX.utils.book_append_sheet(wb, ws, 'Summary');
+  })();
+
+  // ── Tab 6: Evidence & Assumptions ───────────────────────────────────────
+  (function() {
+    const rows = [
+      ['Evidence Registry & Assumptions', '', '', '', ''],
+      ['Confidence: A = Customer confirmed  |  B = Published benchmark  |  C = Customer estimate needed'],
+      [],
+      ['CASE', 'MECHANISM', 'EVIDENCE / SOURCE NOTES', 'RAMP BASIS', 'DISCOVERY QUESTIONS'],
+    ];
+
+    scenarios.forEach(sc => {
+      const mechanism = VCB_MECHANISM_CLAUSES[sc.id] || sc.oneLiner || '';
+      const evidence  = sc.evidence || '';
+      const rampLabel = VCB_RAMP_LABELS[sc.rampType] || sc.rampType || '';
+      const qs        = (sc.discoveryQuestions || []).join('\n');
+      rows.push([sc.name, mechanism, evidence, rampLabel, qs]);
+    });
+
+    rows.push([]);
+    rows.push(['— Scope Assumptions —']);
+    rows.push(['ASSUMPTION', 'VALUE', 'CONFIDENCE', 'SOURCE', '']);
+    rows.push(['Sites in Scope',  scope.sites.value || '', CONF_LABEL[scope.sites.conf] || '', scope.sites.source || '']);
+    rows.push(['WACC',            `${scope.wacc.value || 10}%`, CONF_LABEL[scope.wacc.conf] || '', scope.wacc.source || '']);
+    rows.push(['Benefit basis',   'Benchmark × (1 − haircut) × site count', 'B', 'Zebra benchmark database']);
+    rows.push(['Ramp schedule',   'Varies by ramp type — see 5yr Cashflow tab', 'B', 'Standard implementation timelines']);
+
+    // C-confidence open items
+    const cInputs = [];
+    scenarios.forEach(sc => {
+      const state = vcbState.leverInputs[sc.id] || {};
+      Object.entries(sc.inputs || {}).forEach(([key, def]) => {
+        const li = state[key];
+        if (li && li.conf === 'C') {
+          cInputs.push({ caseName: sc.name, label: def.label || key, source: li.source || '' });
+        }
+      });
+    });
+
+    if (cInputs.length > 0) {
+      rows.push([]);
+      rows.push(['— Open Items: C-Confidence Inputs (customer estimate required) —']);
+      rows.push(['CASE', 'INPUT', 'ACTION REQUIRED', '', '']);
+      cInputs.forEach(ci => {
+        rows.push([ci.caseName, ci.label, 'Confirm with customer', '', ci.source]);
+      });
+    }
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:28},{wch:44},{wch:36},{wch:20},{wch:52}];
+    XLSX.utils.book_append_sheet(wb, ws, 'Evidence');
+  })();
+
+  // ── Write file ───────────────────────────────────────────────────────────
+  const safeName = (customer || 'prospect').replace(/[^a-z0-9]/gi, '-').toLowerCase();
+  XLSX.writeFile(wb, `value-case_${safeName}_${today}.xlsx`);
 }
 </script>
 </body>
