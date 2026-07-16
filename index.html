@@ -876,24 +876,33 @@ svg{max-width:100%;height:auto}
 .customer-mode #customer-footer { display: block; }
 @media print { .customer-mode #customer-footer { display: block; } }
 /* ── Value Case Builder (VCB) ── */
-.vc-card { background:#1a1a1e; border:1px solid #2e2e34; border-radius:8px; padding:14px 16px; cursor:pointer; transition:border .15s,background .15s; }
+.vc-card { background:#1a1a1e; border:1px solid #2e2e34; border-radius:8px; padding:14px 16px; cursor:pointer; transition:border .15s,background .15s,box-shadow .15s; }
 .vc-card:hover { border-color:#4a4a54; }
-.vc-card.selected { border-color:#A8F931; background:#0d1f0a; }
+.vc-card.selected { border-color:#2a3d25; box-shadow:inset 3px 0 0 #A8F931; background:rgba(168,249,49,.04); }
 .vc-card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
 .vc-card-name { font-weight:700; font-size:13px; color:#fff; line-height:1.4; flex:1; }
 .vc-card-check { width:18px; height:18px; border-radius:50%; border:2px solid #555; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:10px; transition:background .15s,border-color .15s; }
 .vc-card.selected .vc-card-check { background:#A8F931; border-color:#A8F931; color:#000; }
-.vc-card-oneliner { font-size:11px; color:rgba(255,255,255,.5); margin:4px 0 8px; line-height:1.5; }
-.vc-card-meta { display:flex; gap:8px; flex-wrap:wrap; }
+.vc-card-mechanism { font-size:12px; color:rgba(255,255,255,.6); line-height:1.5; margin:5px 0 8px; }
+.vc-card-meta { display:flex; flex-direction:column; gap:5px; }
 .vc-badge { font-size:10px; padding:2px 7px; border-radius:20px; font-weight:600; letter-spacing:.02em; }
+/* Ramp tags — color carries meaning (sets investor expectations on realization timeline) */
+.vc-ramp-tag { display:inline-flex; align-items:center; font-size:10px; font-weight:700; border-radius:3px; padding:2px 8px; letter-spacing:.03em; border:1px solid; }
+.vc-ramp-hard_labor,.vc-ramp-hard_cost { background:rgba(21,101,192,.15); color:#90caf9; border-color:rgba(21,101,192,.3); }
+.vc-ramp-revenue { background:rgba(46,125,50,.15); color:#81c784; border-color:rgba(46,125,50,.3); }
+.vc-ramp-soft { background:rgba(255,255,255,.05); color:rgba(255,255,255,.38); border-color:rgba(255,255,255,.1); }
+.vc-ramp-working_cap { background:rgba(106,27,154,.15); color:#ce93d8; border-color:rgba(106,27,154,.3); }
+.vc-ramp-strategic { background:rgba(69,39,160,.15); color:#b39ddb; border-color:rgba(69,39,160,.3); }
+.vc-runs-on { font-size:10px; color:rgba(255,255,255,.28); line-height:1.4; }
 .vc-expand-area { border-top:1px solid #2e2e34; margin-top:10px; padding-top:10px; display:none; }
 .vc-expand-area.open { display:block; }
-.vc-expand-link { font-size:11px; color:#A8F931; cursor:pointer; text-decoration:none; background:none; border:none; padding:0; margin-top:6px; display:block; }
-.vc-q-row { display:flex; gap:8px; margin-bottom:6px; font-size:12px; color:rgba(255,255,255,.75); }
+.vc-expand-link { font-size:11px; color:#A8F931; cursor:pointer; text-decoration:none; background:none; border:none; padding:0; margin-top:8px; display:block; opacity:.8; }
+.vc-expand-link:hover { opacity:1; }
+.vc-q-row { display:flex; gap:8px; margin-bottom:6px; font-size:12px; color:rgba(255,255,255,.72); }
 .vc-q-num { width:18px; flex-shrink:0; color:#A8F931; font-weight:700; }
 .vc-theme-group { margin-bottom:24px; }
-.vc-theme-label { font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:rgba(255,255,255,.4); margin-bottom:10px; }
-.vc-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:12px; }
+.vc-theme-label { font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:rgba(255,255,255,.35); margin-bottom:10px; }
+.vc-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:10px; }
 .vcb-header-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
 .vcb-vbtn { background:#1a1a1e; border:1px solid #333; color:rgba(255,255,255,.7); border-radius:20px; padding:6px 14px; font-size:12px; cursor:pointer; transition:all .15s; }
 .vcb-vbtn.active { background:#A8F931; border-color:#A8F931; color:#000; font-weight:700; }
@@ -923,10 +932,12 @@ svg{max-width:100%;height:auto}
 .vc-lever-name { font-size:11px; color:rgba(255,255,255,.7); line-height:1.3; }
 .vc-lever-bench { font-size:11px; color:rgba(255,255,255,.35); font-family:var(--mono); text-align:right; }
 .vc-lever-src { background:#0d0d0f; border:1px solid #2a2a2e; border-radius:4px; color:rgba(255,255,255,.6); font-size:10px; padding:3px 6px; width:100%; box-sizing:border-box; }
-/* Narrative panel */
-.vcb-narrative { background:rgba(168,249,49,.05); border:1px solid rgba(168,249,49,.18); border-radius:8px; padding:13px 16px; margin-bottom:14px; }
-.vcb-narrative-eyebrow { font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#A8F931; margin-bottom:5px; }
-.vcb-narrative-text { font-size:13px; color:rgba(255,255,255,.8); line-height:1.7; }
+/* Narrative panel — dark for contrast, lime on label + verbs only */
+.vcb-narrative { background:#0b1a09; border:1px solid rgba(168,249,49,.22); border-radius:8px; padding:14px 18px; margin-bottom:14px; }
+.vcb-narrative-eyebrow { font-size:10px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:#A8F931; margin-bottom:6px; }
+.vcb-narrative-text { font-size:13px; color:rgba(255,255,255,.82); line-height:1.78; }
+/* Lever input hint (citation shown below benchmark value) */
+.vc-lever-hint { font-size:9px; color:rgba(255,255,255,.28); line-height:1.35; margin-top:2px; }
 /* Scope gate */
 .vcb-scope-gate { background:#141416; border:1px solid #2a2a2e; border-radius:8px; padding:16px; margin-top:20px; margin-bottom:16px; }
 .vcb-scope-title { font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:rgba(255,255,255,.4); margin-bottom:12px; }
@@ -2156,7 +2167,8 @@ svg{max-width:100%;height:auto}
             <option value="A">A</option><option value="B" selected>B</option><option value="C">C</option>
           </select>
         </div>
-        <div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:3px">A=confirmed · B=benchmark · C=estimate</div>
+        <input class="vcb-inp" id="vcb-scope-sites-source" placeholder="Source (e.g. confirmed in ops brief)" style="font-size:11px;margin-top:4px">
+        <div style="font-size:10px;color:rgba(255,255,255,.28);margin-top:2px">A=confirmed · B=benchmark · C=estimate</div>
       </div>
       <div class="vcb-fg">
         <label class="vcb-label">Discount Rate (WACC)</label>
@@ -2166,6 +2178,7 @@ svg{max-width:100%;height:auto}
             <option value="A">A</option><option value="B" selected>B</option><option value="C">C</option>
           </select>
         </div>
+        <input class="vcb-inp" id="vcb-scope-wacc-source" placeholder="Source (e.g. CFO stated 10%)" style="font-size:11px;margin-top:4px">
       </div>
       <div class="vcb-fg">
         <label class="vcb-label">Software Basis</label>
@@ -10074,9 +10087,16 @@ const vcbState = {
   selected: new Set(),
   expanded: new Set(),
   ctx:   { customer:'', partners:'', team:'', envNotes:'' },
-  scope: { sites:'', sitesConf:'B', tagPoint:'in-store', tagOwner:'customer', softwareBasis:'saas', wacc:10, waccConf:'B' },
+  // Every load-bearing scope field: { value, conf:'A'|'B'|'C', source }
+  scope: {
+    sites:         { value:'', conf:'B', source:'' },
+    wacc:          { value:10, conf:'B', source:'' },
+    tagPoint:      { value:'in-store' },
+    tagOwner:      { value:'customer' },
+    softwareBasis: { value:'saas' }
+  },
   classify: { subVertical:'', techScope: new Set(['rfid-item']), processNotes:'' },
-  leverInputs: {}  // { [scenarioId]: { [inputKey]: { conf:'B', source:'' } } }
+  leverInputs: {}  // { [scenarioId]: { [inputKey]: { value:'', conf:'B', source:'' } } }
 };
 
 // ── Accordions ──────────────────────────────────────────
@@ -10110,13 +10130,15 @@ function renderValueCaseWizard() {
   // Restore scope fields
   const sf = vcbState.scope;
   const sid = el => document.getElementById(el);
-  if (sid('vcb-scope-sites'))         sid('vcb-scope-sites').value = sf.sites || '';
-  if (sid('vcb-scope-sites-conf'))    sid('vcb-scope-sites-conf').value = sf.sitesConf || 'B';
-  if (sid('vcb-scope-wacc'))          sid('vcb-scope-wacc').value = sf.wacc || 10;
-  if (sid('vcb-scope-wacc-conf'))     sid('vcb-scope-wacc-conf').value = sf.waccConf || 'B';
-  if (sid('vcb-scope-tagpoint'))      sid('vcb-scope-tagpoint').value = sf.tagPoint || 'in-store';
-  if (sid('vcb-scope-tagowner'))      sid('vcb-scope-tagowner').value = sf.tagOwner || 'customer';
-  if (sid('vcb-scope-softwarebasis')) sid('vcb-scope-softwarebasis').value = sf.softwareBasis || 'saas';
+  if (sid('vcb-scope-sites'))          sid('vcb-scope-sites').value = sf.sites.value || '';
+  if (sid('vcb-scope-sites-conf'))     sid('vcb-scope-sites-conf').value = sf.sites.conf || 'B';
+  if (sid('vcb-scope-sites-source'))   sid('vcb-scope-sites-source').value = sf.sites.source || '';
+  if (sid('vcb-scope-wacc'))           sid('vcb-scope-wacc').value = sf.wacc.value || 10;
+  if (sid('vcb-scope-wacc-conf'))      sid('vcb-scope-wacc-conf').value = sf.wacc.conf || 'B';
+  if (sid('vcb-scope-wacc-source'))    sid('vcb-scope-wacc-source').value = sf.wacc.source || '';
+  if (sid('vcb-scope-tagpoint'))       sid('vcb-scope-tagpoint').value = sf.tagPoint.value || 'in-store';
+  if (sid('vcb-scope-tagowner'))       sid('vcb-scope-tagowner').value = sf.tagOwner.value || 'customer';
+  if (sid('vcb-scope-softwarebasis'))  sid('vcb-scope-softwarebasis').value = sf.softwareBasis.value || 'saas';
   // Restore classification
   const svEl = document.getElementById('vcb-class-subvertical');
   if (svEl) svEl.value = vcbState.classify.subVertical || '';
@@ -10168,12 +10190,20 @@ function renderVcbNarrative() {
   const clauses = scenarios.map(sc => VCB_MECHANISM_CLAUSES[sc.id]).filter(Boolean);
   if (!clauses.length) { el.innerHTML = ''; return; }
   const vLabel = VCB_VERTICAL_LABELS[vcbState.vertical] || vcbState.vertical;
-  const clauseStr = clauses.length === 1
-    ? clauses[0]
-    : clauses.slice(0,-1).join(', ') + ', and ' + clauses[clauses.length-1];
+  // Highlight the first word (the action verb) of each clause in lime
+  const highlightClause = c => {
+    const space = c.indexOf(' ');
+    return space > 0
+      ? `<span style="color:#A8F931;font-weight:600">${c.slice(0,space)}</span>${c.slice(space)}`
+      : `<span style="color:#A8F931;font-weight:600">${c}</span>`;
+  };
+  const hClauses = clauses.map(highlightClause);
+  const clauseStr = hClauses.length === 1
+    ? hClauses[0]
+    : hClauses.slice(0,-1).join(', ') + ', and ' + hClauses[hClauses.length-1];
   el.innerHTML = `<div class="vcb-narrative">
     <div class="vcb-narrative-eyebrow">What RFID does here</div>
-    <div class="vcb-narrative-text">In ${vLabel}, item-level RFID puts a serialized identity on each unit so the site knows its true on-hand without a manual count. That ${clauseStr}.</div>
+    <div class="vcb-narrative-text">In ${vLabel}, item-level RFID puts a serialized identity on each unit so the system knows true on-hand without a manual count. That ${clauseStr}.</div>
   </div>`;
 }
 
@@ -10212,43 +10242,53 @@ function buildLeverInputRows(sc) {
     const srcEsc = (li.source||'').replace(/"/g,'&quot;');
     return `<div class="vc-lever-row">
       <div class="vc-lever-name">${def.label||key}${def.unit?' <span style="color:rgba(255,255,255,.3)">('+def.unit+')</span>':''}</div>
-      <div class="vc-lever-bench">${benchFmt}</div>
+      <div>
+        <div class="vc-lever-bench">${benchFmt}</div>
+        ${def.hint?`<div class="vc-lever-hint">${def.hint}</div>`:''}
+      </div>
       <select class="vcb-conf-sel" style="background:#0d0d0f;border:1px solid ${confColor};color:${confColor};font-size:10px;font-weight:700;border-radius:4px;padding:3px 4px;cursor:pointer"
         onchange="vcbSetConf('${sc.id}','${key}',this)" onclick="event.stopPropagation()">
         <option value="A"${li.conf==='A'?' selected':''}>A — confirmed</option>
         <option value="B"${li.conf==='B'?' selected':''}>B — benchmark</option>
         <option value="C"${li.conf==='C'?' selected':''}>C — estimate</option>
       </select>
-      <input class="vc-lever-src" placeholder="${(def.hint||'Source / notes').replace(/"/g,'')}"
+      <input class="vc-lever-src" placeholder="Source / notes"
         value="${srcEsc}"
         oninput="vcbSetSource('${sc.id}','${key}',this.value)"
         onclick="event.stopPropagation()">
     </div>`;
   }).join('');
-  return `<div class="vc-lever-hd">Inputs to Collect <span style="font-weight:400;font-size:9px;color:rgba(255,255,255,.25)">— set confidence + source</span></div>${rows}`;
+  return `<div class="vc-lever-hd">Inputs to Collect <span style="font-weight:400;font-size:9px;color:rgba(255,255,255,.25)">— benchmark shown for reference · set A/B/C + source</span></div>${rows}`;
 }
 
 function renderVcCard(sc) {
   const sel = vcbState.selected.has(sc.id);
   const exp = vcbState.expanded.has(sc.id);
-  const rampLabel = VCB_RAMP_LABELS[sc.rampType] || sc.rampType || '';
+  const rampType  = sc.rampType || 'soft';
+  const rampLabel = VCB_RAMP_LABELS[rampType] || rampType;
+  const mechanism = VCB_MECHANISM_CLAUSES[sc.id] || sc.oneLiner || '';
+  const inputEntries = sc.inputs ? Object.entries(sc.inputs) : [];
+  const runsOn = inputEntries.slice(0,4).map(([,d])=>d.label).join(', ');
   const qs = sc.discoveryQuestions || [];
-  const hasDetail = qs.length || (sc.inputs && Object.keys(sc.inputs).length);
-  const leverRows = exp ? buildLeverInputRows(sc) : '';
+  const hasDetail = qs.length || inputEntries.length;
+  // Lever inputs only render when card is selected (data-collection is committed)
+  const leverRows = (exp && sel) ? buildLeverInputRows(sc) : '';
   const qHtml = exp && qs.length
     ? `<div class="vc-lever-hd">Discovery Questions</div>${qs.map((q,i)=>`<div class="vc-q-row"><span class="vc-q-num">${i+1}.</span><span>${q}</span></div>`).join('')}`
     : '';
+  const expandLabel = exp ? '▲ Collapse'
+    : (sel ? '▼ Questions &amp; inputs' : '▼ Questions');
   return `<div class="vc-card${sel?' selected':''}" id="vccard-${sc.id}" onclick="vcbToggle('${sc.id}')">
     <div class="vc-card-head">
       <div class="vc-card-name">${sc.name}</div>
       <div class="vc-card-check">${sel?'✓':''}</div>
     </div>
-    <div class="vc-card-oneliner">${sc.oneLiner||''}</div>
+    ${mechanism?`<div class="vc-card-mechanism">${mechanism}</div>`:''}
     <div class="vc-card-meta">
-      ${rampLabel?`<span class="vc-badge" style="background:rgba(168,249,49,.1);color:#A8F931">${rampLabel}</span>`:''}
-      ${sc.evidence?`<span class="vc-badge" style="background:rgba(255,255,255,.07);color:rgba(255,255,255,.5)">${sc.evidence}</span>`:''}
+      <span class="vc-ramp-tag vc-ramp-${rampType}">${rampLabel}</span>
+      ${runsOn?`<div class="vc-runs-on">Runs on: ${runsOn}</div>`:''}
     </div>
-    ${hasDetail?`<button class="vc-expand-link" onclick="event.stopPropagation();vcbExpand('${sc.id}')">${exp?'▲ Hide details':'▼ Questions &amp; inputs'}</button>
+    ${hasDetail?`<button class="vc-expand-link" onclick="event.stopPropagation();vcbExpand('${sc.id}')">${expandLabel}</button>
     <div class="vc-expand-area${exp?' open':''}">
       ${qHtml}${leverRows}
     </div>`:''}
@@ -10309,13 +10349,16 @@ function vcbSetSource(scId, key, val) {
 
 function vcbReadScope() {
   const g = id => document.getElementById(id);
-  vcbState.scope.sites         = g('vcb-scope-sites')?.value || '';
-  vcbState.scope.sitesConf     = g('vcb-scope-sites-conf')?.value || 'B';
-  vcbState.scope.wacc          = parseFloat(g('vcb-scope-wacc')?.value || '10');
-  vcbState.scope.waccConf      = g('vcb-scope-wacc-conf')?.value || 'B';
-  vcbState.scope.tagPoint      = g('vcb-scope-tagpoint')?.value || 'in-store';
-  vcbState.scope.tagOwner      = g('vcb-scope-tagowner')?.value || 'customer';
-  vcbState.scope.softwareBasis = g('vcb-scope-softwarebasis')?.value || 'saas';
+  const s = vcbState.scope;
+  s.sites.value   = g('vcb-scope-sites')?.value || '';
+  s.sites.conf    = g('vcb-scope-sites-conf')?.value || 'B';
+  s.sites.source  = g('vcb-scope-sites-source')?.value || '';
+  s.wacc.value    = parseFloat(g('vcb-scope-wacc')?.value || '10');
+  s.wacc.conf     = g('vcb-scope-wacc-conf')?.value || 'B';
+  s.wacc.source   = g('vcb-scope-wacc-source')?.value || '';
+  s.tagPoint.value      = g('vcb-scope-tagpoint')?.value || 'in-store';
+  s.tagOwner.value      = g('vcb-scope-tagowner')?.value || 'customer';
+  s.softwareBasis.value = g('vcb-scope-softwarebasis')?.value || 'saas';
   vcbState.ctx.customer   = g('vcb-ctx-customer')?.value || '';
   vcbState.ctx.partners   = g('vcb-ctx-partners')?.value || '';
   vcbState.ctx.team       = g('vcb-ctx-team')?.value || '';
@@ -10339,7 +10382,7 @@ function generateIntakeForm() {
   const company  = (document.getElementById('i-company')?.value||'').trim() || 'Zebra Technologies';
   const seller   = ctx.team || (document.getElementById('i-seller')?.value||'').trim() || '';
   const today    = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
-  const siteCount = parseInt(scope.sites) || 1;
+  const siteCount = parseInt(scope.sites.value) || 1;
 
   // Mechanism narrative
   const vLabel = VCB_VERTICAL_LABELS[vcbState.vertical] || vcbState.vertical;
@@ -10453,7 +10496,7 @@ function generateIntakeForm() {
       }
     });
   });
-  if (!scope.sites) openItems.push({scName:'Scope', input:'Site Count', conf:'C', source:'', owner:'Customer — Operations'});
+  if (!scope.sites.value) openItems.push({scName:'Scope', input:'Site Count', conf:'C', source:'', owner:'Customer — Operations'});
 
   const openItemsHtml = openItems.length ? `
     <div style="margin-top:36px;padding:14px 16px;background:#fffbf0;border:1px solid #f0c36d;border-radius:7px">
@@ -10499,9 +10542,9 @@ function generateIntakeForm() {
         <thead><tr><th colspan="2" style="padding:6px 8px;border:1px solid #e0e0e0;background:#f0f4ff;color:#1a237e;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Tags</th></tr></thead>
         <tbody>
           <tr><td style="padding:7px 8px;border:1px solid #e0e0e0;width:220px">Application point</td>
-              <td style="padding:7px 8px;border:1px solid #e0e0e0">${scope.tagPoint==='source'?'☑ Source-tagged by supplier&nbsp;&nbsp;☐ Applied in-store':'☐ Source-tagged by supplier&nbsp;&nbsp;☑ Applied in-store'}</td></tr>
+              <td style="padding:7px 8px;border:1px solid #e0e0e0">${scope.tagPoint.value==='source'?'☑ Source-tagged by supplier&nbsp;&nbsp;☐ Applied in-store':'☐ Source-tagged by supplier&nbsp;&nbsp;☑ Applied in-store'}</td></tr>
           <tr><td style="padding:7px 8px;border:1px solid #e0e0e0">Tag cost owner</td>
-              <td style="padding:7px 8px;border:1px solid #e0e0e0">${scope.tagOwner==='supplier'?'☑ Supplier&nbsp;&nbsp;☐ Customer':'☐ Supplier&nbsp;&nbsp;☑ Customer'}</td></tr>
+              <td style="padding:7px 8px;border:1px solid #e0e0e0">${scope.tagOwner.value==='supplier'?'☑ Supplier&nbsp;&nbsp;☐ Customer':'☐ Supplier&nbsp;&nbsp;☑ Customer'}</td></tr>
           <tr><td style="padding:7px 8px;border:1px solid #e0e0e0">Coverage % (items tagged)</td><td style="padding:7px 8px;border:1px solid #e0e0e0"></td></tr>
           <tr><td style="padding:7px 8px;border:1px solid #e0e0e0">Unit tag cost ($)</td><td style="padding:7px 8px;border:1px solid #e0e0e0"></td></tr>
           <tr><td style="padding:7px 8px;border:1px solid #e0e0e0">Annual tag volume</td><td style="padding:7px 8px;border:1px solid #e0e0e0"></td></tr>
@@ -10510,7 +10553,7 @@ function generateIntakeForm() {
       <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px">
         <thead><tr><th colspan="2" style="padding:6px 8px;border:1px solid #e0e0e0;background:#f0f4ff;color:#1a237e;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Software</th></tr></thead>
         <tbody>
-          <tr><td style="padding:7px 8px;border:1px solid #e0e0e0;width:220px">Basis</td><td style="padding:7px 8px;border:1px solid #e0e0e0">${SW_LABEL[scope.softwareBasis]||scope.softwareBasis}</td></tr>
+          <tr><td style="padding:7px 8px;border:1px solid #e0e0e0;width:220px">Basis</td><td style="padding:7px 8px;border:1px solid #e0e0e0">${SW_LABEL[scope.softwareBasis.value]||scope.softwareBasis.value}</td></tr>
           <tr><td style="padding:7px 8px;border:1px solid #e0e0e0">Annual platform fee ($)</td><td style="padding:7px 8px;border:1px solid #e0e0e0"></td></tr>
           <tr><td style="padding:7px 8px;border:1px solid #e0e0e0">Deal term (years)</td><td style="padding:7px 8px;border:1px solid #e0e0e0"></td></tr>
         </tbody>
@@ -10557,22 +10600,22 @@ function generateIntakeForm() {
 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px">
   <div style="background:#f0f4ff;border-radius:6px;padding:9px 12px">
     <div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1px">Sites in Scope</div>
-    <div style="font-size:20px;font-weight:800;color:#1a237e">${scope.sites||'—'}</div>
-    <div style="font-size:10px;color:#1565c0">${CONF_LABEL[scope.sitesConf]||''}</div>
+    <div style="font-size:20px;font-weight:800;color:#1a237e">${scope.sites.value||'—'}</div>
+    <div style="font-size:10px;color:#1565c0">${CONF_LABEL[scope.sites.conf]||''}</div>
   </div>
   <div style="background:#f0f4ff;border-radius:6px;padding:9px 12px">
     <div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1px">Tag Application</div>
-    <div style="font-size:13px;font-weight:700;color:#1a237e">${scope.tagPoint==='source'?'Source-tagged':'Applied in-store'}</div>
-    <div style="font-size:10px;color:#555">Cost owner: ${scope.tagOwner==='supplier'?'Supplier':'Customer'}</div>
+    <div style="font-size:13px;font-weight:700;color:#1a237e">${scope.tagPoint.value==='source'?'Source-tagged':'Applied in-store'}</div>
+    <div style="font-size:10px;color:#555">Cost owner: ${scope.tagOwner.value==='supplier'?'Supplier':'Customer'}</div>
   </div>
   <div style="background:#f0f4ff;border-radius:6px;padding:9px 12px">
     <div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1px">Software Basis</div>
-    <div style="font-size:13px;font-weight:700;color:#1a237e">${SW_LABEL[scope.softwareBasis]||scope.softwareBasis}</div>
+    <div style="font-size:13px;font-weight:700;color:#1a237e">${SW_LABEL[scope.softwareBasis.value]||scope.softwareBasis.value}</div>
   </div>
   <div style="background:#f0f4ff;border-radius:6px;padding:9px 12px">
     <div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1px">Discount Rate (WACC)</div>
-    <div style="font-size:20px;font-weight:800;color:#1a237e">${scope.wacc||10}%</div>
-    <div style="font-size:10px;color:#1565c0">${CONF_LABEL[scope.waccConf]||''}</div>
+    <div style="font-size:20px;font-weight:800;color:#1a237e">${scope.wacc.value||10}%</div>
+    <div style="font-size:10px;color:#1565c0">${CONF_LABEL[scope.wacc.conf]||''}</div>
   </div>
 </div>
 ${narrative?`<div style="background:#e8f5e9;border-left:4px solid #2e7d32;padding:11px 15px;margin-bottom:20px;border-radius:0 6px 6px 0">
