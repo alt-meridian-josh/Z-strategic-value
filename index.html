@@ -2105,16 +2105,16 @@ svg{max-width:100%;height:auto}
 <div class="panel" id="panel-8">
   <div class="step-eyebrow">Value Selling</div>
   <div class="step-title">Value Case Builder</div>
-  <div class="step-desc">Pick your vertical and value cases, set confidence on every input, then generate a discovery intake form with questions, objection handling, TCO inputs, and an open-items rollup.</div>
+  <div class="step-desc">Context → Vertical → Cases → Generate. Fill in what you know; everything else stays as benchmark until the customer confirms it.</div>
 
-  <!-- 1. ENGAGEMENT CONTEXT (collapsed accordion) -->
+  <!-- 1. ENGAGEMENT CONTEXT (open by default) -->
   <div class="vcb-accordion">
     <button class="vcb-acc-toggle" onclick="vcbToggleAcc('ctx')">
-      <span class="vcb-acc-arrow" id="vcb-ctx-arrow">▶</span>
+      <span class="vcb-acc-arrow" id="vcb-ctx-arrow">▼</span>
       Engagement Context
-      <span id="vcb-ctx-summary" style="font-size:11px;font-weight:400;color:rgba(255,255,255,.4);margin-left:6px"></span>
+      <span id="vcb-ctx-summary" style="font-size:11px;font-weight:400;color:var(--text-muted);margin-left:6px"></span>
     </button>
-    <div class="vcb-acc-body" id="vcb-ctx-body">
+    <div class="vcb-acc-body open" id="vcb-ctx-body">
       <div class="vcb-field-row">
         <div class="vcb-fg">
           <label class="vcb-label">Customer Name</label>
@@ -2142,12 +2142,64 @@ svg{max-width:100%;height:auto}
   </div>
 
   <!-- 2. VERTICAL PICKER -->
-  <div style="margin-bottom:14px">
-    <div style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:8px">Select Vertical</div>
+  <div style="margin-bottom:var(--space-group)">
+    <div class="vcb-label" style="margin-bottom:8px">Industry vertical</div>
     <div id="vcb-vertical-btns" style="display:flex;flex-wrap:wrap;gap:7px"></div>
   </div>
 
-  <!-- 3. CLASSIFICATION (collapsed accordion) -->
+  <!-- 3. SCOPE & MODEL PARAMETERS (moved before cards so prerequisites are set first) -->
+  <div class="vcb-scope-gate">
+    <div class="vcb-scope-title">Scope &amp; Model Parameters</div>
+    <div class="vcb-field-row w3">
+      <div class="vcb-fg">
+        <label class="vcb-label">Sites in scope</label>
+        <div style="display:flex;gap:5px">
+          <input class="vcb-inp" id="vcb-scope-sites" type="number" min="1" placeholder="e.g. 5" style="flex:1">
+          <select class="vcb-conf-sel conf-b" id="vcb-scope-sites-conf" onchange="vcbSyncConfPills()" title="A = Customer confirmed · B = Published benchmark · C = Estimate needed">
+            <option value="A">A</option><option value="B" selected>B</option><option value="C">C</option>
+          </select>
+        </div>
+        <input class="vcb-inp" id="vcb-scope-sites-source" placeholder="Source (e.g. confirmed in ops brief)" style="font-size:11px;margin-top:4px">
+      </div>
+      <div class="vcb-fg">
+        <label class="vcb-label">Discount rate (WACC)</label>
+        <div style="display:flex;gap:5px;align-items:center">
+          <input class="vcb-inp" id="vcb-scope-wacc" type="number" min="1" max="30" value="10" style="flex:1">
+          <span style="color:var(--text-muted);font-size:12px">%</span>
+          <select class="vcb-conf-sel conf-b" id="vcb-scope-wacc-conf" onchange="vcbSyncConfPills()" title="A = Customer confirmed · B = Published benchmark · C = Estimate needed">
+            <option value="A">A</option><option value="B" selected>B</option><option value="C">C</option>
+          </select>
+        </div>
+        <input class="vcb-inp" id="vcb-scope-wacc-source" placeholder="Source (e.g. CFO stated 10%)" style="font-size:11px;margin-top:4px">
+      </div>
+      <div class="vcb-fg">
+        <label class="vcb-label">Software basis</label>
+        <select class="vcb-sel" id="vcb-scope-softwarebasis">
+          <option value="saas">Annual SaaS</option>
+          <option value="multi-year">Multi-year term</option>
+          <option value="one-time">One-time perpetual</option>
+        </select>
+      </div>
+    </div>
+    <div class="vcb-field-row">
+      <div class="vcb-fg">
+        <label class="vcb-label">Tag application point</label>
+        <select class="vcb-sel" id="vcb-scope-tagpoint">
+          <option value="in-store">Applied in-store / at DC</option>
+          <option value="source">Source-tagged by supplier</option>
+        </select>
+      </div>
+      <div class="vcb-fg">
+        <label class="vcb-label">Tag cost ownership</label>
+        <select class="vcb-sel" id="vcb-scope-tagowner">
+          <option value="customer">Customer-owned cost</option>
+          <option value="supplier">Supplier-owned cost</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. CLASSIFICATION (collapsed accordion) -->
   <div class="vcb-accordion">
     <button class="vcb-acc-toggle" onclick="vcbToggleAcc('class')">
       <span class="vcb-acc-arrow" id="vcb-class-arrow">▶</span>
@@ -2176,72 +2228,22 @@ svg{max-width:100%;height:auto}
 
   <!-- 5. CARD GRID -->
   <div class="vcb-header-actions">
-    <span id="vcb-count-label" style="font-size:12px;color:var(--muted);flex:1"></span>
+    <span id="vcb-count-label" style="font-size:13px;color:var(--text-secondary);flex:1;font-weight:500"></span>
     <button class="btn btn-outline" style="height:28px;padding:0 11px;font-size:12px" onclick="vcbSelectAll(true)">Select All</button>
     <button class="btn btn-outline" style="height:28px;padding:0 11px;font-size:12px" onclick="vcbSelectAll(false)">Clear</button>
   </div>
   <div id="vcb-grid"></div>
 
-  <!-- 6. SCOPE GATING TRIO -->
-  <div class="vcb-scope-gate">
-    <div class="vcb-scope-title">Scope &amp; Model Parameters — set these before generating</div>
-    <div class="vcb-field-row w3">
-      <div class="vcb-fg">
-        <label class="vcb-label">Sites in Scope</label>
-        <div style="display:flex;gap:5px">
-          <input class="vcb-inp" id="vcb-scope-sites" type="number" min="1" placeholder="e.g. 5" style="flex:1">
-          <select class="vcb-conf-sel conf-b" id="vcb-scope-sites-conf" onchange="vcbSyncConfPills()" title="A = Customer confirmed · B = Published benchmark · C = Estimate needed">
-            <option value="A">A</option><option value="B" selected>B</option><option value="C">C</option>
-          </select>
-        </div>
-        <input class="vcb-inp" id="vcb-scope-sites-source" placeholder="Source (e.g. confirmed in ops brief)" style="font-size:11px;margin-top:4px">
-      </div>
-      <div class="vcb-fg">
-        <label class="vcb-label">Discount Rate (WACC)</label>
-        <div style="display:flex;gap:5px;align-items:center">
-          <input class="vcb-inp" id="vcb-scope-wacc" type="number" min="1" max="30" value="10" style="flex:1"> <span style="color:rgba(255,255,255,.4);font-size:12px">%</span>
-          <select class="vcb-conf-sel conf-b" id="vcb-scope-wacc-conf" onchange="vcbSyncConfPills()" title="A = Customer confirmed · B = Published benchmark · C = Estimate needed">
-            <option value="A">A</option><option value="B" selected>B</option><option value="C">C</option>
-          </select>
-        </div>
-        <input class="vcb-inp" id="vcb-scope-wacc-source" placeholder="Source (e.g. CFO stated 10%)" style="font-size:11px;margin-top:4px">
-      </div>
-      <div class="vcb-fg">
-        <label class="vcb-label">Software Basis</label>
-        <select class="vcb-sel" id="vcb-scope-softwarebasis">
-          <option value="saas">Annual SaaS</option>
-          <option value="multi-year">Multi-year term</option>
-          <option value="one-time">One-time perpetual</option>
-        </select>
-      </div>
-    </div>
-    <div class="vcb-field-row">
-      <div class="vcb-fg">
-        <label class="vcb-label">Tag Application Point</label>
-        <select class="vcb-sel" id="vcb-scope-tagpoint">
-          <option value="in-store">Applied in-store / at DC</option>
-          <option value="source">Source-tagged by supplier</option>
-        </select>
-      </div>
-      <div class="vcb-fg">
-        <label class="vcb-label">Tag Cost Ownership</label>
-        <select class="vcb-sel" id="vcb-scope-tagowner">
-          <option value="customer">Customer-owned cost</option>
-          <option value="supplier">Supplier-owned cost</option>
-        </select>
-      </div>
-    </div>
-  </div>
-
-  <!-- 7. GENERATE ACTIONS -->
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+  <!-- 6. GENERATE ACTIONS — sticky so it's always reachable -->
+  <div style="position:sticky;bottom:0;z-index:10;background:var(--bg-page,#0a0a0a);border-top:1px solid var(--border-subtle);padding:10px 0 2px;margin-top:var(--space-block)">
+  <div style="display:flex;justify-content:space-between;align-items:center">
     <div style="display:flex;align-items:center;gap:8px">
-      <span style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.35)">Output mode</span>
+      <span class="vcb-label" style="letter-spacing:.03em;text-transform:none">Output</span>
       <button id="vcb-mode-btn" class="vcb-mode-btn vcb-mode-internal" onclick="vcbToggleMode()" title="Internal: shows A/B/C confidence, sources, open-items. Customer: clean output only.">🔒 Internal</button>
     </div>
     <div style="display:flex;gap:8px">
-      <button class="btn" style="height:38px;padding:0 16px;font-size:13px;background:rgba(168,249,49,.12);color:#A8F931;font-weight:700;border:1px solid rgba(168,249,49,.35);border-radius:6px" onclick="generateExcelModel()" title="Export 6-tab Excel model (Inputs, Value Cases, Cost Model, 5yr Cashflow, Summary, Evidence)">Export Excel ↓</button>
-      <button class="btn" style="height:38px;padding:0 22px;font-size:13px;background:#A8F931;color:#000;font-weight:700;border:none;border-radius:6px" onclick="generateIntakeForm()">Generate Intake Form ↗</button>
+      <button class="btn" style="height:36px;padding:0 14px;font-size:13px;background:rgba(163,230,53,.1);color:var(--lime);font-weight:600;border:1px solid var(--lime-dim);border-radius:8px" onclick="generateExcelModel()" title="Export 6-tab Excel model">Excel ↓</button>
+      <button class="btn" style="height:36px;padding:0 20px;font-size:14px;background:var(--lime);color:#000;font-weight:700;border:none;border-radius:8px" onclick="generateIntakeForm()">Generate Intake Form ↗</button>
     </div>
   </div>
 </div>
@@ -10279,9 +10281,8 @@ function renderVcbGrid() {
   const byTheme = {};
   scenarios.forEach(sc => { const t=sc.theme||'Other'; if(!byTheme[t]) byTheme[t]=[]; byTheme[t].push(sc); });
   grid.innerHTML = Object.entries(byTheme).map(([theme, scs]) => {
-    const color = VCB_THEME_COLORS[theme] || '#555';
     return `<div class="vc-theme-group">
-      <div class="vc-theme-label" style="color:${color}">${theme}</div>
+      <div class="vc-theme-label">${theme}</div>
       <div class="vc-grid">${scs.map(sc => renderVcCard(sc)).join('')}</div>
     </div>`;
   }).join('');
@@ -10385,19 +10386,18 @@ function vcbSelectAll(on) {
 
 function updateVcbCount() {
   const lbl = document.getElementById('vcb-count-label');
-  if (lbl) {
-    const n = vcbState.selected.size;
-    lbl.textContent = n ? `${n} value case${n>1?'s':''} selected` : 'Select value cases to build an intake form';
-  }
+  if (!lbl) return;
+  const n = vcbState.selected.size;
+  lbl.innerHTML = n
+    ? `<span style="color:var(--lime);font-weight:700">${n}</span> value case${n>1?'s':''} selected`
+    : '<span style="color:var(--text-muted)">Select value cases below</span>';
 }
 
 function vcbSetConf(scId, key, sel) {
   if (!vcbState.leverInputs[scId]) vcbState.leverInputs[scId] = {};
   if (!vcbState.leverInputs[scId][key]) vcbState.leverInputs[scId][key] = {conf:'B', source:''};
   vcbState.leverInputs[scId][key].conf = sel.value;
-  // Update just this select's color in-place
-  const color = {A:'#81c784', B:'#90caf9', C:'#ffcc80'}[sel.value] || '#90caf9';
-  sel.style.borderColor = color; sel.style.color = color;
+  // vcbSyncConfPills() in the onchange handles the visual update
 }
 
 function vcbSetSource(scId, key, val) {
