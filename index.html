@@ -875,78 +875,100 @@ svg{max-width:100%;height:auto}
 #customer-footer { display: none; }
 .customer-mode #customer-footer { display: block; }
 @media print { .customer-mode #customer-footer { display: block; } }
+/* ── VCB Design Tokens ── */
+:root {
+  --bg-page:        #0A0A0A;
+  --bg-block:       #141414;
+  --bg-header:      #1E1E1E;
+  --bg-input:       #000000;
+  --border-subtle:  #2A2A2A;
+  --border-input:   #333333;
+  --text-primary:   #F2F2F2;
+  --text-secondary: #A0A0A0;
+  --text-muted:     #6B6B6B;
+  --lime:           #A3E635;
+  --lime-dim:       #4A5D28;
+  --flag-a:         #A3E635;
+  --flag-b:         #E0B341;
+  --flag-c:         #7A7A7A;
+  --space-field:    12px;
+  --space-group:    20px;
+  --space-block:    32px;
+  --pad-block:      20px;
+}
 /* ── Value Case Builder (VCB) ── */
-.vc-card { background:#1a1a1e; border:1px solid #2e2e34; border-radius:8px; padding:14px 16px; cursor:pointer; transition:border .15s,background .15s,box-shadow .15s; }
-.vc-card:hover { border-color:#4a4a54; }
-.vc-card.selected { border-color:#2a3d25; box-shadow:inset 3px 0 0 #A8F931; background:rgba(168,249,49,.04); }
+.vc-card { background:var(--bg-block); border:1px solid var(--border-subtle); border-radius:8px; padding:var(--pad-block) 16px 14px; cursor:pointer; transition:border .15s,background .15s; }
+.vc-card:hover { border-color:var(--border-input); }
+.vc-card.selected { background:#181818; border-color:var(--lime-dim); box-shadow:inset 3px 0 0 var(--lime); }
 .vc-card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
-.vc-card-name { font-weight:700; font-size:13px; color:#fff; line-height:1.4; flex:1; }
-.vc-card-check { width:18px; height:18px; border-radius:50%; border:2px solid #555; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:10px; transition:background .15s,border-color .15s; }
-.vc-card.selected .vc-card-check { background:#A8F931; border-color:#A8F931; color:#000; }
-.vc-card-mechanism { font-size:12px; color:rgba(255,255,255,.6); line-height:1.5; margin:5px 0 8px; }
+.vc-card-name { font-size:15px; font-weight:600; color:var(--text-primary); line-height:1.35; flex:1; }
+.vc-card-check { width:18px; height:18px; border-radius:50%; border:2px solid var(--border-input); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:10px; transition:background .15s,border-color .15s; }
+.vc-card.selected .vc-card-check { background:var(--lime); border-color:var(--lime); color:#000; }
+.vc-card-mechanism { font-size:13px; color:var(--text-secondary); line-height:1.55; margin:6px 0 10px; }
 .vc-card-meta { display:flex; flex-direction:column; gap:5px; }
-.vc-badge { font-size:10px; padding:2px 7px; border-radius:20px; font-weight:600; letter-spacing:.02em; }
-/* Ramp tags — color carries meaning (sets investor expectations on realization timeline) */
-.vc-ramp-tag { display:inline-flex; align-items:center; font-size:10px; font-weight:700; border-radius:3px; padding:2px 8px; letter-spacing:.03em; border:1px solid; }
-.vc-ramp-hard_labor,.vc-ramp-hard_cost { background:rgba(21,101,192,.15); color:#90caf9; border-color:rgba(21,101,192,.3); }
-.vc-ramp-revenue { background:rgba(46,125,50,.15); color:#81c784; border-color:rgba(46,125,50,.3); }
-.vc-ramp-soft { background:rgba(255,255,255,.05); color:rgba(255,255,255,.38); border-color:rgba(255,255,255,.1); }
-.vc-ramp-working_cap { background:rgba(106,27,154,.15); color:#ce93d8; border-color:rgba(106,27,154,.3); }
-.vc-ramp-strategic { background:rgba(69,39,160,.15); color:#b39ddb; border-color:rgba(69,39,160,.3); }
-.vc-runs-on { font-size:10px; color:rgba(255,255,255,.28); line-height:1.4; }
-.vc-expand-area { border-top:1px solid #2e2e34; margin-top:10px; padding-top:10px; display:none; }
+/* Pill — shared geometry for ramp tags and confidence flags */
+.vc-ramp-tag { display:inline-flex; align-items:center; height:20px; padding:0 8px; border-radius:10px; font-size:11px; font-weight:600; }
+.vc-ramp-hard_labor,.vc-ramp-hard_cost { background:rgba(21,101,192,.18); color:#90caf9; }
+.vc-ramp-revenue { background:rgba(46,125,50,.18); color:#81c784; }
+.vc-ramp-soft { background:rgba(255,255,255,.07); color:var(--text-muted); }
+.vc-ramp-working_cap { background:rgba(106,27,154,.18); color:#ce93d8; }
+.vc-ramp-strategic { background:rgba(69,39,160,.18); color:#b39ddb; }
+.vc-runs-on { font-size:11px; color:var(--text-muted); line-height:1.4; }
+/* Expand toggle — lime text-toggle, no bg/border */
+.vc-expand-area { border-top:1px solid var(--border-subtle); margin-top:10px; padding-top:10px; display:none; }
 .vc-expand-area.open { display:block; }
-.vc-expand-link { font-size:11px; color:#A8F931; cursor:pointer; text-decoration:none; background:none; border:none; padding:0; margin-top:8px; display:block; opacity:.8; }
+.vc-expand-link { font-size:12px; font-weight:500; color:var(--lime); cursor:pointer; text-decoration:none; background:none; border:none; padding:0; margin-top:8px; display:block; opacity:.75; }
 .vc-expand-link:hover { opacity:1; }
-.vc-q-row { display:flex; gap:8px; margin-bottom:6px; font-size:12px; color:rgba(255,255,255,.72); }
-.vc-q-num { width:18px; flex-shrink:0; color:#A8F931; font-weight:700; }
-.vc-theme-group { margin-bottom:24px; }
-.vc-theme-label { font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:rgba(255,255,255,.35); margin-bottom:10px; }
+.vc-q-row { display:flex; gap:8px; margin-bottom:var(--space-field); font-size:13px; color:var(--text-secondary); }
+.vc-q-num { width:18px; flex-shrink:0; color:var(--lime); font-weight:700; }
+.vc-theme-group { margin-bottom:var(--space-block); }
+.vc-theme-label { font-size:11px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:var(--text-secondary); margin-bottom:10px; }
 .vc-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:10px; }
-.vcb-header-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
-.vcb-vbtn { background:#1a1a1e; border:1px solid #333; color:rgba(255,255,255,.7); border-radius:20px; padding:6px 14px; font-size:12px; cursor:pointer; transition:all .15s; }
-.vcb-vbtn.active { background:#A8F931; border-color:#A8F931; color:#000; font-weight:700; }
-/* VCB accordions */
-.vcb-accordion { border:1px solid #2a2a2e; border-radius:8px; margin-bottom:12px; overflow:hidden; }
-.vcb-acc-toggle { display:flex; align-items:center; gap:8px; padding:10px 14px; cursor:pointer; background:#141416; font-size:13px; font-weight:600; color:#fff; border:none; width:100%; text-align:left; }
-.vcb-acc-toggle:hover { background:#1c1c20; }
-.vcb-acc-arrow { font-size:10px; color:rgba(255,255,255,.4); transition:transform .15s; }
-.vcb-acc-body { padding:14px 16px; border-top:1px solid #2a2a2e; display:none; }
+.vcb-header-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:var(--space-group); }
+.vcb-vbtn { background:var(--bg-block); border:1px solid var(--border-input); color:var(--text-secondary); border-radius:20px; padding:6px 14px; font-size:12px; cursor:pointer; transition:all .15s; }
+.vcb-vbtn.active { background:var(--lime); border-color:var(--lime); color:#000; font-weight:700; }
+.vcb-accordion { border:1px solid var(--border-subtle); border-radius:8px; margin-bottom:var(--space-field); overflow:hidden; }
+.vcb-acc-toggle { display:flex; align-items:center; gap:8px; padding:10px 14px; cursor:pointer; background:var(--bg-header); font-size:13px; font-weight:600; color:var(--text-primary); border:none; width:100%; text-align:left; }
+.vcb-acc-toggle:hover { filter:brightness(1.12); }
+.vcb-acc-arrow { font-size:10px; color:var(--text-muted); transition:transform .15s; }
+.vcb-acc-body { padding:var(--pad-block) 16px; border-top:1px solid var(--border-subtle); display:none; }
 .vcb-acc-body.open { display:block; }
-/* VCB form fields */
-.vcb-field-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+.vcb-field-row { display:grid; grid-template-columns:1fr 1fr; gap:var(--space-field); margin-bottom:var(--space-field); }
 .vcb-field-row.w1 { grid-template-columns:1fr; }
 .vcb-field-row.w3 { grid-template-columns:1fr 1fr 1fr; }
 .vcb-fg { display:flex; flex-direction:column; gap:4px; }
-.vcb-label { font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:rgba(255,255,255,.4); }
-.vcb-inp { background:#0d0d0f; border:1px solid #2e2e34; border-radius:5px; padding:7px 10px; color:#fff; font-size:13px; width:100%; box-sizing:border-box; }
-.vcb-inp:focus { outline:none; border-color:#A8F931; }
-.vcb-sel { background:#0d0d0f; border:1px solid #2e2e34; border-radius:5px; padding:7px 10px; color:#fff; font-size:12px; width:100%; }
-.vcb-ta { background:#0d0d0f; border:1px solid #2e2e34; border-radius:5px; padding:7px 10px; color:#fff; font-size:12px; width:100%; box-sizing:border-box; resize:vertical; min-height:60px; }
-/* Confidence flag selects */
-.vcb-conf-sel { background:#0d0d0f; border-radius:4px; font-size:10px; font-weight:700; padding:3px 6px; cursor:pointer; }
-/* Per-lever input rows inside expanded card */
-.vc-lever-hd { font-size:10px; font-weight:700; letter-spacing:.06em; color:rgba(255,255,255,.35); text-transform:uppercase; margin:10px 0 6px; }
-.vc-lever-row { display:grid; grid-template-columns:1fr 72px 62px 1fr; gap:5px; align-items:center; padding:5px 0; border-bottom:1px solid rgba(255,255,255,.05); }
+.vcb-label { font-size:11px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:var(--text-secondary); }
+.vcb-inp { background:var(--bg-input); border:1px solid var(--border-input); border-radius:5px; padding:7px 10px; color:var(--text-primary); font-size:13px; width:100%; box-sizing:border-box; }
+.vcb-inp:focus { outline:none; border-color:var(--lime); }
+.vcb-inp::placeholder { color:var(--text-muted); }
+.vcb-sel { background:var(--bg-input); border:1px solid var(--border-input); border-radius:5px; padding:7px 10px; color:var(--text-primary); font-size:12px; width:100%; }
+.vcb-ta { background:var(--bg-input); border:1px solid var(--border-input); border-radius:5px; padding:7px 10px; color:var(--text-primary); font-size:12px; width:100%; box-sizing:border-box; resize:vertical; min-height:60px; }
+/* Confidence pill select — single letter A/B/C, colored by value */
+.vcb-conf-sel { height:20px; padding:0 8px; border-radius:10px; font-size:11px; font-weight:600; cursor:pointer; border:none; background:rgba(107,107,107,.12); color:var(--text-muted); appearance:none; -webkit-appearance:none; text-align:center; width:34px; }
+.vcb-conf-sel.conf-a { background:rgba(163,230,53,.15); color:var(--flag-a); }
+.vcb-conf-sel.conf-b { background:rgba(224,179,65,.15); color:var(--flag-b); }
+.vcb-conf-sel.conf-c { background:rgba(122,122,122,.15); color:var(--flag-c); }
+/* Per-lever input rows */
+.vc-lever-hd { font-size:11px; font-weight:600; letter-spacing:.12em; color:var(--text-secondary); text-transform:uppercase; margin:10px 0 6px; }
+.vc-lever-row { display:grid; grid-template-columns:1fr 72px 34px 1fr; gap:5px; align-items:center; padding:5px 0; border-bottom:1px solid rgba(255,255,255,.04); }
 .vc-lever-row:last-child { border-bottom:none; }
-.vc-lever-name { font-size:11px; color:rgba(255,255,255,.7); line-height:1.3; }
-.vc-lever-bench { font-size:11px; color:rgba(255,255,255,.35); font-family:var(--mono); text-align:right; }
-.vc-lever-src { background:#0d0d0f; border:1px solid #2a2a2e; border-radius:4px; color:rgba(255,255,255,.6); font-size:10px; padding:3px 6px; width:100%; box-sizing:border-box; }
-/* Narrative panel — dark for contrast, lime on label + verbs only */
-.vcb-narrative { background:#0b1a09; border:1px solid rgba(168,249,49,.22); border-radius:8px; padding:14px 18px; margin-bottom:14px; }
-.vcb-narrative-eyebrow { font-size:10px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:#A8F931; margin-bottom:6px; }
+.vc-lever-name { font-size:13px; color:var(--text-primary); line-height:1.3; }
+.vc-lever-bench { font-size:11px; color:var(--text-muted); font-family:var(--mono); text-align:right; }
+.vc-lever-src { background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:4px; color:var(--text-secondary); font-size:10px; padding:3px 6px; width:100%; box-sizing:border-box; }
+/* Narrative panel — dark bg, lime on eyebrow + mechanism verbs only */
+.vcb-narrative { background:#0b1a09; border:1px solid rgba(163,230,53,.22); border-radius:8px; padding:14px 18px; margin-bottom:14px; }
+.vcb-narrative-eyebrow { font-size:11px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:var(--lime); margin-bottom:6px; }
 .vcb-narrative-text { font-size:13px; color:rgba(255,255,255,.82); line-height:1.78; }
-/* Lever input hint (citation shown below benchmark value) */
-.vc-lever-hint { font-size:9px; color:rgba(255,255,255,.28); line-height:1.35; margin-top:2px; }
+.vc-lever-hint { font-size:9px; color:var(--text-muted); line-height:1.35; margin-top:2px; }
 /* Scope gate */
-.vcb-scope-gate { background:#141416; border:1px solid #2a2a2e; border-radius:8px; padding:16px; margin-top:20px; margin-bottom:16px; }
-.vcb-scope-title { font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:rgba(255,255,255,.4); margin-bottom:12px; }
+.vcb-scope-gate { background:var(--bg-block); border:1px solid var(--border-subtle); border-radius:8px; padding:var(--pad-block); margin-top:var(--space-group); margin-bottom:var(--space-group); }
+.vcb-scope-title { font-size:11px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:var(--text-secondary); margin-bottom:var(--space-field); }
 /* Tech chips */
 .vcb-tech-chips { display:flex; flex-wrap:wrap; gap:6px; }
-.vcb-tech-chip { background:#1a1a1e; border:1px solid #333; border-radius:4px; padding:5px 11px; font-size:11px; cursor:pointer; color:rgba(255,255,255,.55); transition:all .12s; }
-.vcb-tech-chip.active { background:rgba(168,249,49,.1); border-color:#A8F931; color:#A8F931; }
+.vcb-tech-chip { background:var(--bg-block); border:1px solid var(--border-input); border-radius:4px; padding:5px 11px; font-size:11px; cursor:pointer; color:var(--text-secondary); transition:all .12s; }
+.vcb-tech-chip.active { background:rgba(163,230,53,.1); border-color:var(--lime); color:var(--lime); }
 /* Output mode toggle */
-.vcb-mode-btn { font-size:10px; font-weight:700; border-radius:4px; padding:5px 12px; cursor:pointer; border:1px solid; transition:all .15s; letter-spacing:.03em; }
+.vcb-mode-btn { font-size:11px; font-weight:600; border-radius:4px; padding:5px 12px; cursor:pointer; border:1px solid; transition:all .15s; letter-spacing:.03em; }
 .vcb-mode-internal { background:rgba(21,101,192,.15); color:#90caf9; border-color:rgba(21,101,192,.3); }
 .vcb-mode-customer { background:rgba(46,125,50,.15); color:#81c784; border-color:rgba(46,125,50,.3); }
 </style>
@@ -2168,18 +2190,17 @@ svg{max-width:100%;height:auto}
         <label class="vcb-label">Sites in Scope</label>
         <div style="display:flex;gap:5px">
           <input class="vcb-inp" id="vcb-scope-sites" type="number" min="1" placeholder="e.g. 5" style="flex:1">
-          <select class="vcb-sel vcb-conf-sel" id="vcb-scope-sites-conf" style="width:48px;color:#90caf9;border-color:#1565c0" title="Confidence: A=Customer confirmed, B=Benchmark, C=Estimate">
+          <select class="vcb-conf-sel conf-b" id="vcb-scope-sites-conf" onchange="vcbSyncConfPills()" title="A = Customer confirmed · B = Published benchmark · C = Estimate needed">
             <option value="A">A</option><option value="B" selected>B</option><option value="C">C</option>
           </select>
         </div>
         <input class="vcb-inp" id="vcb-scope-sites-source" placeholder="Source (e.g. confirmed in ops brief)" style="font-size:11px;margin-top:4px">
-        <div style="font-size:10px;color:rgba(255,255,255,.28);margin-top:2px">A=confirmed · B=benchmark · C=estimate</div>
       </div>
       <div class="vcb-fg">
         <label class="vcb-label">Discount Rate (WACC)</label>
         <div style="display:flex;gap:5px;align-items:center">
           <input class="vcb-inp" id="vcb-scope-wacc" type="number" min="1" max="30" value="10" style="flex:1"> <span style="color:rgba(255,255,255,.4);font-size:12px">%</span>
-          <select class="vcb-sel vcb-conf-sel" id="vcb-scope-wacc-conf" style="width:48px;color:#90caf9;border-color:#1565c0" title="Confidence">
+          <select class="vcb-conf-sel conf-b" id="vcb-scope-wacc-conf" onchange="vcbSyncConfPills()" title="A = Customer confirmed · B = Published benchmark · C = Estimate needed">
             <option value="A">A</option><option value="B" selected>B</option><option value="C">C</option>
           </select>
         </div>
@@ -10123,6 +10144,14 @@ function vcbToggleMode() {
   btn.className = 'vcb-mode-btn ' + (isInt ? 'vcb-mode-internal' : 'vcb-mode-customer');
 }
 
+// Sync conf pill appearance to current selected value for all .vcb-conf-sel elements
+function vcbSyncConfPills() {
+  document.querySelectorAll('.vcb-conf-sel').forEach(sel => {
+    sel.classList.remove('conf-a','conf-b','conf-c');
+    sel.classList.add('conf-' + (sel.value||'b').toLowerCase());
+  });
+}
+
 // ── Accordions ──────────────────────────────────────────
 function vcbToggleAcc(key) {
   const body  = document.getElementById('vcb-'+key+'-body');
@@ -10170,6 +10199,7 @@ function renderValueCaseWizard() {
   if (pnEl) pnEl.value = vcbState.classify.processNotes || '';
   renderTechChips();
   renderVcbGrid();
+  vcbSyncConfPills();
 }
 
 function vcbCtxChange() {
@@ -10263,23 +10293,23 @@ function buildLeverInputRows(sc) {
   if (!inputs.length) return '';
   const rows = inputs.map(([key, def]) => {
     const li = (vcbState.leverInputs[sc.id]||{})[key] || {conf:'B', source:''};
-    const confColor = {A:'#81c784', B:'#90caf9', C:'#ffcc80'}[li.conf] || '#90caf9';
     const v = def.value;
     const benchFmt = v === undefined ? '—'
       : (typeof v === 'number' && v > 0 && v < 1) ? (v*100).toFixed(1)+'%'
       : typeof v === 'number' ? v.toLocaleString() : String(v);
     const srcEsc = (li.source||'').replace(/"/g,'&quot;');
+    const confCls = 'conf-' + (li.conf||'b').toLowerCase();
     return `<div class="vc-lever-row">
-      <div class="vc-lever-name">${def.label||key}${def.unit?' <span style="color:rgba(255,255,255,.3)">('+def.unit+')</span>':''}</div>
+      <div class="vc-lever-name">${def.label||key}${def.unit?' <span style="color:var(--text-muted)">('+def.unit+')</span>':''}</div>
       <div>
         <div class="vc-lever-bench">${benchFmt}</div>
         ${def.hint?`<div class="vc-lever-hint">${def.hint}</div>`:''}
       </div>
-      <select class="vcb-conf-sel" style="background:#0d0d0f;border:1px solid ${confColor};color:${confColor};font-size:10px;font-weight:700;border-radius:4px;padding:3px 4px;cursor:pointer"
-        onchange="vcbSetConf('${sc.id}','${key}',this)" onclick="event.stopPropagation()">
-        <option value="A"${li.conf==='A'?' selected':''}>A — confirmed</option>
-        <option value="B"${li.conf==='B'?' selected':''}>B — benchmark</option>
-        <option value="C"${li.conf==='C'?' selected':''}>C — estimate</option>
+      <select class="vcb-conf-sel ${confCls}"
+        onchange="vcbSetConf('${sc.id}','${key}',this);vcbSyncConfPills()" onclick="event.stopPropagation()">
+        <option value="A"${li.conf==='A'?' selected':''}>A</option>
+        <option value="B"${li.conf==='B'?' selected':''}>B</option>
+        <option value="C"${li.conf==='C'?' selected':''}>C</option>
       </select>
       <input class="vc-lever-src" placeholder="Source / notes"
         value="${srcEsc}"
@@ -10287,7 +10317,7 @@ function buildLeverInputRows(sc) {
         onclick="event.stopPropagation()">
     </div>`;
   }).join('');
-  return `<div class="vc-lever-hd">Inputs to Collect <span style="font-weight:400;font-size:9px;color:rgba(255,255,255,.25)">— benchmark shown for reference · set A/B/C + source</span></div>${rows}`;
+  return `<div class="vc-lever-hd">Inputs to Collect <span style="font-weight:400;font-size:9px;color:var(--text-muted)">— benchmark shown · set A/B/C + source</span></div>${rows}`;
 }
 
 function renderVcCard(sc) {
@@ -10426,9 +10456,11 @@ function generateIntakeForm() {
   VCB_TECH_OPTIONS.forEach(o => { techLabels[o.id] = o.label; });
   const techStr = [...classify.techScope].map(t => techLabels[t]||t).join(', ');
 
-  const CONF_COLOR = {A:'#2e7d32', B:'#1565c0', C:'#c62828'};
+  const CONF_COLOR = {A:'#15803d', B:'#9a6d00', C:'#5f5f5f'};
+  const CONF_BG    = {A:'rgba(21,128,61,.12)', B:'rgba(154,109,0,.12)', C:'rgba(95,95,95,.12)'};
   const CONF_LABEL = {A:'A — Customer confirmed', B:'B — Published benchmark', C:'C — Estimate'};
   const SW_LABEL   = {'one-time':'One-time perpetual', 'saas':'Annual SaaS', 'multi-year':'Multi-year term'};
+  const confPill = c => `<span style="display:inline-flex;align-items:center;height:18px;padding:0 7px;border-radius:9px;font-size:10px;font-weight:600;background:${CONF_BG[c]||CONF_BG.C};color:${CONF_COLOR[c]||CONF_COLOR.C}">${c||'?'}</span>`;
 
   const tocItems = scenarios.map((sc,i) =>
     `<li><a href="#vc-${sc.id}" style="color:#1565c0">${i+1}. ${sc.name}</a></li>`
@@ -10459,16 +10491,13 @@ function generateIntakeForm() {
       // scaled note for internal only (exposes internal math)
       const scaledNote = isInternal && typeof v==='number' && v>=1 && siteCount>1
         ? '<br><span style="font-size:10px;color:#1565c0">× '+siteCount+' sites = '+(v*siteCount).toLocaleString()+'</span>' : '';
-      const cc = CONF_COLOR[li.conf] || CONF_COLOR.B;
       const src = li.source || (isInternal ? (def.hint || '') : '');
       if (isInternal) {
         return `<tr>
           <td style="padding:6px 8px;border:1px solid #e0e0e0;font-size:12px;color:#333">${def.label||key}${def.unit?' <span style="font-size:10px;color:#999">('+def.unit+')</span>':''}</td>
           <td style="padding:6px 8px;border:1px solid #e0e0e0;font-size:11px;text-align:center;font-family:monospace;color:#555">${benchFmt}${scaledNote}</td>
           <td style="padding:6px 8px;border:1px solid #e0e0e0;min-width:90px"></td>
-          <td style="padding:6px 8px;border:1px solid #e0e0e0;text-align:center;width:44px">
-            <span style="font-size:10px;font-weight:800;color:${cc};background:${cc}1a;border:1px solid ${cc};padding:1px 5px;border-radius:3px">${li.conf}</span>
-          </td>
+          <td style="padding:6px 8px;border:1px solid #e0e0e0;text-align:center;width:36px">${confPill(li.conf)}</td>
           <td style="padding:6px 8px;border:1px solid #e0e0e0;font-size:11px;color:#888">${src}</td>
         </tr>`;
       } else {
@@ -10649,7 +10678,7 @@ function generateIntakeForm() {
   <div style="background:#f0f4ff;border-radius:6px;padding:9px 12px">
     <div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1px">Sites in Scope</div>
     <div style="font-size:20px;font-weight:800;color:#1a237e">${scope.sites.value||'—'}</div>
-    ${isInternal?`<div style="font-size:10px;color:#1565c0">${CONF_LABEL[scope.sites.conf]||''}</div>`:''}
+    ${isInternal?`<div style="margin-top:3px;display:flex;align-items:center;gap:5px">${confPill(scope.sites.conf)}<span style="font-size:10px;color:#666">${CONF_LABEL[scope.sites.conf]||''}</span></div>`:''}
   </div>
   <div style="background:#f0f4ff;border-radius:6px;padding:9px 12px">
     <div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1px">Tag Application</div>
@@ -10663,7 +10692,7 @@ function generateIntakeForm() {
   <div style="background:#f0f4ff;border-radius:6px;padding:9px 12px">
     <div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1px">Discount Rate (WACC)</div>
     <div style="font-size:20px;font-weight:800;color:#1a237e">${scope.wacc.value||10}%</div>
-    ${isInternal?`<div style="font-size:10px;color:#1565c0">${CONF_LABEL[scope.wacc.conf]||''}</div>`:''}
+    ${isInternal?`<div style="margin-top:3px;display:flex;align-items:center;gap:5px">${confPill(scope.wacc.conf)}<span style="font-size:10px;color:#666">${CONF_LABEL[scope.wacc.conf]||''}</span></div>`:''}
   </div>
 </div>
 ${narrative?`<div style="background:#e8f5e9;border-left:4px solid #2e7d32;padding:11px 15px;margin-bottom:20px;border-radius:0 6px 6px 0">
