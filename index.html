@@ -883,9 +883,9 @@ svg{max-width:100%;height:auto}
   --bg-input:       #000000;
   --border-subtle:  #2A2A2A;
   --border-input:   #333333;
-  --text-primary:   #F2F2F2;
-  --text-secondary: #A0A0A0;
-  --text-muted:     #6B6B6B;
+  --text-primary:   #F5F5F5;
+  --text-secondary: #B8B8B8;
+  --text-muted:     #7A7A7A;
   --lime:           #A3E635;
   --lime-dim:       #4A5D28;
   --flag-a:         #A3E635;
@@ -901,76 +901,84 @@ svg{max-width:100%;height:auto}
 .vc-card:hover { border-color:var(--border-input); }
 .vc-card.selected { background:#181818; border-color:var(--lime-dim); box-shadow:inset 3px 0 0 var(--lime); }
 .vc-card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
-.vc-card-name { font-size:15px; font-weight:600; color:var(--text-primary); line-height:1.35; flex:1; }
-.vc-card-check { width:18px; height:18px; border-radius:50%; border:2px solid var(--border-input); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:10px; transition:background .15s,border-color .15s; }
+.vc-card-name { font-size:17px; font-weight:600; color:var(--text-primary); line-height:1.35; flex:1; }
+.vc-card-check { width:20px; height:20px; border-radius:50%; border:2px solid var(--border-input); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:11px; transition:background .15s,border-color .15s; }
 .vc-card.selected .vc-card-check { background:var(--lime); border-color:var(--lime); color:#000; }
-.vc-card-mechanism { font-size:13px; color:var(--text-secondary); line-height:1.55; margin:6px 0 10px; }
+.vc-card-mechanism { font-size:15px; color:var(--text-secondary); line-height:1.55; margin:6px 0 10px; }
 .vc-card-meta { display:flex; flex-direction:column; gap:5px; }
 /* Pill — shared geometry for ramp tags and confidence flags */
-.vc-ramp-tag { display:inline-flex; align-items:center; height:20px; padding:0 8px; border-radius:10px; font-size:11px; font-weight:600; }
+.vc-ramp-tag { display:inline-flex; align-items:center; height:22px; padding:0 9px; border-radius:11px; font-size:12px; font-weight:600; }
 .vc-ramp-hard_labor,.vc-ramp-hard_cost { background:rgba(21,101,192,.18); color:#90caf9; }
 .vc-ramp-revenue { background:rgba(46,125,50,.18); color:#81c784; }
 .vc-ramp-soft { background:rgba(255,255,255,.07); color:var(--text-muted); }
 .vc-ramp-working_cap { background:rgba(106,27,154,.18); color:#ce93d8; }
 .vc-ramp-strategic { background:rgba(69,39,160,.18); color:#b39ddb; }
-.vc-runs-on { font-size:11px; color:var(--text-muted); line-height:1.4; }
+.vc-runs-on { font-size:13px; color:var(--text-muted); line-height:1.4; }
 /* Expand toggle — lime text-toggle, no bg/border */
 .vc-expand-area { border-top:1px solid var(--border-subtle); margin-top:10px; padding-top:10px; display:none; }
 .vc-expand-area.open { display:block; }
-.vc-expand-link { font-size:12px; font-weight:500; color:var(--lime); cursor:pointer; text-decoration:none; background:none; border:none; padding:0; margin-top:8px; display:block; opacity:.75; }
+.vc-expand-link { font-size:13px; font-weight:500; color:var(--lime); cursor:pointer; text-decoration:none; background:none; border:none; padding:0; margin-top:8px; display:block; opacity:.75; }
 .vc-expand-link:hover { opacity:1; }
-.vc-q-row { display:flex; gap:8px; margin-bottom:var(--space-field); font-size:13px; color:var(--text-secondary); }
-.vc-q-num { width:18px; flex-shrink:0; color:var(--lime); font-weight:700; }
+.vc-q-row { display:flex; gap:8px; margin-bottom:var(--space-field); font-size:15px; color:var(--text-secondary); }
+.vc-q-num { width:20px; flex-shrink:0; color:var(--lime); font-weight:700; }
 .vc-theme-group { margin-bottom:var(--space-block); }
-.vc-theme-label { font-size:11px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:var(--text-secondary); margin-bottom:10px; }
-.vc-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:10px; }
+.vc-theme-label { font-size:12px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--text-secondary); margin-bottom:12px; }
+.vc-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px; }
 .vcb-header-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:var(--space-group); }
-.vcb-vbtn { background:var(--bg-block); border:1px solid var(--border-input); color:var(--text-secondary); border-radius:20px; padding:6px 14px; font-size:12px; cursor:pointer; transition:all .15s; }
+.vcb-vbtn { background:var(--bg-block); border:1px solid var(--border-input); color:var(--text-secondary); border-radius:20px; padding:0 18px; height:38px; font-size:14px; cursor:pointer; transition:all .15s; }
 .vcb-vbtn.active { background:var(--lime); border-color:var(--lime); color:#000; font-weight:700; }
-.vcb-accordion { border:1px solid var(--border-subtle); border-radius:8px; margin-bottom:var(--space-field); overflow:hidden; }
-.vcb-acc-toggle { display:flex; align-items:center; gap:8px; padding:10px 14px; cursor:pointer; background:var(--bg-header); font-size:13px; font-weight:600; color:var(--text-primary); border:none; width:100%; text-align:left; }
+.vcb-vbtn:focus { outline:2px solid var(--lime); outline-offset:2px; }
+.vcb-accordion { border:1px solid var(--border-subtle); border-radius:8px; margin-bottom:var(--space-group); overflow:hidden; }
+.vcb-acc-toggle { display:flex; align-items:center; gap:8px; padding:14px 16px; cursor:pointer; background:var(--bg-header); font-size:15px; font-weight:600; color:var(--text-primary); border:none; width:100%; text-align:left; }
 .vcb-acc-toggle:hover { filter:brightness(1.12); }
-.vcb-acc-arrow { font-size:10px; color:var(--text-muted); transition:transform .15s; }
-.vcb-acc-body { padding:var(--pad-block) 16px; border-top:1px solid var(--border-subtle); display:none; }
+.vcb-acc-arrow { font-size:11px; color:var(--text-muted); transition:transform .15s; }
+.vcb-acc-body { padding:var(--pad-block) 18px; border-top:1px solid var(--border-subtle); display:none; }
 .vcb-acc-body.open { display:block; }
 .vcb-field-row { display:grid; grid-template-columns:1fr 1fr; gap:var(--space-field); margin-bottom:var(--space-field); }
 .vcb-field-row.w1 { grid-template-columns:1fr; }
 .vcb-field-row.w3 { grid-template-columns:1fr 1fr 1fr; }
-.vcb-fg { display:flex; flex-direction:column; gap:4px; }
-.vcb-label { font-size:11px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:var(--text-secondary); }
-.vcb-inp { background:var(--bg-input); border:1px solid var(--border-input); border-radius:5px; padding:7px 10px; color:var(--text-primary); font-size:13px; width:100%; box-sizing:border-box; }
-.vcb-inp:focus { outline:none; border-color:var(--lime); }
+.vcb-fg { display:flex; flex-direction:column; gap:6px; }
+.vcb-label { font-size:12px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--text-secondary); }
+.vcb-inp { background:var(--bg-input); border:1px solid var(--border-input); border-radius:6px; padding:0 12px; height:44px; color:var(--text-primary); font-size:15px; width:100%; box-sizing:border-box; }
+.vcb-inp:focus { outline:2px solid var(--lime); outline-offset:2px; border-color:var(--lime); }
 .vcb-inp::placeholder { color:var(--text-muted); }
-.vcb-sel { background:var(--bg-input); border:1px solid var(--border-input); border-radius:5px; padding:7px 10px; color:var(--text-primary); font-size:12px; width:100%; }
-.vcb-ta { background:var(--bg-input); border:1px solid var(--border-input); border-radius:5px; padding:7px 10px; color:var(--text-primary); font-size:12px; width:100%; box-sizing:border-box; resize:vertical; min-height:60px; }
+.vcb-sel { background:var(--bg-input); border:1px solid var(--border-input); border-radius:6px; padding:0 12px; height:44px; color:var(--text-primary); font-size:15px; width:100%; }
+.vcb-sel:focus { outline:2px solid var(--lime); outline-offset:2px; border-color:var(--lime); }
+.vcb-ta { background:var(--bg-input); border:1px solid var(--border-input); border-radius:6px; padding:11px 12px; color:var(--text-primary); font-size:15px; width:100%; box-sizing:border-box; resize:vertical; min-height:70px; }
+.vcb-ta:focus { outline:2px solid var(--lime); outline-offset:2px; border-color:var(--lime); }
+.vcb-ta::placeholder { color:var(--text-muted); }
 /* Confidence pill select — single letter A/B/C, colored by value */
-.vcb-conf-sel { height:20px; padding:0 8px; border-radius:10px; font-size:11px; font-weight:600; cursor:pointer; border:none; background:rgba(107,107,107,.12); color:var(--text-muted); appearance:none; -webkit-appearance:none; text-align:center; width:34px; }
+.vcb-conf-sel { height:24px; padding:0 8px; border-radius:12px; font-size:12px; font-weight:600; cursor:pointer; border:none; background:rgba(107,107,107,.12); color:var(--text-muted); appearance:none; -webkit-appearance:none; text-align:center; width:36px; }
 .vcb-conf-sel.conf-a { background:rgba(163,230,53,.15); color:var(--flag-a); }
 .vcb-conf-sel.conf-b { background:rgba(224,179,65,.15); color:var(--flag-b); }
 .vcb-conf-sel.conf-c { background:rgba(122,122,122,.15); color:var(--flag-c); }
+.vcb-conf-sel:focus { outline:2px solid var(--lime); outline-offset:2px; }
 /* Per-lever input rows */
-.vc-lever-hd { font-size:11px; font-weight:600; letter-spacing:.12em; color:var(--text-secondary); text-transform:uppercase; margin:10px 0 6px; }
-.vc-lever-row { display:grid; grid-template-columns:1fr 72px 34px 1fr; gap:5px; align-items:center; padding:5px 0; border-bottom:1px solid rgba(255,255,255,.04); }
+.vc-lever-hd { font-size:12px; font-weight:600; letter-spacing:.08em; color:var(--text-secondary); text-transform:uppercase; margin:12px 0 8px; }
+.vc-lever-row { display:grid; grid-template-columns:1fr 80px 36px 1fr; gap:6px; align-items:center; padding:7px 0; border-bottom:1px solid rgba(255,255,255,.04); }
 .vc-lever-row:last-child { border-bottom:none; }
-.vc-lever-name { font-size:13px; color:var(--text-primary); line-height:1.3; }
-.vc-lever-bench { font-size:11px; color:var(--text-muted); font-family:var(--mono); text-align:right; }
-.vc-lever-src { background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:4px; color:var(--text-secondary); font-size:10px; padding:3px 6px; width:100%; box-sizing:border-box; }
+.vc-lever-name { font-size:15px; color:var(--text-primary); line-height:1.3; }
+.vc-lever-bench { font-size:13px; color:var(--text-muted); font-family:var(--mono); text-align:right; }
+.vc-lever-src { background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:4px; color:var(--text-secondary); font-size:12px; padding:4px 8px; width:100%; box-sizing:border-box; }
 /* Narrative panel — dark bg, lime on eyebrow + mechanism verbs only */
-.vcb-narrative { background:#0b1a09; border:1px solid rgba(163,230,53,.22); border-radius:8px; padding:14px 18px; margin-bottom:14px; }
-.vcb-narrative-eyebrow { font-size:11px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:var(--lime); margin-bottom:6px; }
-.vcb-narrative-text { font-size:13px; color:rgba(255,255,255,.82); line-height:1.78; }
-.vc-lever-hint { font-size:9px; color:var(--text-muted); line-height:1.35; margin-top:2px; }
+.vcb-narrative { background:#0b1a09; border:1px solid rgba(163,230,53,.22); border-radius:8px; padding:16px 20px; margin-bottom:16px; }
+.vcb-narrative-eyebrow { font-size:12px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--lime); margin-bottom:8px; }
+.vcb-narrative-text { font-size:15px; color:rgba(255,255,255,.82); line-height:1.78; }
+.vc-lever-hint { font-size:11px; color:var(--text-muted); line-height:1.35; margin-top:3px; }
 /* Scope gate */
-.vcb-scope-gate { background:var(--bg-block); border:1px solid var(--border-subtle); border-radius:8px; padding:var(--pad-block); margin-top:var(--space-group); margin-bottom:var(--space-group); }
-.vcb-scope-title { font-size:11px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:var(--text-secondary); margin-bottom:var(--space-field); }
+.vcb-scope-gate { background:var(--bg-block); border:1px solid var(--border-subtle); border-radius:8px; padding:var(--pad-block); margin-bottom:var(--space-group); }
+.vcb-scope-title { font-size:12px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--text-secondary); margin-bottom:var(--space-field); }
 /* Tech chips */
-.vcb-tech-chips { display:flex; flex-wrap:wrap; gap:6px; }
-.vcb-tech-chip { background:var(--bg-block); border:1px solid var(--border-input); border-radius:4px; padding:5px 11px; font-size:11px; cursor:pointer; color:var(--text-secondary); transition:all .12s; }
+.vcb-tech-chips { display:flex; flex-wrap:wrap; gap:8px; }
+.vcb-tech-chip { background:var(--bg-block); border:1px solid var(--border-input); border-radius:6px; padding:7px 13px; font-size:13px; cursor:pointer; color:var(--text-secondary); transition:all .12s; }
 .vcb-tech-chip.active { background:rgba(163,230,53,.1); border-color:var(--lime); color:var(--lime); }
+.vcb-tech-chip:focus { outline:2px solid var(--lime); outline-offset:2px; }
 /* Output mode toggle */
-.vcb-mode-btn { font-size:11px; font-weight:600; border-radius:4px; padding:5px 12px; cursor:pointer; border:1px solid; transition:all .15s; letter-spacing:.03em; }
+.vcb-mode-btn { font-size:13px; font-weight:600; border-radius:4px; padding:6px 14px; cursor:pointer; border:1px solid; transition:all .15s; letter-spacing:.03em; }
 .vcb-mode-internal { background:rgba(21,101,192,.15); color:#90caf9; border-color:rgba(21,101,192,.3); }
 .vcb-mode-customer { background:rgba(46,125,50,.15); color:#81c784; border-color:rgba(46,125,50,.3); }
+/* VCB section separator — wraps vertical picker to give it a container */
+.vcb-section { background:var(--bg-block); border:1px solid var(--border-subtle); border-radius:8px; padding:var(--pad-block) 18px; margin-bottom:var(--space-group); }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
@@ -2108,7 +2116,7 @@ svg{max-width:100%;height:auto}
     <button class="vcb-acc-toggle" onclick="vcbToggleAcc('ctx')">
       <span class="vcb-acc-arrow" id="vcb-ctx-arrow">▼</span>
       Engagement Context
-      <span id="vcb-ctx-summary" style="font-size:11px;font-weight:400;color:var(--text-muted);margin-left:6px"></span>
+      <span id="vcb-ctx-summary" style="font-size:13px;font-weight:400;color:var(--text-muted);margin-left:6px"></span>
     </button>
     <div class="vcb-acc-body open" id="vcb-ctx-body">
       <div class="vcb-field-row">
@@ -2138,59 +2146,23 @@ svg{max-width:100%;height:auto}
   </div>
 
   <!-- 2. VERTICAL PICKER -->
-  <div style="margin-bottom:var(--space-group)">
-    <div class="vcb-label" style="margin-bottom:8px">Industry vertical</div>
-    <div id="vcb-vertical-btns" style="display:flex;flex-wrap:wrap;gap:7px"></div>
+  <div class="vcb-section">
+    <div class="vcb-label" style="margin-bottom:10px">Industry vertical</div>
+    <div id="vcb-vertical-btns" style="display:flex;flex-wrap:wrap;gap:8px"></div>
   </div>
 
-  <!-- 3. SCOPE & MODEL PARAMETERS (moved before cards so prerequisites are set first) -->
+  <!-- 3. SITES IN SCOPE (prerequisite filter — stays above cards) -->
   <div class="vcb-scope-gate">
-    <div class="vcb-scope-title">Scope &amp; Model Parameters</div>
-    <div class="vcb-field-row w3">
+    <div class="vcb-scope-title">Sites in scope</div>
+    <div class="vcb-field-row w1" style="max-width:340px">
       <div class="vcb-fg">
-        <label class="vcb-label">Sites in scope</label>
-        <div style="display:flex;gap:5px">
+        <div style="display:flex;gap:6px;align-items:center">
           <input class="vcb-inp" id="vcb-scope-sites" type="number" min="1" placeholder="e.g. 5" style="flex:1">
           <select class="vcb-conf-sel conf-b" id="vcb-scope-sites-conf" onchange="vcbSyncConfPills()" title="A = Customer confirmed · B = Published benchmark · C = Estimate needed">
             <option value="A">A</option><option value="B" selected>B</option><option value="C">C</option>
           </select>
         </div>
-        <input class="vcb-inp" id="vcb-scope-sites-source" placeholder="Source (e.g. confirmed in ops brief)" style="font-size:11px;margin-top:4px">
-      </div>
-      <div class="vcb-fg">
-        <label class="vcb-label">Discount rate (WACC)</label>
-        <div style="display:flex;gap:5px;align-items:center">
-          <input class="vcb-inp" id="vcb-scope-wacc" type="number" min="1" max="30" value="10" style="flex:1">
-          <span style="color:var(--text-muted);font-size:12px">%</span>
-          <select class="vcb-conf-sel conf-b" id="vcb-scope-wacc-conf" onchange="vcbSyncConfPills()" title="A = Customer confirmed · B = Published benchmark · C = Estimate needed">
-            <option value="A">A</option><option value="B" selected>B</option><option value="C">C</option>
-          </select>
-        </div>
-        <input class="vcb-inp" id="vcb-scope-wacc-source" placeholder="Source (e.g. CFO stated 10%)" style="font-size:11px;margin-top:4px">
-      </div>
-      <div class="vcb-fg">
-        <label class="vcb-label">Software basis</label>
-        <select class="vcb-sel" id="vcb-scope-softwarebasis">
-          <option value="saas">Annual SaaS</option>
-          <option value="multi-year">Multi-year term</option>
-          <option value="one-time">One-time perpetual</option>
-        </select>
-      </div>
-    </div>
-    <div class="vcb-field-row">
-      <div class="vcb-fg">
-        <label class="vcb-label">Tag application point</label>
-        <select class="vcb-sel" id="vcb-scope-tagpoint">
-          <option value="in-store">Applied in-store / at DC</option>
-          <option value="source">Source-tagged by supplier</option>
-        </select>
-      </div>
-      <div class="vcb-fg">
-        <label class="vcb-label">Tag cost ownership</label>
-        <select class="vcb-sel" id="vcb-scope-tagowner">
-          <option value="customer">Customer-owned cost</option>
-          <option value="supplier">Supplier-owned cost</option>
-        </select>
+        <input class="vcb-inp" id="vcb-scope-sites-source" placeholder="Source (e.g. confirmed in ops brief)" style="font-size:13px;height:36px">
       </div>
     </div>
   </div>
@@ -2224,22 +2196,67 @@ svg{max-width:100%;height:auto}
 
   <!-- 5. CARD GRID -->
   <div class="vcb-header-actions">
-    <span id="vcb-count-label" style="font-size:13px;color:var(--text-secondary);flex:1;font-weight:500"></span>
-    <button class="btn btn-outline" style="height:28px;padding:0 11px;font-size:12px" onclick="vcbSelectAll(true)">Select All</button>
-    <button class="btn btn-outline" style="height:28px;padding:0 11px;font-size:12px" onclick="vcbSelectAll(false)">Clear</button>
+    <span id="vcb-count-label" style="font-size:15px;color:var(--text-secondary);flex:1;font-weight:500"></span>
+    <button class="btn btn-outline" style="height:34px;padding:0 14px;font-size:13px" onclick="vcbSelectAll(true)">Select All</button>
+    <button class="btn btn-outline" style="height:34px;padding:0 14px;font-size:13px" onclick="vcbSelectAll(false)">Clear</button>
   </div>
   <div id="vcb-grid"></div>
 
-  <!-- 6. GENERATE ACTIONS — sticky so it's always reachable -->
-  <div style="position:sticky;bottom:0;z-index:10;background:var(--bg-page,#0a0a0a);border-top:1px solid var(--border-subtle);padding:10px 0 2px;margin-top:var(--space-block)">
+  <!-- 6. MODEL PARAMETERS — WACC and tag fields live here, directly above Generate -->
+  <div class="vcb-scope-gate" style="margin-top:var(--space-block)">
+    <div class="vcb-scope-title">Model Parameters</div>
+    <div class="vcb-field-row w3">
+      <div class="vcb-fg">
+        <label class="vcb-label">Discount rate (WACC)</label>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input class="vcb-inp" id="vcb-scope-wacc" type="number" min="1" max="30" value="10" style="flex:1">
+          <span style="color:var(--text-muted);font-size:14px">%</span>
+          <select class="vcb-conf-sel conf-b" id="vcb-scope-wacc-conf" onchange="vcbSyncConfPills()" title="A = Customer confirmed · B = Published benchmark · C = Estimate needed">
+            <option value="A">A</option><option value="B" selected>B</option><option value="C">C</option>
+          </select>
+        </div>
+        <input class="vcb-inp" id="vcb-scope-wacc-source" placeholder="Source (e.g. CFO stated 10%)" style="font-size:13px;height:36px">
+      </div>
+      <div class="vcb-fg">
+        <label class="vcb-label">Tag cost ownership</label>
+        <select class="vcb-sel" id="vcb-scope-tagowner">
+          <option value="customer">Customer-owned cost</option>
+          <option value="supplier">Supplier-owned cost</option>
+        </select>
+      </div>
+      <div class="vcb-fg">
+        <label class="vcb-label">Software basis</label>
+        <select class="vcb-sel" id="vcb-scope-softwarebasis">
+          <option value="saas">Annual SaaS</option>
+          <option value="multi-year">Multi-year term</option>
+          <option value="one-time">One-time perpetual</option>
+        </select>
+      </div>
+    </div>
+    <div class="vcb-field-row w1" style="max-width:340px;margin-bottom:0">
+      <div class="vcb-fg">
+        <label class="vcb-label">Tag application point</label>
+        <select class="vcb-sel" id="vcb-scope-tagpoint">
+          <option value="in-store">Applied in-store / at DC</option>
+          <option value="source">Source-tagged by supplier</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Spacer so the last block isn't hidden behind the sticky generate bar -->
+  <div style="height:24px"></div>
+
+  <!-- 7. GENERATE ACTIONS — sticky so it's always reachable -->
+  <div style="position:sticky;bottom:0;z-index:10;background:var(--bg-page,#0a0a0a);border-top:1px solid var(--border-subtle);padding:14px 0 4px">
   <div style="display:flex;justify-content:space-between;align-items:center">
-    <div style="display:flex;align-items:center;gap:8px">
+    <div style="display:flex;align-items:center;gap:10px">
       <span class="vcb-label" style="letter-spacing:.03em;text-transform:none">Output</span>
       <button id="vcb-mode-btn" class="vcb-mode-btn vcb-mode-internal" onclick="vcbToggleMode()" title="Internal: shows A/B/C confidence, sources, open-items. Customer: clean output only.">🔒 Internal</button>
     </div>
-    <div style="display:flex;gap:8px">
-      <button class="btn" style="height:36px;padding:0 14px;font-size:13px;background:rgba(163,230,53,.1);color:var(--lime);font-weight:600;border:1px solid var(--lime-dim);border-radius:8px" onclick="generateExcelModel()" title="Export 6-tab Excel model">Excel ↓</button>
-      <button class="btn" style="height:36px;padding:0 20px;font-size:14px;background:var(--lime);color:#000;font-weight:700;border:none;border-radius:8px" onclick="generateIntakeForm()">Generate Intake Form ↗</button>
+    <div style="display:flex;gap:10px">
+      <button class="btn" style="height:42px;padding:0 18px;font-size:14px;background:rgba(163,230,53,.1);color:var(--lime);font-weight:600;border:1px solid var(--lime-dim);border-radius:8px" onclick="generateExcelModel()" title="Export 6-tab Excel model">Excel ↓</button>
+      <button class="btn" style="height:42px;padding:0 24px;font-size:15px;background:var(--lime);color:#000;font-weight:700;border:none;border-radius:8px" onclick="generateIntakeForm()">Generate Intake Form ↗</button>
     </div>
   </div>
 </div>
