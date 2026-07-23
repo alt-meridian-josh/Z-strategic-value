@@ -1032,33 +1032,29 @@ svg{max-width:100%;height:auto}
      load only when no engagement is embedded and no ?example= is present. A front
      door over the existing loader; it adds no new load mechanism. == -->
 <div id="entry-chooser" style="display:none;position:fixed;inset:0;z-index:1000;background:var(--brand-black,#0b0b0c);overflow:auto;color:#fff">
-  <div style="max-width:900px;margin:0 auto;padding:64px 24px 48px">
+  <div style="max-width:940px;margin:0 auto;padding:64px 24px 48px">
     <div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#A8F931;font-weight:700">Zebra Value Accelerator</div>
-    <h1 style="font-size:30px;margin:10px 0 4px;font-weight:800">Start an engagement</h1>
-    <p style="color:rgba(255,255,255,.55);font-size:14px;margin:0 0 28px">Four ways in — all land in the same guided analysis.</p>
-    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px">
-      <button class="entry-door" onclick="chooseStartNew()" style="text-align:left;background:#151517;border:1px solid #2a2a2e;border-radius:10px;padding:22px 18px;color:#fff;cursor:pointer">
-        <div style="font-size:22px;line-height:1">＋</div>
-        <div style="font-weight:700;margin:10px 0 4px;font-size:15px">Start new</div>
-        <div style="color:rgba(255,255,255,.5);font-size:12px;line-height:1.5">A blank engagement. Straight into the guided flow.</div>
-      </button>
-      <button class="entry-door" onclick="chooseProfiles()" style="text-align:left;background:#151517;border:1px solid #2a2a2e;border-radius:10px;padding:22px 18px;color:#fff;cursor:pointer">
-        <div style="font-size:22px;line-height:1">⬡</div>
-        <div style="font-weight:700;margin:10px 0 4px;font-size:15px">Start from a profile</div>
-        <div style="color:rgba(255,255,255,.5);font-size:12px;line-height:1.5">A bundled vertical starter you can tailor.</div>
-      </button>
-      <button class="entry-door" onclick="chooseOpenJson()" style="text-align:left;background:#151517;border:1px solid #2a2a2e;border-radius:10px;padding:22px 18px;color:#fff;cursor:pointer">
-        <div style="font-size:22px;line-height:1">↥</div>
-        <div style="font-weight:700;margin:10px 0 4px;font-size:15px">Open a JSON</div>
-        <div style="color:rgba(255,255,255,.5);font-size:12px;line-height:1.5">Reload a saved engagement from a .json file.</div>
-      </button>
-      <button class="entry-door" onclick="chooseValueBuilder()" style="text-align:left;background:#0d1f0a;border:2px solid #A8F931;border-radius:10px;padding:22px 18px;color:#fff;cursor:pointer">
-        <div style="font-size:22px;line-height:1">◈</div>
-        <div style="font-weight:700;margin:10px 0 4px;font-size:15px">Build Value Case First</div>
-        <div style="color:rgba(255,255,255,.5);font-size:12px;line-height:1.5">Pick your vertical, select value cases, generate a discovery intake form.</div>
-      </button>
+    <h1 style="font-size:30px;margin:10px 0 36px;font-weight:800">Start an engagement</h1>
+    <div style="display:grid;grid-template-columns:5fr 7fr;gap:36px;align-items:start">
+      <div>
+        <button class="entry-door" onclick="chooseStartNew()" style="display:block;width:100%;text-align:left;background:#A3E635;border:none;border-radius:10px;padding:22px 18px;color:#000;cursor:pointer;margin-bottom:10px">
+          <div style="font-weight:700;font-size:15px">Start new</div>
+          <div style="font-size:12px;line-height:1.5;margin-top:4px;opacity:.65">A blank engagement. Straight into the guided flow.</div>
+        </button>
+        <button class="entry-door" onclick="chooseProfiles()" style="display:block;width:100%;text-align:left;background:transparent;border:1px solid #2a2a2e;border-radius:10px;padding:22px 18px;color:#fff;cursor:pointer;margin-bottom:16px">
+          <div style="font-weight:700;font-size:15px">Start from a profile</div>
+          <div style="color:rgba(255,255,255,.5);font-size:12px;line-height:1.5;margin-top:4px">A bundled vertical starter you can tailor.</div>
+        </button>
+        <div style="text-align:center">
+          <button onclick="chooseOpenJson()" style="background:none;border:none;color:rgba(255,255,255,.35);font-size:12px;cursor:pointer;text-decoration:underline;padding:0">Open a saved .json file</button>
+        </div>
+        <div id="entry-profiles" style="display:none;margin-top:20px"></div>
+      </div>
+      <div>
+        <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.35);font-weight:700;margin-bottom:14px">Recent engagements</div>
+        <div id="entry-recents-list"></div>
+      </div>
     </div>
-    <div id="entry-profiles" style="display:none;margin-top:28px"></div>
   </div>
 </div>
 
@@ -4297,6 +4293,7 @@ function applyEngagement(p) {
   if(document.getElementById('panel-4')?.classList.contains('active')) { try { ensureCosts(); renderROI(); } catch(e){} }
   applyModeGuards();  // customer-lite locks/footer (no-op in analyst mode); after fields are set
   console.log('Applied engagement:', p._label || p.engagement?.customer || '(unnamed)');
+  try { saveRecentEngagement(p); } catch(e) {}
   return true;
 }
 
@@ -4364,6 +4361,7 @@ function saveEngagementFile() {
     const co = (data.engagement.customer || 'engagement').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '');
     a.href = url; a.download = co + '-strategic-value.json'; a.click();
     URL.revokeObjectURL(url);
+    try { saveRecentEngagement(data); } catch(e) {}
   } catch(e) { alert('Save error: ' + e.message); }
 }
 
@@ -4390,7 +4388,7 @@ function triggerImport() { document.getElementById('import-file')?.click(); }
 // ── ENTRY CHOOSER (Phase 2) ───────────────────────────────────────────────────
 // The three doors are thin wrappers over the existing loaders. The chooser is an
 // overlay; choosing a door hides it and lands in the one guided pipeline.
-function showChooser() { const el = document.getElementById('entry-chooser'); if(el) el.style.display = 'block'; }
+function showChooser() { const el = document.getElementById('entry-chooser'); if(el) { el.style.display = 'block'; renderRecentsList(); } }
 function hideChooser() { const el = document.getElementById('entry-chooser'); if(el) el.style.display = 'none'; }
 
 // Phase 3: the persistent sidebar identity band reflects the current mode.
@@ -10165,6 +10163,72 @@ function vcbToggleAcc(key) {
 
 // ── Entry point ─────────────────────────────────────────
 function chooseValueBuilder() { hideChooser(); go(8); }
+
+// ── RECENT ENGAGEMENTS (localStorage) ────────────────────────────────────────
+const ZVA_RECENTS_KEY = 'zva_recents';
+const ZVA_RECENTS_MAX = 5;
+
+function _recentsLoad() {
+  try { return JSON.parse(localStorage.getItem(ZVA_RECENTS_KEY) || '[]'); } catch(e) { return []; }
+}
+
+function saveRecentEngagement(data) {
+  const customer = ((data && data.engagement && data.engagement.customer) || '').trim();
+  if (!customer) return;
+  const entry = {
+    id: customer.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'engagement',
+    customer,
+    vertical: (Array.isArray(data.verticals) && data.verticals[0]) || '',
+    lastModified: new Date().toISOString().slice(0, 10),
+    hasLevers: Array.isArray(data.selectedIds) && data.selectedIds.length > 0,
+    snapshot: data
+  };
+  let recents = _recentsLoad();
+  recents = recents.filter(r => r.id !== entry.id);
+  recents.unshift(entry);
+  recents = recents.slice(0, ZVA_RECENTS_MAX);
+  try { localStorage.setItem(ZVA_RECENTS_KEY, JSON.stringify(recents)); } catch(e) {}
+  renderRecentsList();
+}
+
+function resumeRecent(id) {
+  const recents = _recentsLoad();
+  const entry = recents.find(r => r.id === id);
+  if (!entry || !entry.snapshot) return;
+  applyEngagement(entry.snapshot);
+  hideChooser();
+  go(0);
+}
+
+function renderRecentsList() {
+  const el = document.getElementById('entry-recents-list');
+  if (!el) return;
+  const recents = _recentsLoad();
+  if (!recents.length) {
+    el.innerHTML = '<div style="color:rgba(255,255,255,.35);font-size:13px;line-height:1.65;border:1px solid #1a1a1a;border-radius:8px;padding:20px 18px">'
+      + '<div style="font-weight:600;color:rgba(255,255,255,.45);margin-bottom:8px;font-size:14px">No recent engagements</div>'
+      + 'This tool builds a value case, discovery intake form, Excel model, and customer deck from your customer\'s data.'
+      + '</div>';
+    return;
+  }
+  const vLabel = v => {
+    const m = {retail:'Retail',logistics:'Logistics',manufacturing:'Manufacturing',healthcare:'Healthcare',hospitality:'Hospitality',government:'Government'};
+    return m[v] || (v ? v.charAt(0).toUpperCase() + v.slice(1) : '');
+  };
+  el.innerHTML = recents.map(r =>
+    '<button onclick="resumeRecent(\'' + _entryEsc(r.id) + '\')" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#151517;border:1px solid #2a2a2e;border-radius:8px;padding:14px 16px;color:#fff;cursor:pointer;margin-bottom:8px">'
+    + '<div style="flex:1;min-width:0">'
+    + '<div style="font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + _entryEsc(r.customer) + '</div>'
+    + '<div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:3px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">'
+    + (r.vertical ? '<span style="background:rgba(163,230,53,.1);color:#A3E635;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:600">' + _entryEsc(vLabel(r.vertical)) + '</span>' : '')
+    + '<span>' + _entryEsc(r.lastModified) + '</span>'
+    + (r.hasLevers ? '<span style="color:rgba(255,255,255,.3)">&middot; Levers active</span>' : '')
+    + '</div>'
+    + '</div>'
+    + '<span style="color:rgba(255,255,255,.3);font-size:18px;flex-shrink:0;line-height:1">&#x203A;</span>'
+    + '</button>'
+  ).join('');
+}
 
 function renderValueCaseWizard() {
   // Vertical buttons
