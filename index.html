@@ -360,6 +360,30 @@ svg{max-width:100%;height:auto}
 .lever-row.on{background:rgba(168,249,49,.08);border-color:rgba(168,249,49,.4)}
 .lever-check{width:18px;height:18px;border-radius:3px;border:1.5px solid var(--gray-200);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;color:transparent;transition:all .12s}
 .lever-row.on .lever-check{background:var(--brand-green);border-color:var(--brand-green);color:var(--brand-black)}
+
+/* VALUE CASE BUILDER CARDS */
+.vc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px}
+.vc-card{position:relative;border:2px solid var(--gray-200);border-radius:10px;padding:14px 13px 12px;cursor:pointer;transition:border-color .13s,box-shadow .13s,background .13s;background:#fff;overflow:hidden;user-select:none}
+.vc-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:transparent;transition:background .13s}
+.vc-card:hover{border-color:#999;box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.vc-card.on{border-color:var(--brand-green);border-width:2.5px;background:rgba(168,249,49,.06)}
+.vc-card.on::after{background:var(--brand-green)}
+.vc-check-bubble{position:absolute;top:11px;right:11px;width:26px;height:26px;border-radius:50%;border:2px solid var(--gray-300);background:#fff;display:flex;align-items:center;justify-content:center;font-size:0;font-weight:900;color:var(--brand-black);transition:all .13s;flex-shrink:0}
+.vc-card:hover .vc-check-bubble{border-color:#777}
+.vc-card.on .vc-check-bubble{background:var(--brand-green);border-color:var(--brand-green);font-size:14px}
+.vc-check-bubble::before{content:'✓'}
+.vc-category-hdr{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--brand-black);text-transform:uppercase;letter-spacing:1.2px;padding:14px 0 7px;border-bottom:2px solid var(--brand-black);margin-bottom:10px}
+.vc-dq-btn{background:none;border:none;font-size:11px;color:var(--brand-black);cursor:pointer;padding:0;font-family:var(--body);text-decoration:underline;text-underline-offset:2px;margin-top:9px;display:block;opacity:.7}
+.vc-dq-btn:hover{opacity:1}
+.vc-dq-list{display:none;margin-top:8px;padding:8px 0 2px;border-top:1px solid var(--gray-100)}
+.vc-dq-list.open{display:block}
+.vc-dq-list li{font-size:11px;color:var(--gray-700);line-height:1.5;margin-bottom:4px;padding-left:2px}
+.vcb-action-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+.vcb-count{font-size:13px;color:var(--gray-600);flex:1;min-width:120px}
+.vcb-count strong{color:var(--brand-black)}
+.btn-intake{display:inline-flex;align-items:center;gap:6px;padding:0 18px;height:36px;background:var(--brand-black);color:var(--brand-green);border:none;border-radius:18px;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .13s;letter-spacing:.01em}
+.btn-intake:hover{opacity:.85}
+.btn-intake svg{flex-shrink:0}
 .btn-link{background:none;border:none;color:var(--blue);font-size:12px;cursor:pointer;padding:2px 6px;font-family:var(--body);text-decoration:underline}
 .btn-link:hover{color:var(--brand-black)}
 
@@ -633,6 +657,7 @@ svg{max-width:100%;height:auto}
   .g2 { grid-template-columns: 1fr 1fr; }
   .g3 { grid-template-columns: 1fr 1fr; }
   .sc-grid { grid-template-columns: 1fr 1fr; }
+  .vc-grid { grid-template-columns: 1fr 1fr; }
   .kpi-grid { grid-template-columns: 1fr 1fr; }
   .fin-grid { grid-template-columns: 1fr 1fr; }
   .exec-kpis { grid-template-columns: 1fr 1fr; }
@@ -676,6 +701,7 @@ svg{max-width:100%;height:auto}
   /* ── All grids → 1 col on phone ── */
   .g2, .g3 { grid-template-columns: 1fr; }
   .sc-grid { grid-template-columns: 1fr 1fr; }   /* 2-col stays, cards are small */
+  .vc-grid { grid-template-columns: 1fr; }
   .kpi-grid { grid-template-columns: 1fr 1fr; }
   .fin-grid { grid-template-columns: 1fr 1fr; }
   .exec-kpis { grid-template-columns: 1fr 1fr; }
@@ -1035,14 +1061,14 @@ svg{max-width:100%;height:auto}
   </div>
 </div>
 
-<!-- == STEP 2: INDUSTRY & FILTERS == -->
+<!-- == STEP 2: VALUE CASE BUILDER == -->
 <div class="panel" id="panel-1">
-  <div class="step-eyebrow">Step 2 of 6</div>
-  <div class="step-title">Industry &amp; Value Levers</div>
-  <div class="step-desc">Select one or more industries. All matching value levers appear below &#8212; deselect any that are out of scope before moving on.</div>
+  <div class="step-eyebrow">Step 2 of 6 &nbsp;·&nbsp; Value Selling</div>
+  <div class="step-title">Value Case Builder</div>
+  <div class="step-desc">Pick your vertical, click the value cases that match your customer's pain, then generate a discovery intake form — with questions to ask, data to capture, and objection handling ready to go.</div>
 
   <div class="card">
-    <div class="card-label">Select Industries <span style="font-size:11px;font-weight:400;color:var(--muted);margin-left:6px">Pick all that apply &#8212; levers update instantly</span></div>
+    <div class="card-label">Select Vertical <span style="font-size:11px;font-weight:400;color:var(--muted);margin-left:6px">Pick all that apply — cards update instantly</span></div>
     <div class="vertical-btns" id="vertical-btns">
       <button class="vbtn active" data-v="retail"         onclick="toggleIndustry(this)">Retail</button>
       <button class="vbtn"        data-v="warehouse"      onclick="toggleIndustry(this)">Warehouse / 3PL</button>
@@ -1058,24 +1084,25 @@ svg{max-width:100%;height:auto}
     </div>
   </div>
 
-  <div class="card" id="lever-card">
-    <div class="card-label" style="display:flex;justify-content:space-between;align-items:center">
-      <span>Value Levers <span id="lever-count-label" style="font-weight:400;color:var(--muted)"></span></span>
-      <span style="display:flex;gap:8px">
-        <button class="btn-link" onclick="setAllLevers(true)">Select all</button>
-        <button class="btn-link" onclick="setAllLevers(false)">Clear all</button>
-      </span>
-    </div>
-    <div id="lever-grid" style="display:flex;flex-direction:column;gap:6px"></div>
+  <div class="vcb-action-row">
+    <span class="vcb-count"><span id="sel-count">0 selected</span> <span id="lever-count-label" style="color:var(--muted)"></span></span>
+    <button class="btn btn-outline" style="height:32px;padding:0 14px;font-size:12px;border-radius:16px" onclick="setAllLevers(true)">Select all</button>
+    <button class="btn btn-outline" style="height:32px;padding:0 14px;font-size:12px;border-radius:16px" onclick="setAllLevers(false)">Clear</button>
+    <button class="btn-intake" onclick="generateIntakeForm()">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="1.5" width="9" height="11" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M4 5h5M4 7.5h5M4 10h3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M9 1.5v3H12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Generate Intake Form
+    </button>
   </div>
 
+  <div id="lever-grid"></div>
+
   <div id="lever-count-warn" style="display:none;padding:10px 14px;margin-bottom:10px;background:#fdf0f0;border:1px solid rgba(235,87,87,.25);border-left:3px solid #EB5757;font-size:12px;color:#7a1010;line-height:1.55">
-    <strong>⚠ Too many levers selected.</strong> Research on executive decision-making (Miller's Law, CEB/Gartner B2B consensus studies) shows that presenting more than 6 value scenarios in a single conversation reduces buy-in &#8212; stakeholders anchor on complexity rather than value. <strong>Trim to your top 5–6 highest-confidence scenarios</strong> before proceeding to Discovery.
+    <strong>⚠ Too many cases selected.</strong> Research shows presenting more than 6 value scenarios in a single conversation reduces buy-in — stakeholders anchor on complexity rather than value. <strong>Trim to your top 5–6</strong> before proceeding to Discovery.
   </div>
 
   <div class="alert a-strategy" style="margin-top:4px">
     <span>⬡</span>
-    <div><strong>Framing Guide</strong> &#8212; Lead with direct labor and hard cost scenarios. Revenue uplift and working capital scenarios carry more variability; position them as upside, not headline. Soft productivity scenarios are best introduced after the hard case is agreed.</div>
+    <div><strong>Framing Guide</strong> &#8212; Lead with Hard Labor and Hard Cost cases. Revenue and working capital scenarios carry more variability — position as upside, not the headline. Soft productivity follows only after the hard case is agreed.</div>
   </div>
 
   <div class="btn-row">
@@ -4588,6 +4615,17 @@ const evLabel = {
   'Emerging':      'Emerging',
 };
 
+// Theme category display order for Value Case Builder
+const VC_THEME_ORDER = [
+  'Labor & Human Capacity',
+  'Direct Cost & Spend',
+  'Revenue / Margin',
+  'Working Capital',
+  'Operational Efficiency',
+  'Regulatory & Compliance',
+  'Strategic',
+];
+
 function renderLeverGrid() {
   const grid = document.getElementById('lever-grid');
   const label = document.getElementById('lever-count-label');
@@ -4597,60 +4635,168 @@ function renderLeverGrid() {
   // Sync selectedIds: remove any stale ids that no longer match active industries
   [...state.selectedIds].forEach(id => { if(!matched.find(s=>s.id===id)) state.selectedIds.delete(id); });
 
-  if(label) label.textContent = '— ' + matched.length + ' levers, ' + state.selectedIds.size + ' selected';
+  if(label) label.textContent = '— ' + matched.length + ' case' + (matched.length!==1?'s':'');
 
-  // Phase 5: never show a blank grid on click — badge instead.
   if(!matched.length) {
-    grid.innerHTML = `<div style="padding:18px;text-align:center;color:var(--muted);font-size:12px;border:1px dashed var(--gray-300);border-radius:8px">No bundled levers for the selected industr${(activeIndustries && activeIndustries.size>1)?'ies':'y'} yet — <strong>custom levers / profile only</strong>. Add custom value levers below, or start from a profile.</div>`;
-    return;
+    grid.innerHTML = `<div style="padding:24px;text-align:center;color:var(--muted);font-size:12px;border:1px dashed var(--gray-300);border-radius:10px">No value cases for the selected vertical yet — add a custom lever below or start from a profile.</div>`;
+    selCount(); return;
   }
 
-  // Group by verticalKey
+  // Group by primary theme key
   const groups = {};
   matched.forEach(sc => {
-    if(!groups[sc.verticalKey]) groups[sc.verticalKey] = [];
-    groups[sc.verticalKey].push(sc);
+    const theme = (sc.themeKeys && sc.themeKeys[0]) || sc.theme || 'Other';
+    if(!groups[theme]) groups[theme] = [];
+    groups[theme].push(sc);
   });
 
-  const vLabels = {retail:'Retail',warehouse:'Warehouse / 3PL',manufacturing:'Manufacturing & MRO',
-    healthcare:'Healthcare',government:'Government / Federal',carriers:'Carriers & Logistics',
-    aviation:'Aviation / MRO',hospitality:'Hospitality & Venues',datacenter:'Data Center / IT',
-    energy:'Energy & Industrial',foodservice:'Food Service / CPG'};
+  // Sort groups by theme order, then alphabetically for any extras
+  const orderedKeys = [
+    ...VC_THEME_ORDER.filter(t => groups[t]),
+    ...Object.keys(groups).filter(t => !VC_THEME_ORDER.includes(t)).sort(),
+  ];
 
-  grid.innerHTML = Object.entries(groups).map(([vk, scs]) => `
-    <div style="margin-bottom:10px">
-      <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.8px;padding:6px 0 4px;border-bottom:1px solid var(--gray-100);margin-bottom:4px">${vLabels[vk]||vk}</div>
-      ${scs.map(sc => `
-        <div class="lever-row ${state.selectedIds.has(sc.id)?'on':''}" onclick="toggleLever('${sc.id}',this)">
-          <div class="lever-check">✓</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:13px;font-weight:600;color:var(--brand-black)">${sc.name}</div>
-            <div style="font-size:11px;color:var(--gray-500);margin-top:1px">${sc.theme}</div>
-          </div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0">
-            <span style="font-family:var(--mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:2px 6px;border-radius:3px;background:${RAMP[sc.rampType]?rampColors[sc.rampType].bg:'#f0f0f0'};color:${RAMP[sc.rampType]?rampColors[sc.rampType].fg:'#555'}">${RAMP[sc.rampType]?.label||sc.rampType}</span>
-            <span style="font-family:var(--mono);font-size:9px;color:var(--gray-500)">${evDots[sc.evidence]||'●○○'} ${evLabel[sc.evidence]||'Emerging'}</span>
-          </div>
-        </div>`).join('')}
-    </div>`).join('');
+  grid.innerHTML = orderedKeys.map(theme => {
+    const scs = groups[theme];
+    const cards = scs.map(sc => {
+      const isOn = state.selectedIds.has(sc.id);
+      const rcBg = rampColors[sc.rampType]?.bg || '#f0f0f0';
+      const rcFg = rampColors[sc.rampType]?.fg || '#555';
+      const rampLabel = RAMP[sc.rampType]?.label || sc.rampType;
+      const desc = sc.oneLiner || sc.theme || '';
+      const hasDqs = sc.discoveryQuestions && sc.discoveryQuestions.length;
+      const dqList = hasDqs ? sc.discoveryQuestions.map(q=>`<li>${q}</li>`).join('') : '';
+      return `<div class="vc-card${isOn?' on':''}" onclick="toggleLever('${sc.id}',this)" data-scid="${sc.id}">
+        <div class="vc-check-bubble"></div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">${sc.id}</div>
+        <div style="font-size:13px;font-weight:700;color:var(--brand-black);line-height:1.3;padding-right:30px;margin-bottom:6px">${sc.name}</div>
+        <div style="font-size:11px;color:var(--gray-600);line-height:1.5;margin-bottom:10px">${desc}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+          <span style="font-family:var(--mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:2px 8px;border-radius:3px;background:${rcBg};color:${rcFg}">${rampLabel}</span>
+          ${hasDqs?`<button class="vc-dq-btn" onclick="event.stopPropagation();toggleVcDq(this)">▾ Show discovery questions</button>`:''}
+        </div>
+        ${hasDqs?`<ul class="vc-dq-list">${dqList}</ul>`:''}
+      </div>`;
+    }).join('');
+    return `<div style="margin-bottom:20px">
+      <div class="vc-category-hdr">${theme}</div>
+      <div class="vc-grid">${cards}</div>
+    </div>`;
+  }).join('');
 
   // Update badge on step 3 if visible
   const scBadge = document.getElementById('sc-match-badge');
   if(scBadge) scBadge.textContent = state.selectedIds.size + ' SELECTED';
-  selCount(); // always sync warning banner after any grid render
+  selCount();
 }
 
-// Toggle a single lever on/off
+function toggleVcDq(btn) {
+  const list = btn.closest('.vc-card').querySelector('.vc-dq-list');
+  if(!list) return;
+  const open = list.classList.toggle('open');
+  btn.textContent = (open ? '▴' : '▾') + ' ' + (open ? 'Hide' : 'Show') + ' discovery questions';
+}
+
+function generateIntakeForm() {
+  const selected = SCENARIOS.filter(s => state.selectedIds.has(s.id));
+  if(!selected.length) {
+    alert('Select at least one value case first, then click Generate.');
+    return;
+  }
+  const company = document.getElementById('i-company')?.value || 'Zebra Technologies';
+  const customer = document.getElementById('i-customer')?.value || 'Customer';
+  const dateStr = new Date().toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'});
+
+  const scenarioBlocks = selected.map((sc) => {
+    const rcBg = rampColors[sc.rampType]?.bg || '#e8e8e8';
+    const rcFg = rampColors[sc.rampType]?.fg || '#333';
+    const rampLabel = RAMP[sc.rampType]?.label || sc.rampType;
+    const evStr = evDots[sc.evidence] || '●○○';
+    const dqs = (sc.discoveryQuestions || []).map((q,i) => `
+      <div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #eee">
+        <span style="font-weight:700;font-size:12px;color:#999;min-width:18px">${i+1}.</span>
+        <div style="flex:1">
+          <div style="font-size:13px;color:#222;line-height:1.5">${q}</div>
+          <div style="height:26px;border-bottom:1px solid #bbb;margin-top:6px"></div>
+        </div>
+      </div>`).join('');
+    const inputRows = Object.entries(sc.inputs||{}).map(([k,v]) => `
+      <tr>
+        <td style="padding:8px 10px;border:1px solid #ddd;font-size:12px;color:#222">${v.label}</td>
+        <td style="padding:8px 10px;border:1px solid #ddd;font-size:11px;color:#888;font-style:italic">${v.hint||''}</td>
+        <td style="padding:8px 10px;border:1px solid #ddd;width:130px;background:#fafafa"></td>
+      </tr>`).join('');
+    return `<div style="margin-bottom:44px;page-break-inside:avoid">
+      <div style="background:#111;color:#fff;padding:14px 18px;border-radius:8px 8px 0 0;display:flex;align-items:flex-start;gap:12px;justify-content:space-between">
+        <div>
+          <div style="font-size:10px;letter-spacing:1.2px;color:rgba(255,255,255,.4);text-transform:uppercase;margin-bottom:5px">${sc.id} &nbsp;·&nbsp; ${evStr} Evidence</div>
+          <div style="font-size:17px;font-weight:700;line-height:1.3">${sc.name}</div>
+          ${sc.oneLiner?`<div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:5px;line-height:1.5">${sc.oneLiner}</div>`:''}
+        </div>
+        <span style="flex-shrink:0;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:4px 10px;border-radius:4px;background:${rcBg};color:${rcFg};margin-top:2px">${rampLabel}</span>
+      </div>
+      <div style="border:1px solid #ddd;border-top:none;border-radius:0 0 8px 8px;overflow:hidden">
+        ${sc.challenge?`<div style="padding:14px 18px;border-bottom:1px solid #eee;background:#fafafa">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#888;margin-bottom:6px">Challenge &amp; Objection Handling</div>
+          <div style="font-size:12px;color:#333;line-height:1.65">${sc.challenge}</div>
+        </div>`:''}
+        ${dqs?`<div style="padding:14px 18px;border-bottom:1px solid #eee">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#888;margin-bottom:4px">Discovery Questions</div>
+          ${dqs}
+        </div>`:''}
+        ${inputRows?`<div style="padding:14px 18px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#888;margin-bottom:10px">Data to Capture</div>
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead><tr>
+              <th style="padding:7px 10px;border:1px solid #ddd;background:#f5f5f5;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:#888;font-weight:700">Variable</th>
+              <th style="padding:7px 10px;border:1px solid #ddd;background:#f5f5f5;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:#888;font-weight:700">Source / Hint</th>
+              <th style="padding:7px 10px;border:1px solid #ddd;background:#f5f5f5;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:#888;font-weight:700">Customer Value</th>
+            </tr></thead>
+            <tbody>${inputRows}</tbody>
+          </table>
+        </div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html><html lang="en"><head>
+  <meta charset="UTF-8">
+  <title>Discovery Intake — ${customer}</title>
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,'Helvetica Neue',sans-serif;max-width:900px;margin:0 auto;padding:36px 28px 60px;color:#111}@media print{.no-print{display:none!important}body{padding:0 0 40px}}</style>
+</head><body>
+  <div class="no-print" style="background:#f5f5f5;border:1px solid #ddd;border-radius:6px;padding:12px 16px;margin-bottom:28px;display:flex;align-items:center;gap:14px">
+    <span style="font-size:13px;color:#555;flex:1">Print this form or save as PDF to use in your discovery conversation.</span>
+    <button onclick="window.print()" style="padding:9px 22px;background:#000;color:#A8F931;border:none;border-radius:5px;cursor:pointer;font-size:13px;font-weight:700">Print / Save PDF</button>
+  </div>
+  <div style="border-bottom:4px solid #A8F931;padding-bottom:16px;margin-bottom:32px">
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#888;margin-bottom:10px">Discovery Intake Form &nbsp;·&nbsp; Zebra Technologies</div>
+    <div style="font-size:28px;font-weight:700;margin-bottom:6px">${customer}</div>
+    <div style="font-size:13px;color:#555">${company} &nbsp;·&nbsp; ${dateStr} &nbsp;·&nbsp; ${selected.length} value case${selected.length!==1?'s':''} selected</div>
+  </div>
+  ${scenarioBlocks}
+  <div style="margin-top:48px;padding-top:16px;border-top:1px solid #eee;font-size:10px;color:#bbb;text-align:center">Zebra Technologies — Value Accelerator &nbsp;·&nbsp; Confidential — For internal and customer-facing discovery only</div>
+</body></html>`;
+
+  const win = window.open('', '_blank');
+  if(!win) { alert('Pop-up blocked — allow pop-ups for this page, then try again.'); return; }
+  win.document.write(html);
+  win.document.close();
+}
+
+// Toggle a single lever / value case card on/off
 function toggleLever(id, el) {
-  el.classList.toggle('on');
+  // el is either a .vc-card or a .lever-row
+  const card = el.classList.contains('vc-card') ? el : el.closest('.vc-card');
+  if(card) card.classList.toggle('on');
+  else el.classList.toggle('on');
   if(state.selectedIds.has(id)) state.selectedIds.delete(id);
   else state.selectedIds.add(id);
   const label = document.getElementById('lever-count-label');
   const total = matchScenarios().length;
-  if(label) label.textContent = '— ' + total + ' levers, ' + state.selectedIds.size + ' selected';
+  if(label) label.textContent = '— ' + total + ' case' + (total!==1?'s':'');
   const scBadge = document.getElementById('sc-match-badge');
   if(scBadge) scBadge.textContent = state.selectedIds.size + ' SELECTED';
-  selCount(); // update warning banner
+  selCount();
 }
 
 // ── STEP 3: SCENARIO GRID ──
