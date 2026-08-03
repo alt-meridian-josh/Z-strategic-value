@@ -366,6 +366,9 @@ svg{max-width:100%;height:auto}
 .vc-card{position:relative;border:2px solid var(--gray-200);border-radius:10px;padding:14px 13px 12px;cursor:pointer;transition:border-color .13s,box-shadow .13s,background .13s;background:#fff;overflow:hidden;user-select:none}
 .vc-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:transparent;transition:background .13s}
 .vc-card:hover{border-color:#999;box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.vc-card.vc-unavailable{opacity:.55;cursor:not-allowed;background:#fbfbfb;border-style:dashed}
+.vc-card.vc-unavailable:hover{border-color:var(--gray-300);box-shadow:none}
+.vc-card.vc-unavailable .vc-check-bubble{opacity:.35}
 .vc-card.on{border-color:var(--brand-green);border-width:2.5px;background:rgba(168,249,49,.06)}
 .vc-card.on::after{background:var(--brand-green)}
 .vc-check-bubble{position:absolute;top:11px;right:11px;width:26px;height:26px;border-radius:50%;border:2px solid var(--gray-300);background:#fff;display:flex;align-items:center;justify-content:center;font-size:0;font-weight:900;color:var(--brand-black);transition:all .13s;flex-shrink:0}
@@ -4760,7 +4763,7 @@ function toggleIndustry(btn) {
   else {
     activeIndustries.add(v);
     // Auto-select newly added vertical's scenarios
-    SCENARIOS.filter(s => s.verticalKey === v).forEach(s => state.selectedIds.add(s.id));
+    SCENARIOS.filter(s => s.verticalKey === v && !leverUnavailableReason(s.id)).forEach(s => state.selectedIds.add(s.id));
     // Update slider defaults to reflect new primary vertical
     if(activeIndustries.size === 1) {
       setSliderDefaults(v);
@@ -4774,7 +4777,7 @@ function toggleIndustry(btn) {
 function setAllLevers(on) {
   if(on) {
     // Select all: check all scenarios for all active industries
-    matchScenarios().forEach(s => state.selectedIds.add(s.id));
+    matchScenarios().forEach(s => { if(!leverUnavailableReason(s.id)) state.selectedIds.add(s.id); });
   } else {
     // Clear all: deactivate all industry tiles except the first one,
     // clear all scenario selections, reset to single-industry clean state
@@ -4871,19 +4874,21 @@ function renderLeverGrid() {
     const scs = groups[theme];
     const cards = scs.map(sc => {
       const isOn = state.selectedIds.has(sc.id);
+      const unavailable = leverUnavailableReason(sc.id);
       const rcBg = rampColors[sc.rampType]?.bg || '#f0f0f0';
       const rcFg = rampColors[sc.rampType]?.fg || '#555';
       const rampLabel = RAMP[sc.rampType]?.label || sc.rampType;
       const desc = sc.oneLiner || sc.theme || '';
       const hasDqs = sc.discoveryQuestions && sc.discoveryQuestions.length;
       const dqList = hasDqs ? sc.discoveryQuestions.map(q=>`<li>${q}</li>`).join('') : '';
-      return `<div class="vc-card${isOn?' on':''}" onclick="toggleLever('${sc.id}',this)" data-scid="${sc.id}">
+      return `<div class="vc-card${isOn?' on':''}${unavailable?' vc-unavailable':''}" onclick="toggleLever('${sc.id}',this)" data-scid="${sc.id}"${unavailable?` title="Unavailable — ${unavailable}"`:''}>
         <div class="vc-check-bubble"></div>
         <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">${sc.id}</div>
         <div style="font-size:13px;font-weight:700;color:var(--brand-black);line-height:1.3;padding-right:30px;margin-bottom:6px">${sc.name}</div>
         <div style="font-size:11px;color:var(--gray-600);line-height:1.5;margin-bottom:10px">${desc}</div>
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
           <span style="font-family:var(--mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:2px 8px;border-radius:3px;background:${rcBg};color:${rcFg}">${rampLabel}</span>
+          ${unavailable?`<span style="font-family:var(--mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:2px 8px;border-radius:3px;background:#fdece8;color:#c8330e">Unavailable — ${unavailable}</span>`:''}
           ${hasDqs?`<button class="vc-dq-btn" onclick="event.stopPropagation();toggleVcDq(this)">▾ Show discovery questions</button>`:''}
         </div>
         ${hasDqs?`<ul class="vc-dq-list">${dqList}</ul>`:''}
@@ -4996,6 +5001,11 @@ function generateIntakeForm() {
 
 // Toggle a single lever / value case card on/off
 function toggleLever(id, el) {
+  const why = leverUnavailableReason(id);
+  if (why && !state.selectedIds.has(id)) {   // deselect stays possible if a file loaded it
+    showLoadWarning(id + ' is not available for selection: ' + why + '.');
+    return;
+  }
   // el is either a .vc-card or a .lever-row
   const card = el.classList.contains('vc-card') ? el : el.closest('.vc-card');
   if(card) card.classList.toggle('on');
@@ -5489,6 +5499,18 @@ function ensureCosts() {
 // ── NRV ENGINE HELPERS ──
 function calcNRV(activeScenarios, costs, wacc) {
   wacc = wacc || 0.10;
+  // NaN CONTAINMENT (PR 3.1): a lever whose formula yields a non-finite value is
+  // EXCLUDED from every sum below rather than propagated. Without this, one bad
+  // lever turns B0, every yearly netBenefit, npv, mirr and bcr into NaN, and
+  // several export formatters render NaN as a plausible "$0" (they use `v||0`,
+  // and NaN is falsy). Excluded ids are returned so callers can name them.
+  const excludedLevers = [];
+  activeScenarios = (activeScenarios || []).filter(sc => {
+    let v; try { v = calcSc(sc); } catch (e) { v = NaN; }
+    if (Number.isFinite(v)) return true;
+    excludedLevers.push(sc.id);
+    return false;
+  });
   const capex = costs.yr0 || 0;
   const annOpex = costs.yr1 || 0;
   const attrition = capex * 0.20;
@@ -5553,7 +5575,7 @@ function calcNRV(activeScenarios, costs, wacc) {
 
   return {
     nrv, mirr, paybackMo, bcr, peakAnnual, roi5,
-    yearlyData, B0, totalAnnOpex, capex, wacc
+    yearlyData, B0, totalAnnOpex, capex, wacc, excludedLevers
   };
 }
 
@@ -5954,12 +5976,23 @@ function renderROI() {
   const { nrv, mirr, paybackMo, bcr, peakAnnual, roi5, yearlyData } = result;
 
   state.nrvResult = result;
+  // Keep the KPI table on exactly the levers calcNRV actually summed, so the
+  // rows cannot disagree with the totals above them.
+  const excluded = result.excludedLevers || [];
+  if (excluded.length) {
+    showLoadWarning(
+      excluded.length + ' lever' + (excluded.length > 1 ? 's' : '') + ' could not be calculated and '
+      + (excluded.length > 1 ? 'were' : 'was') + ' EXCLUDED from this analysis: ' + excluded.join(', ')
+      + '. Every other lever is unaffected. Totals shown do not include '
+      + (excluded.length > 1 ? 'them' : 'it') + '.');
+  }
+  const scored = active.filter(sc => !excluded.includes(sc.id));
   state.benefits = {
     totAnnual: peakAnnual,
     totY1: yearlyData[0].netBenefit,
     totY2: yearlyData[1].netBenefit,
     totY3: yearlyData[2].netBenefit,
-    rows: active.map(sc => {
+    rows: scored.map(sc => {
       const ann = Math.max(0, calcSc(sc));
       return {
         sc, ann,
@@ -9121,6 +9154,15 @@ function validateRegistry() {
   return { errors, infos };
 }
 
+// Levers withheld from selection. Visible in the catalog so the analyst can see
+// they exist and why they are unavailable, but not selectable — each would
+// otherwise contribute a non-finite value. No benchmark value is invented here.
+const UNAVAILABLE_LEVERS = {
+  'GOV-02': 'benchmark defaults pending',
+  'TL-02':  'benchmark defaults pending',
+};
+function leverUnavailableReason(id) { return UNAVAILABLE_LEVERS[id] || null; }
+
 // Pre-existing data defects found by validateRegistry(). Listed here so the tool
 // still boots: quarantining them as ERRORs would take the whole app down for a
 // fault that predates this validator. Each entry needs a real fix — the missing
@@ -9217,6 +9259,11 @@ const SELFTEST_FIXTURES = [
    name:"F3_multi_lever_shared_pool", note:"4 labor levers in one dedup pool \u2014 shares replace per-lever haircuts",
    input:{"selectedIds":["WH-01","WH-02","WH-06","RET-05"],"inputs":{},"costRows":[{"label":"Readers","qty":120,"unitCost":1200,"yr0":144000,"yr1":0,"yr2":0,"cadence":"one-time"},{"label":"SaaS","qty":20,"unitCost":4800,"yr0":0,"yr1":96000,"yr2":96000,"cadence":"annual"}],"contingencyRate":0.07,"wacc":0.1,"financeCredit":{"enabled":true,"rate":0.4},"dedup":[{"poolId":"dc_labor","label":"DC labor pool","rationale":"WH-01/02/06 and RET-05 all draw down the same DC hourly labor budget; summing them undeduplicated double-counts the same headcount.","members":[{"leverId":"WH-01","share":0.35},{"leverId":"WH-02","share":0.3},{"leverId":"WH-06","share":0.2},{"leverId":"RET-05","share":0.15}]}]},
    expected:{"nrv":118457,"mirr":0.2473528611,"paybackMo":36,"bcr":1.2922027383,"peakAnnual":257447.914911,"roi5":29,"B0":667800,"totalAnnOpex":131816,"capex":154080,"y1net":-15476,"y3net":101276.196925,"y5net":125631.914911}
+  },
+  {
+   name:"F5_nan_lever_excluded", note:"F4 plus GOV-02 (NaN formula) — every F4 value must be unchanged and the exclusion reported",
+   input:{"selectedIds":["WH-01","GOV-02"],"inputs":{},"costRows":[{"label":"Handhelds","qty":10,"unitCost":1500,"yr0":15000,"yr1":0,"yr2":0,"cadence":"one-time"}],"contingencyRate":0,"wacc":0.1,"financeCredit":{"enabled":true,"rate":0.4},"dedup":[]},
+   expected:{"excluded":"GOV-02","nrv":832779,"mirr":1.5125195798,"paybackMo":1,"bcr":21.484172691,"peakAnnual":270949.72,"roi5":2048,"B0":320000,"totalAnnOpex":8000,"capex":15000,"y1net":140000,"y3net":262949.72,"y5net":246459.617807}
   },
   {
    name:"F4_single_lever_min", note:"one lever, benchmark defaults, single cost row \u2014 smallest viable case",
@@ -9352,6 +9399,7 @@ function _selftestCompute(input) {
     const r = calcNRV(active, state.costs, input.wacc != null ? input.wacc : 0.10);
     const rd = (v, n) => (v === null || v === undefined) ? null : +(+v).toFixed(n);
     return {
+      excluded: (r.excludedLevers || []).join(',') || '(none)',
       nrv: r.nrv, mirr: rd(r.mirr, 10), paybackMo: r.paybackMo, bcr: rd(r.bcr, 10),
       peakAnnual: rd(r.peakAnnual, 6), roi5: r.roi5, B0: rd(r.B0, 6),
       totalAnnOpex: rd(r.totalAnnOpex, 6), capex: r.capex,
