@@ -8860,7 +8860,179 @@ Keep it conversational. One paragraph, then the question.
   }
 }
 
+
+// ══════════════════════════════════════════════════════════════════════════════
+// GOLDEN FIXTURES + SELF-TEST  (?selftest=1)
+//
+// Locks the compute path (calcSc -> rebuildCostState -> calcNRV) against known
+// values. Baselines captured at the PR-1 commit, i.e. AFTER the WACC fix
+// (renderROI previously passed a hardcoded 0.10 to calcNRV, so the Step-5 WACC
+// control had no effect on any number the tool produced).
+//
+// F1_wacc_variant is the load-bearing one: it is sample_engagement at WACC
+// 0.085 and is the only fixture whose expected values differ from what the
+// pre-fix build produced. If F1 ever matches the 0.10 baseline again, the
+// slider has been disconnected from the calc path a second time.
+//
+// DO NOT edit expected values to make a failing test pass. A diff here means
+// either a real regression or an intended change that needs sign-off.
+// ══════════════════════════════════════════════════════════════════════════════
+const SELFTEST_FIXTURES = [
+  {
+   name:"sample_engagement", note:"in-repo example, stored WACC 0.10",
+   input:{"selectedIds":["RET-01","RET-02","RET-03","RET-05"],"inputs":{"RET-01":{"total_sku_locations":50000,"hours_per_sku_manual":0.05,"hours_per_sku_rfid":0.0033,"loaded_rate":24,"annual_count_cycles":12},"RET-02":{"annual_store_revenue":5000000,"out_of_stock_baseline_pct":0.05,"osa_improvement_pct":0.5,"gross_margin_pct":0.4},"RET-03":{"annual_store_revenue":5000000,"shrink_pct_baseline":0.014,"shrink_reduction_pct":0.2},"RET-05":{"annual_receiving_labor_hours":8000,"labor_reduction_pct":0.4,"loaded_rate":24}},"costRows":[{"label":"Fixed readers / handheld units","qty":200,"unitCost":1200,"yr0":240000,"yr1":0,"yr2":0,"cadence":"one-time"},{"label":"Mounting / installation fixtures","qty":50,"unitCost":650,"yr0":32500,"yr1":0,"yr2":0,"cadence":"one-time"},{"label":"Initial tag deployment","qty":750000,"unitCost":0.08,"yr0":60000,"yr1":0,"yr2":0,"cadence":"one-time"},{"label":"Annual tag replenishment","qty":300000,"unitCost":0.08,"yr0":0,"yr1":24000,"yr2":24000,"cadence":"annual"},{"label":"SaaS / platform license","qty":50,"unitCost":4800,"yr0":0,"yr1":240000,"yr2":240000,"cadence":"annual"},{"label":"Professional services / impl.","qty":50,"unitCost":8500,"yr0":425000,"yr1":0,"yr2":0,"cadence":"one-time"},{"label":"Training & enablement","qty":50,"unitCost":1200,"yr0":60000,"yr1":0,"yr2":0,"cadence":"one-time"},{"label":"Internal FTE time (project)","qty":480,"unitCost":55,"yr0":26400,"yr1":0,"yr2":0,"cadence":"one-time"},{"label":"Contingency","qty":"","unitCost":"","yr0":59073,"yr1":0,"yr2":0,"cadence":"one-time","contingency":true}],"wacc":0.1,"financeCredit":{"enabled":true,"rate":0.4},"contingencyRate":0.07},
+   expected:{"nrv":-452391,"mirr":-0.0086444326,"paybackMo":null,"bcr":0.9207858748,"peakAnnual":666478.71338,"roi5":-8,"B0":813280,"totalAnnOpex":449594.6,"capex":902973,"y1net":-89697.6,"y3net":216884.11338,"y5net":177809.518656}
+  },
+  {
+   name:"healthcare_starter", note:"in-repo example, stored WACC 0.10",
+   input:{"selectedIds":["HC-01","HC-02","HC-05","HC-06"],"inputs":{"HC-01":{"annual_rental_spend":1200000,"rental_reduction_pct":0.15,"num_nursing_staff":200,"nursing_search_hours_per_shift":0.5,"shifts_per_year":365,"loaded_nursing_rate":48},"HC-02":{"annual_or_cases":8000,"instrument_delay_rate_pct":0.05,"delay_reduction_pct":0.25,"avg_delay_duration_hr":0.5,"or_delay_cost_per_hour":6000},"HC-05":{"annual_audit_prep_hours":4000,"labor_reduction_pct":0.4,"loaded_rate":45},"HC-06":{"annual_expired_writeoffs":400000,"expiry_reduction_pct":0.15,"annual_stockout_cost":200000,"stockout_reduction_pct":0.2}},"costRows":[{"label":"Fixed readers / handheld units","qty":20,"unitCost":1200,"yr0":24000,"yr1":0,"yr2":0,"cadence":"one-time"},{"label":"Mounting / installation fixtures","qty":5,"unitCost":650,"yr0":3250,"yr1":0,"yr2":0,"cadence":"one-time"},{"label":"Initial tag deployment","qty":25000,"unitCost":0.12,"yr0":3000,"yr1":0,"yr2":0,"cadence":"one-time"},{"label":"Annual tag replenishment","qty":7500,"unitCost":0.12,"yr0":0,"yr1":900,"yr2":900,"cadence":"annual"},{"label":"SaaS / platform license","qty":5,"unitCost":5000,"yr0":0,"yr1":25000,"yr2":25000,"cadence":"annual"},{"label":"Professional services / impl.","qty":5,"unitCost":8500,"yr0":42500,"yr1":0,"yr2":0,"cadence":"one-time"},{"label":"Training & enablement","qty":5,"unitCost":1200,"yr0":6000,"yr1":0,"yr2":0,"cadence":"one-time"},{"label":"Internal FTE time (project)","qty":480,"unitCost":55,"yr0":26400,"yr1":0,"yr2":0,"cadence":"one-time"},{"label":"Contingency","qty":"","unitCost":"","yr0":7361,"yr1":0,"yr2":0,"cadence":"one-time","contingency":true}],"wacc":0.1,"financeCredit":{"enabled":true,"rate":0.4},"contingencyRate":0.07,"dedup":[]},
+   expected:{"nrv":3878003,"mirr":1.2889589213,"paybackMo":2,"bcr":14.8668083879,"peakAnnual":1293784.913,"roi5":1387,"B0":1528000,"totalAnnOpex":53402.2,"capex":112511,"y1net":653297.8,"y3net":1240382.713,"y5net":1161642.475028}
+  },
+  {
+   name:"warehouse_starter", note:"in-repo example, stored WACC 0.10",
+   input:{"selectedIds":["WH-01","WH-02","WH-03","WH-06"],"inputs":{"WH-01":{"total_pallet_positions":25000,"count_cycles_per_year":12,"time_per_position_manual_min":3,"time_per_position_rfid_sec":20,"loaded_rate":24},"WH-02":{"annual_inbound_pallets":150000,"hours_per_pallet_manual":0.133,"hours_per_pallet_rfid":0.083,"loaded_rate":24},"WH-03":{"annual_orders_picked":2000000,"error_rate_baseline_pct":0.005,"error_reduction_pct":0.8,"cost_per_error":20},"WH-06":{"outbound_labor_hours":10000,"labor_reduction_pct":0.35,"loaded_rate":26}},"costRows":[{"label":"Fixed readers / handheld units","qty":40,"unitCost":1200,"yr0":48000,"yr1":0,"yr2":0,"cadence":"one-time"},{"label":"Mounting / installation fixtures","qty":5,"unitCost":650,"yr0":3250,"yr1":0,"yr2":0,"cadence":"one-time"},{"label":"Initial tag deployment","qty":250000,"unitCost":0.07,"yr0":17500,"yr1":0,"yr2":0,"cadence":"one-time"},{"label":"Annual tag replenishment","qty":62500,"unitCost":0.07,"yr0":0,"yr1":4375,"yr2":4375,"cadence":"annual"},{"label":"SaaS / platform license","qty":5,"unitCost":6000,"yr0":0,"yr1":30000,"yr2":30000,"cadence":"annual"},{"label":"Professional services / impl.","qty":5,"unitCost":8500,"yr0":42500,"yr1":0,"yr2":0,"cadence":"one-time"},{"label":"Training & enablement","qty":5,"unitCost":1200,"yr0":6000,"yr1":0,"yr2":0,"cadence":"one-time"},{"label":"Internal FTE time (project)","qty":480,"unitCost":55,"yr0":26400,"yr1":0,"yr2":0,"cadence":"one-time"},{"label":"Contingency","qty":"","unitCost":"","yr0":10056,"yr1":0,"yr2":0,"cadence":"one-time","contingency":true}],"wacc":0.1,"financeCredit":{"enabled":true,"rate":0.4},"contingencyRate":0.07,"dedup":[]},
+   expected:{"nrv":1641301,"mirr":0.8329316673,"paybackMo":7,"bcr":5.4991239674,"peakAnnual":635885.124125,"roi5":450,"B0":751000,"totalAnnOpex":70116.2,"capex":153706,"y1net":277221.3,"y3net":565768.924125,"y5net":527068.715541}
+  },
+  {
+   name:"F1_wacc_variant", note:"sample_engagement @ WACC 0.085 \u2014 proves the slider reaches the calc path",
+   input:{"selectedIds":["RET-01","RET-02","RET-03","RET-05"],"inputs":{"RET-01":{"total_sku_locations":50000,"hours_per_sku_manual":0.05,"hours_per_sku_rfid":0.0033,"loaded_rate":24,"annual_count_cycles":12},"RET-02":{"annual_store_revenue":5000000,"out_of_stock_baseline_pct":0.05,"osa_improvement_pct":0.5,"gross_margin_pct":0.4},"RET-03":{"annual_store_revenue":5000000,"shrink_pct_baseline":0.014,"shrink_reduction_pct":0.2},"RET-05":{"annual_receiving_labor_hours":8000,"labor_reduction_pct":0.4,"loaded_rate":24}},"costRows":[{"label":"Fixed readers / handheld units","qty":200,"unitCost":1200,"yr0":240000,"yr1":0,"yr2":0,"cadence":"one-time"},{"label":"Mounting / installation fixtures","qty":50,"unitCost":650,"yr0":32500,"yr1":0,"yr2":0,"cadence":"one-time"},{"label":"Initial tag deployment","qty":750000,"unitCost":0.08,"yr0":60000,"yr1":0,"yr2":0,"cadence":"one-time"},{"label":"Annual tag replenishment","qty":300000,"unitCost":0.08,"yr0":0,"yr1":24000,"yr2":24000,"cadence":"annual"},{"label":"SaaS / platform license","qty":50,"unitCost":4800,"yr0":0,"yr1":240000,"yr2":240000,"cadence":"annual"},{"label":"Professional services / impl.","qty":50,"unitCost":8500,"yr0":425000,"yr1":0,"yr2":0,"cadence":"one-time"},{"label":"Training & enablement","qty":50,"unitCost":1200,"yr0":60000,"yr1":0,"yr2":0,"cadence":"one-time"},{"label":"Internal FTE time (project)","qty":480,"unitCost":55,"yr0":26400,"yr1":0,"yr2":0,"cadence":"one-time"},{"label":"Contingency","qty":"","unitCost":"","yr0":59073,"yr1":0,"yr2":0,"cadence":"one-time","contingency":true}],"wacc":0.085,"financeCredit":{"enabled":true,"rate":0.4},"contingencyRate":0.07},
+   expected:{"nrv":-427645,"mirr":-0.0157659454,"paybackMo":null,"bcr":0.9207858748,"peakAnnual":666478.71338,"roi5":-8,"B0":813280,"totalAnnOpex":449594.6,"capex":902973,"y1net":-89697.6,"y3net":216884.11338,"y5net":177809.518656}
+  },
+  {
+   name:"F2_null_mirr", note:"zero capex + every year cash-positive => pvNegatives 0 => mirr null",
+   input:{"selectedIds":["HC-01"],"inputs":{},"costRows":[{"label":"SaaS only (no capex)","qty":1,"unitCost":12000,"yr0":0,"yr1":12000,"yr2":12000,"cadence":"annual"}],"contingencyRate":0,"wacc":0.1,"financeCredit":{"enabled":true,"rate":0.4},"dedup":[]},
+   expected:{"nrv":2833303,"mirr":null,"paybackMo":0,"bcr":45.8750275697,"peakAnnual":894134.076,"roi5":4488,"B0":1056000,"totalAnnOpex":17000,"capex":0,"y1net":471400,"y3net":877134.076,"y5net":822716.738763}
+  },
+  {
+   name:"F3_multi_lever_shared_pool", note:"4 labor levers in one dedup pool \u2014 shares replace per-lever haircuts",
+   input:{"selectedIds":["WH-01","WH-02","WH-06","RET-05"],"inputs":{},"costRows":[{"label":"Readers","qty":120,"unitCost":1200,"yr0":144000,"yr1":0,"yr2":0,"cadence":"one-time"},{"label":"SaaS","qty":20,"unitCost":4800,"yr0":0,"yr1":96000,"yr2":96000,"cadence":"annual"}],"contingencyRate":0.07,"wacc":0.1,"financeCredit":{"enabled":true,"rate":0.4},"dedup":[{"poolId":"dc_labor","label":"DC labor pool","rationale":"WH-01/02/06 and RET-05 all draw down the same DC hourly labor budget; summing them undeduplicated double-counts the same headcount.","members":[{"leverId":"WH-01","share":0.35},{"leverId":"WH-02","share":0.3},{"leverId":"WH-06","share":0.2},{"leverId":"RET-05","share":0.15}]}]},
+   expected:{"nrv":118457,"mirr":0.2473528611,"paybackMo":36,"bcr":1.2922027383,"peakAnnual":257447.914911,"roi5":29,"B0":667800,"totalAnnOpex":131816,"capex":154080,"y1net":-15476,"y3net":101276.196925,"y5net":125631.914911}
+  },
+  {
+   name:"F4_single_lever_min", note:"one lever, benchmark defaults, single cost row \u2014 smallest viable case",
+   input:{"selectedIds":["WH-01"],"inputs":{},"costRows":[{"label":"Handhelds","qty":10,"unitCost":1500,"yr0":15000,"yr1":0,"yr2":0,"cadence":"one-time"}],"contingencyRate":0,"wacc":0.1,"financeCredit":{"enabled":true,"rate":0.4},"dedup":[]},
+   expected:{"nrv":832779,"mirr":1.5125195798,"paybackMo":1,"bcr":21.484172691,"peakAnnual":270949.72,"roi5":2048,"B0":320000,"totalAnnOpex":8000,"capex":15000,"y1net":140000,"y3net":262949.72,"y5net":246459.617807}
+  }
+ ];
+
+// Runs one fixture through the REAL compute functions (no reimplemented math)
+// and returns the same field set the fixtures store.
+function _selftestCompute(input) {
+  const savedInputs   = state.inputs,   savedCostRows = costRows;
+  const savedCosts    = state.costs,    savedCont     = contingencyRate;
+  const savedDedup    = engagementDedup;
+  const savedFcOn     = financeCreditEnabled, savedFcRate = financeCreditRate;
+  try {
+    state.inputs = {};
+    SCENARIOS.forEach(sc => {
+      state.inputs[sc.id] = {};
+      Object.entries(sc.inputs).forEach(([k, v]) => { state.inputs[sc.id][k] = v.value; });
+    });
+    if (input.inputs) Object.entries(input.inputs).forEach(([scId, vals]) => {
+      if (!state.inputs[scId]) state.inputs[scId] = {};
+      Object.assign(state.inputs[scId], vals);
+    });
+    engagementDedup = Array.isArray(input.dedup) ? input.dedup : [];
+    validateDedup(engagementDedup);
+    const fc = input.financeCredit || { enabled: true, rate: 0.40 };
+    financeCreditEnabled = !!fc.enabled;
+    financeCreditRate    = (fc.rate != null) ? fc.rate : 0.40;
+    contingencyRate = (input.contingencyRate != null) ? input.contingencyRate : 0.07;
+    costRows = (input.costRows || []).map(r => Object.assign({}, r));
+    rebuildCostState();                       // real cost function, not a copy
+    const known  = new Set(SCENARIOS.map(s => s.id));
+    const unknown = (input.selectedIds || []).filter(id => !known.has(id));
+    if (unknown.length) throw new Error('unknown levers: ' + unknown.join(','));
+    const active = SCENARIOS.filter(s => (input.selectedIds || []).includes(s.id));
+    const r = calcNRV(active, state.costs, input.wacc != null ? input.wacc : 0.10);
+    const rd = (v, n) => (v === null || v === undefined) ? null : +(+v).toFixed(n);
+    return {
+      nrv: r.nrv, mirr: rd(r.mirr, 10), paybackMo: r.paybackMo, bcr: rd(r.bcr, 10),
+      peakAnnual: rd(r.peakAnnual, 6), roi5: r.roi5, B0: rd(r.B0, 6),
+      totalAnnOpex: rd(r.totalAnnOpex, 6), capex: r.capex,
+      y1net: rd(r.yearlyData[0].netCF, 6), y3net: rd(r.yearlyData[2].netCF, 6),
+      y5net: rd(r.yearlyData[4].netCF, 6)
+    };
+  } finally {
+    state.inputs = savedInputs; costRows = savedCostRows; state.costs = savedCosts;
+    contingencyRate = savedCont; engagementDedup = savedDedup;
+    financeCreditEnabled = savedFcOn; financeCreditRate = savedFcRate;
+  }
+}
+
+function runSelfTest() {
+  const rows = [];
+  let passN = 0, failN = 0, errN = 0;
+  SELFTEST_FIXTURES.forEach(fx => {
+    let actual = null, err = null;
+    try { actual = _selftestCompute(fx.input); }
+    catch (e) { err = e && e.message ? e.message : String(e); }
+    if (err) {
+      errN++;
+      rows.push({ fixture: fx.name, note: fx.note, error: err, fields: [] });
+      return;
+    }
+    const fields = Object.keys(fx.expected).map(k => {
+      const exp = fx.expected[k], got = actual[k];
+      const ok = (exp === null && got === null) || exp === got;
+      if (ok) passN++; else failN++;
+      return { field: k, expected: exp, actual: got, ok,
+               delta: (typeof exp === 'number' && typeof got === 'number') ? got - exp : null };
+    });
+    rows.push({ fixture: fx.name, note: fx.note, error: null, fields });
+  });
+  return { rows, passN, failN, errN };
+}
+
+function renderSelfTest() {
+  const res = runSelfTest();
+  const bad = res.failN > 0 || res.errN > 0;
+  const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const body = res.rows.map(r => {
+    if (r.error) return '<div style="margin:0 0 18px"><div style="font-weight:700;font-size:14px">'
+      + esc(r.fixture) + '</div><div style="color:#c8330e;font-family:monospace;font-size:12px;padding:6px 0">ERROR: '
+      + esc(r.error) + '</div></div>';
+    const fRows = r.fields.map(f =>
+      '<tr style="border-top:1px solid #eef0f3">'
+      + '<td style="padding:3px 10px;font-family:monospace;font-size:11.5px">' + esc(f.field) + '</td>'
+      + '<td style="padding:3px 10px;font-family:monospace;font-size:11.5px;text-align:right">' + esc(f.expected) + '</td>'
+      + '<td style="padding:3px 10px;font-family:monospace;font-size:11.5px;text-align:right">' + esc(f.actual) + '</td>'
+      + '<td style="padding:3px 10px;font-family:monospace;font-size:11.5px;text-align:right;color:'
+      + (f.ok ? '#2b8a3e' : '#c8330e') + ';font-weight:700">'
+      + (f.ok ? 'PASS' : 'FAIL' + (f.delta !== null ? ' (' + (f.delta >= 0 ? '+' : '') + f.delta + ')' : '')) + '</td></tr>').join('');
+    const nFail = r.fields.filter(f => !f.ok).length;
+    return '<div style="margin:0 0 22px">'
+      + '<div style="font-weight:700;font-size:14px">' + esc(r.fixture)
+      + ' <span style="font-weight:400;color:' + (nFail ? '#c8330e' : '#2b8a3e') + '">'
+      + (nFail ? nFail + ' field(s) failed' : 'all ' + r.fields.length + ' fields pass') + '</span></div>'
+      + '<div style="color:#666;font-size:11.5px;margin:2px 0 6px">' + esc(r.note) + '</div>'
+      + '<table style="width:100%;border-collapse:collapse;background:#fff">'
+      + '<thead><tr><th style="text-align:left;padding:4px 10px;font-size:10px;text-transform:uppercase;color:#888">Field</th>'
+      + '<th style="text-align:right;padding:4px 10px;font-size:10px;text-transform:uppercase;color:#888">Expected</th>'
+      + '<th style="text-align:right;padding:4px 10px;font-size:10px;text-transform:uppercase;color:#888">Actual</th>'
+      + '<th style="text-align:right;padding:4px 10px;font-size:10px;text-transform:uppercase;color:#888">Result</th></tr></thead>'
+      + '<tbody>' + fRows + '</tbody></table></div>';
+  }).join('');
+  document.body.innerHTML =
+    '<div style="max-width:900px;margin:0 auto;padding:32px 24px;font-family:system-ui,sans-serif">'
+    + '<div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#888;font-weight:700">Zebra Value Accelerator</div>'
+    + '<h1 style="font-size:26px;margin:8px 0 2px">Self-test</h1>'
+    + '<div style="font-size:13px;color:#666;margin-bottom:18px">'
+    + SELFTEST_FIXTURES.length + ' fixtures &middot; compute path: calcSc &rarr; rebuildCostState &rarr; calcNRV</div>'
+    + '<div style="padding:12px 16px;border-radius:6px;margin-bottom:24px;font-weight:700;font-size:15px;'
+    + (bad ? 'background:#fef0f0;border:1px solid #f5b8b8;color:#7a1500'
+           : 'background:#eefbf1;border:1px solid #a8dcb8;color:#1c6b32') + '">'
+    + (bad ? '&#9888; FAIL — ' + res.failN + ' field mismatch(es), ' + res.errN + ' error(s), ' + res.passN + ' passing'
+           : '&#10003; PASS — all ' + res.passN + ' field assertions match') + '</div>'
+    + body
+    + '<div style="margin-top:24px;padding-top:14px;border-top:1px solid #ddd;color:#888;font-size:11.5px;line-height:1.6">'
+    + 'Baselines captured after the PR-1 WACC fix. Do not edit expected values to silence a failure &mdash; '
+    + 'a mismatch is either a regression or an intended change that needs sign-off.</div></div>';
+  console.log('[selftest]', bad ? 'FAIL' : 'PASS', res);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  if (new URLSearchParams(location.search).get('selftest') === '1') { renderSelfTest(); return; }
   renderLeverGrid();
   selCount(); // fire on load so warning shows if defaults exceed 6
   // Init cost state from slider defaults (sliders have value= attrs so this works)
