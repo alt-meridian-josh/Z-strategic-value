@@ -4964,7 +4964,19 @@ function toggleIndustry(btn) {
 function setAllLevers(on) {
   if(on) {
     // Select all: check all scenarios for all active industries
-    matchScenarios().forEach(s => { if(!leverUnavailableReason(s.id)) state.selectedIds.add(s.id); });
+    const skipped = [];
+    matchScenarios().forEach(s => {
+      if (leverUnavailableReason(s.id)) return;
+      // Never select across an exclusive group — pick neither, prompt instead.
+      if (exclusiveGroupFor(s.id)) { skipped.push(s.id); return; }
+      state.selectedIds.add(s.id);
+    });
+    if (skipped.length) {
+      const gs = [...new Set(skipped.map(id => exclusiveGroupFor(id)))];
+      showLoadWarning(gs.map(g =>
+        'Not selected automatically: ' + g.members.join(' and ') + ' are mutually exclusive. '
+        + g.rationale + ' Pick the one that matches this customer.'));
+    }
   } else {
     // Clear all: deactivate all industry tiles except the first one,
     // clear all scenario selections, reset to single-industry clean state
@@ -5189,6 +5201,13 @@ function generateIntakeForm() {
 
 // Toggle a single lever / value case card on/off
 function toggleLever(id, el) {
+  const conflicts = state.selectedIds.has(id) ? [] : exclusiveConflictsFor(id);
+  if (conflicts.length) {
+    const g = exclusiveGroupFor(id);
+    showLoadWarning(id + ' and ' + conflicts.join(', ') + ' are mutually exclusive — '
+      + g.rationale + ' Deselect ' + conflicts.join(', ') + ' first if this customer is the other case.');
+    return;
+  }
   const why = leverUnavailableReason(id);
   if (why && !state.selectedIds.has(id)) {   // deselect stays possible if a file loaded it
     showLoadWarning(id + ' is not available for selection: ' + why + '.');
@@ -9023,6 +9042,18 @@ function validateRegistry() {
     }
   });
 
+  // mutually-exclusive groups must be well formed
+  const seenEx = {};
+  MUTUALLY_EXCLUSIVE.forEach(g => {
+    if (!g.rationale || !String(g.rationale).trim()) errors.push('Exclusive group ' + g.groupId + ': rationale required');
+    if (!Array.isArray(g.members) || g.members.length < 2) errors.push('Exclusive group ' + g.groupId + ': needs at least two members');
+    (g.members || []).forEach(m => {
+      if (!LIBRARY.leverById(m)) errors.push('Exclusive group ' + g.groupId + ': unknown lever ' + m);
+      if (seenEx[m]) errors.push('Lever ' + m + ' appears in more than one exclusive group');
+      seenEx[m] = true;
+    });
+  });
+
   // scale / basis enforcement (PR 7 amendment B')
   const sb = validateScaleBasis();
   sb.errors.forEach(e => errors.push(e));
@@ -9060,6 +9091,35 @@ const LIBRARY = {
   evidence:  EVIDENCE,
   leverById(id) { return this.levers.find(l => l.id === id) || null; },
 };
+
+// ── MUTUALLY EXCLUSIVE LEVER GROUPS (PR 7) ───────────────────────────────────
+// A general mechanism, not a special case. Distinct from a dedup pool:
+//   dedup pool  — two levers each own a SHARE of one asset. Correct when a
+//                 single customer really does realise both (a retailer with its
+//                 own DC has one data foundation serving both, so RET-09 and
+//                 WH-07 split it).
+//   exclusive   — the levers describe DIFFERENT BUYERS of the same asset. No
+//                 share split is truthful: CAR-08 is a parcel carrier's
+//                 sortation case, TL-03 is a freight operator's load-matching
+//                 case. 50/50 would be wrong in both directions.
+// "Select all" never picks across an exclusive group — it selects NEITHER and
+// prompts, so an operator who genuinely is both chooses deliberately.
+const MUTUALLY_EXCLUSIVE = [
+  { groupId: 'carrier_ai_foundation',
+    members: ['CAR-08','TL-03'],
+    rationale: 'Both monetise the same item-level location data through one Tier 2 citation '
+             + '(EV-CAR-AI-01), but address different buyers — parcel sortation vs freight load '
+             + 'matching. A single operator buys the data foundation once.' },
+];
+function exclusiveGroupFor(id) {
+  return MUTUALLY_EXCLUSIVE.find(g => g.members.includes(id)) || null;
+}
+// Members of the same exclusive group that are already selected, excluding `id`.
+function exclusiveConflictsFor(id) {
+  const g = exclusiveGroupFor(id);
+  if (!g) return [];
+  return g.members.filter(m => m !== id && state.selectedIds.has(m));
+}
 
 // ── LEVER STATUS (PR 5.1) ─────────────────────────────────────────────────────
 // Three distinct states, deliberately not collapsed into one:
