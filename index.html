@@ -5333,7 +5333,10 @@ function recalcCostRow(i) {
 function rebuildCostState() {
   let yr0Sub=0, yr1Sub=0, yr2Sub=0;
   costRows.forEach(r=>{ if(!r.contingency){ yr0Sub+=r.yr0||0; yr1Sub+=r.yr1||0; yr2Sub+=r.yr2||0; }});
-  const cont = Math.round(yr0Sub*contingencyRate);
+  // A non-numeric contingency rate previously turned the whole cost model NaN
+  // (yr0Sub*undefined -> NaN -> state.costs.yr0 NaN). Absent means 0% here.
+  const _cr = Number.isFinite(+contingencyRate) ? +contingencyRate : 0;
+  const cont = Math.round(yr0Sub*_cr);
   costRows.forEach(r=>{ if(r.contingency) r.yr0=cont; });
   state.costs = {yr0: yr0Sub+cont, yr1: yr1Sub, yr2: yr2Sub};
 }
@@ -5568,7 +5571,14 @@ function computeEngagement(st, opts) {
 
   const active = SCENARIOS.filter(s => st.selectedIds.has(s.id))
     .concat((st.customScenarios || []).filter(s => s.active));
-  const costs = st.costs || { yr0: 0, yr1: 0, yr2: 0 };
+  // A cost year that is blank/absent genuinely means "nothing is spent then", so
+  // it coalesces to 0 here — display and math then agree. This is ONLY valid for
+  // cost lines. Discovery inputs are deliberately NOT coalesced: a blank labour
+  // rate means "not discovered yet", not "$0/hr", and silently zeroing one makes
+  // a lever look legitimately weak instead of incomplete.
+  const zc = v => Number.isFinite(+v) ? +v : 0;
+  const rawCosts = st.costs || {};
+  const costs = { yr0: zc(rawCosts.yr0), yr1: zc(rawCosts.yr1), yr2: zc(rawCosts.yr2) };
   const r = calcNRV(active, costs, wacc, { financeRate, reinvestRate });
   const excluded = r.excludedLevers || [];
   const scored = active.filter(sc => !excluded.includes(sc.id));
@@ -9350,6 +9360,44 @@ const SELFTEST_FIXTURES = [
   }
  ];
 
+// ── FORMATTER STRING FIXTURES (PR 4.1) ───────────────────────────────────────
+// Golden strings for the single formatter, covering the modes each export path
+// uses. The load-bearing rows are the non-finite ones: before PR 4, several
+// paths rendered NaN as "$0" (they used `v||0`, and NaN is falsy), so a poisoned
+// engagement could ship looking like a weak-but-real case. A real zero and a
+// missing value must never format alike.
+const SELFTEST_FMT_FIXTURES = [
+  // plain — tables, prose, JSON, LLM prompt
+  { call:'money', v:0,          o:null,                  expected:'$0',          note:'real zero stays $0' },
+  { call:'money', v:1500000,    o:null,                  expected:'$1,500,000',  note:'plain thousands separators' },
+  { call:'money', v:-89697.6,   o:null,                  expected:'-$89,698',    note:'negative rounds and keeps sign' },
+  { call:'money', v:0.42,       o:null,                  expected:'$0.42',       note:'sub-dollar keeps cents' },
+  { call:'money', v:NaN,        o:null,                  expected:'—',           note:'NaN is NOT zero (was $0 in PPTX)' },
+  { call:'money', v:Infinity,   o:null,                  expected:'—',           note:'non-finite is NOT zero' },
+  { call:'money', v:null,       o:null,                  expected:'—',           note:'missing is NOT zero' },
+  { call:'money', v:undefined,  o:null,                  expected:'—',           note:'missing is NOT zero' },
+  // compact — chart axes, PPTX slides, PDF SVGs
+  { call:'money', v:1500000,    o:{compact:true},        expected:'$1.5M',       note:'1-decimal millions (PDF used 2)' },
+  { call:'money', v:1500000,    o:{compact:true,decimals:2}, expected:'$1.50M',  note:'decimals option reproduces old PDF form' },
+  { call:'money', v:250000,     o:{compact:true},        expected:'$250K',       note:'thousands suffix' },
+  { call:'money', v:-89697.6,   o:{compact:true},        expected:'-$90K',       note:'signed compact' },
+  { call:'money', v:-89697.6,   o:{compact:true,sign:false}, expected:'$90K',    note:'unsigned axis variant' },
+  { call:'money', v:0,          o:{compact:true},        expected:'$0',          note:'real zero on an axis' },
+  { call:'money', v:NaN,        o:{compact:true},        expected:'—',           note:'the PDF/PPTX plausible-zero bug' },
+  { call:'money', v:NaN,        o:{dash:'n/a'},          expected:'n/a',         note:'dash is configurable' },
+  // percent
+  { call:'pct',   v:0,          o:null,                  expected:'0%',          note:'real zero percent' },
+  { call:'pct',   v:0.42,       o:null,                  expected:'42%',         note:'whole percent' },
+  { call:'pct',   v:0.4237,     o:{decimals:1},          expected:'42.4%',       note:'decimals option' },
+  { call:'pct',   v:-0.0157659, o:{decimals:1},          expected:'-1.6%',       note:'negative MIRR, F1 fixture value' },
+  { call:'pct',   v:NaN,        o:null,                  expected:'—',           note:'was NaN% in PDF and 0% in PPTX' },
+  { call:'pct',   v:null,       o:null,                  expected:'—',           note:'missing is NOT zero percent' },
+];
+function _selftestFmt(fx) {
+  const f = fx.call === 'pct' ? fmtPct : fmtMoney;
+  return { out: fx.o ? f(fx.v, fx.o) : f(fx.v) };
+}
+
 // ── FORECAST-SIGNAL FIXTURES (PR 3) ───────────────────────────────────────────
 // Captured BEFORE the canonical-VERTICALS refactor so that refactor cannot move
 // forecast output without failing here. The map only decides which chip
@@ -9509,6 +9557,17 @@ function runSelfTest() {
       return { field: k, expected: norm(exp), actual: norm(got), ok, delta: null };
     });
     rows.push({ fixture: fx.name, note: fx.note, error: null, fields });
+  });
+  SELFTEST_FMT_FIXTURES.forEach((fx, i) => {
+    let actual = null, err = null;
+    try { actual = _selftestFmt(fx); }
+    catch (e) { err = e && e.message ? e.message : String(e); }
+    const label = 'FMT_' + fx.call + '_' + i + '(' + String(fx.v) + (fx.o ? ',' + JSON.stringify(fx.o) : '') + ')';
+    if (err) { errN++; rows.push({ fixture: label, note: fx.note, error: err, fields: [] }); return; }
+    const ok = actual.out === fx.expected;
+    if (ok) passN++; else failN++;
+    rows.push({ fixture: label, note: fx.note, error: null,
+      fields: [{ field: 'formatted', expected: fx.expected, actual: actual.out, ok, delta: null }] });
   });
   SELFTEST_FS_FIXTURES.forEach(fx => {
     let actual = null, err = null;
