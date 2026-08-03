@@ -2304,7 +2304,10 @@ function nrvSet(scId, field, val) {
 const SCENARIOS = [
 
 // == RETAIL (8 original + 1 new) ==========================================
-  { id:"RET-01", name:"Inventory Accuracy — Cycle Count Labor",
+  { id:"RET-01",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_count_cycles","hours_per_sku_manual","hours_per_sku_rfid","loaded_rate","total_sku_locations"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Inventory Accuracy — Cycle Count Labor",
     theme:"Labor & Human Capacity", verticalKey:"retail",
     facilityKeys:["Store / Branch"], techKeys:["RFID Core","Handheld RFID","Fixed RFID Infrastructure"],
     themeKeys:["Labor & Human Capacity"], evidence:"Strong", annualBenefit:312000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
@@ -2320,7 +2323,10 @@ const SCENARIOS = [
       annual_count_cycles:{label:"Annual Count Cycles",unit:"count",value:12,hint:"Monthly=12; Weekly=52"}
     }
   },
-  { id:"RET-02", name:"On-Shelf Availability — Stockout Recovery",
+  { id:"RET-02",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_store_revenue","gross_margin_pct","osa_improvement_pct","out_of_stock_baseline_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"On-Shelf Availability — Stockout Recovery",
     theme:"Revenue / Margin", verticalKey:"retail",
     facilityKeys:["Store / Branch"], techKeys:["RFID Core","Fixed RFID Infrastructure"],
     themeKeys:["Revenue / Margin","Operational Efficiency"], evidence:"Strong", annualBenefit:500000, rampType:"revenue", accessibilityTier:"configured", haircut:0.10,
@@ -2335,7 +2341,10 @@ const SCENARIOS = [
       gross_margin_pct:{label:"Gross Margin %",unit:"%",value:0.40,hint:"Apparel: 40–60%; use 40%"}
     }
   },
-  { id:"RET-03", name:"Shrink Reduction — Loss Prevention",
+  { id:"RET-03",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_store_revenue","shrink_pct_baseline","shrink_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Shrink Reduction — Loss Prevention",
     theme:"Direct Cost & Spend", verticalKey:"retail",
     facilityKeys:["Store / Branch"], techKeys:["RFID Core","Fixed RFID Infrastructure"],
     themeKeys:["Direct Cost & Spend"], evidence:"Strong", annualBenefit:350000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -2349,7 +2358,10 @@ const SCENARIOS = [
       shrink_reduction_pct:{label:"Shrink Reduction from RFID",unit:"%",value:0.20,hint:"NRF 2023: 20–40%; use 20%"}
     }
   },
-  { id:"RET-04", name:"Markdown Reduction — Better Sell-Through",
+  { id:"RET-04",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_markdown_spend","gm_recovery_pct","markdown_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Markdown Reduction — Better Sell-Through",
     theme:"Revenue / Margin", verticalKey:"retail",
     facilityKeys:["Store / Branch"], techKeys:["RFID Core"],
     themeKeys:["Revenue / Margin","Operational Efficiency"], evidence:"Medium-Strong", annualBenefit:150000, rampType:"revenue", accessibilityTier:"configured", haircut:0.10,
@@ -2363,7 +2375,10 @@ const SCENARIOS = [
       gm_recovery_pct:{label:"GM Recovery per Avoided Markdown",unit:"%",value:0.20,hint:"Accenture: 15–25 pts; use 20%"}
     }
   },
-  { id:"RET-05", name:"Receiving Accuracy & Labor",
+  { id:"RET-05",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_receiving_labor_hours","labor_reduction_pct","loaded_rate"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Receiving Accuracy & Labor",
     theme:"Labor & Human Capacity", verticalKey:"retail",
     facilityKeys:["Store / Branch","Warehouse / DC"], techKeys:["RFID Core","Fixed RFID Infrastructure"],
     themeKeys:["Labor & Human Capacity"], evidence:"Medium-Strong", annualBenefit:96000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
@@ -2377,7 +2392,10 @@ const SCENARIOS = [
       loaded_rate:{label:"Loaded Labor Rate ($/hr)",unit:"$/hr",value:24,hint:"BLS retail median + 30%"}
     }
   },
-  { id:"RET-06", name:"Associate Productivity — Recovered Hours",
+  { id:"RET-06",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["associates_per_store","hours_recovered_per_week","loaded_rate","num_stores","weeks_per_year"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Associate Productivity — Recovered Hours",
     theme:"Labor & Human Capacity", verticalKey:"retail",
     facilityKeys:["Store / Branch"], techKeys:["RFID Core","Handheld RFID"],
     themeKeys:["Labor & Human Capacity"], evidence:"Medium-Strong", annualBenefit:187200, rampType:"soft", accessibilityTier:"configured", haircut:0.10,
@@ -2393,7 +2411,10 @@ const SCENARIOS = [
       loaded_rate:{label:"Loaded Labor Rate ($/hr)",unit:"$/hr",value:24,hint:"BLS retail median + 30%"}
     }
   },
-  { id:"RET-07", name:"Omnichannel Fulfillment — BOPIS Accuracy",
+  { id:"RET-07",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_omni_orders","avg_order_value","cancellation_rate_baseline","cancellation_reduction_pct","gm_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Omnichannel Fulfillment — BOPIS Accuracy",
     theme:"Revenue / Margin", verticalKey:"retail",
     facilityKeys:["Store / Branch"], techKeys:["RFID Core","Fixed RFID Infrastructure"],
     themeKeys:["Revenue / Margin","Operational Efficiency"], evidence:"Strong", annualBenefit:162000, rampType:"working_cap", accessibilityTier:"configured", haircut:0.10,
@@ -2409,7 +2430,10 @@ const SCENARIOS = [
       gm_pct:{label:"Gross Margin %",unit:"%",value:0.40,hint:"Apparel: 40% conservative"}
     }
   },
-  { id:"RET-08", name:"Safety Stock Reduction — Carrying Cost",
+  { id:"RET-08",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["carrying_cost_pct","safety_stock_reduction_pct","total_inventory_value"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Safety Stock Reduction — Carrying Cost",
     theme:"Working Capital", verticalKey:"retail",
     facilityKeys:["Store / Branch","Warehouse / DC"], techKeys:["RFID Core"],
     themeKeys:["Working Capital","Operational Efficiency"], evidence:"Medium-Strong", annualBenefit:100000, rampType:"working_cap", accessibilityTier:"configured", haircut:0.10,
@@ -2424,7 +2448,10 @@ const SCENARIOS = [
     }
   },
   // WAREHOUSE
-  { id:"WH-01", name:"Cycle Count Labor — Perpetual DC Accuracy",
+  { id:"WH-01",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["count_cycles_per_year","loaded_rate","time_per_position_manual_min","time_per_position_rfid_sec","total_pallet_positions"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Cycle Count Labor — Perpetual DC Accuracy",
     theme:"Labor & Human Capacity", verticalKey:"warehouse",
     facilityKeys:["Warehouse / DC"], techKeys:["RFID Core","Fixed RFID Infrastructure"],
     themeKeys:["Labor & Human Capacity"], evidence:"Strong", annualBenefit:480000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
@@ -2440,7 +2467,10 @@ const SCENARIOS = [
       loaded_rate:{label:"Loaded Labor Rate ($/hr)",unit:"$/hr",value:24,hint:"DC warehouse rate"}
     }
   },
-  { id:"WH-02", name:"Receiving Throughput & Dock-to-Stock",
+  { id:"WH-02",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_inbound_pallets","hours_per_pallet_manual","hours_per_pallet_rfid","loaded_rate"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Receiving Throughput & Dock-to-Stock",
     theme:"Labor & Human Capacity", verticalKey:"warehouse",
     facilityKeys:["Warehouse / DC"], techKeys:["RFID Core","Fixed RFID Infrastructure"],
     themeKeys:["Labor & Human Capacity","Operational Efficiency"], evidence:"Strong", annualBenefit:210000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
@@ -2455,7 +2485,10 @@ const SCENARIOS = [
       loaded_rate:{label:"Loaded Labor Rate ($/hr)",unit:"$/hr",value:24,hint:"DC warehouse rate"}
     }
   },
-  { id:"WH-03", name:"Pick Accuracy & Returns Reduction",
+  { id:"WH-03",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_orders_picked","cost_per_error","error_rate_baseline_pct","error_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Pick Accuracy & Returns Reduction",
     theme:"Operational Efficiency", verticalKey:"warehouse",
     facilityKeys:["Warehouse / DC"], techKeys:["RFID Core","Handheld RFID"],
     themeKeys:["Operational Efficiency","Direct Cost & Spend"], evidence:"Medium-Strong", annualBenefit:160000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -2471,7 +2504,10 @@ const SCENARIOS = [
     }
   },
   // HEALTHCARE
-  { id:"HC-01", name:"Equipment Rental Reduction & Asset Utilization",
+  { id:"HC-01",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_rental_spend","loaded_nursing_rate","num_nursing_staff","nursing_search_hours_per_shift","rental_reduction_pct","shifts_per_year"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Equipment Rental Reduction & Asset Utilization",
     theme:"Direct Cost & Spend", verticalKey:"healthcare",
     facilityKeys:["Hospital / Clinic"], techKeys:["RFID Core","RTLS / Location"],
     themeKeys:["Direct Cost & Spend","Labor & Human Capacity"], evidence:"Strong", annualBenefit:325000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -2488,7 +2524,10 @@ const SCENARIOS = [
       loaded_nursing_rate:{label:"Loaded Nursing Rate ($/hr)",unit:"$/hr",value:48,hint:"Conservative: $48/hr loaded"}
     }
   },
-  { id:"HC-02", name:"Surgical Instrument Tracking — OR Throughput",
+  { id:"HC-02",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_or_cases","avg_delay_duration_hr","delay_reduction_pct","instrument_delay_rate_pct","or_delay_cost_per_hour"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Surgical Instrument Tracking — OR Throughput",
     theme:"Operational Efficiency", verticalKey:"healthcare",
     facilityKeys:["Hospital / Clinic"], techKeys:["RFID Core"],
     themeKeys:["Operational Efficiency","Regulatory & Compliance"], evidence:"Strong", annualBenefit:280000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -2505,7 +2544,10 @@ const SCENARIOS = [
     }
   },
   // GOVERNMENT
-  { id:"GOV-01", name:"Audit Readiness — Property NFR & CAP Reduction",
+  { id:"GOV-01",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_cap_consulting_spend","annual_nfrs_property_related","avg_remediation_hours_per_nfr","loaded_rate","nfr_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Audit Readiness — Property NFR & CAP Reduction",
     theme:"Regulatory & Compliance", verticalKey:"government",
     facilityKeys:["Government Facility","Depot / MRO"], techKeys:["RFID Core","Fixed RFID Infrastructure"],
     themeKeys:["Regulatory & Compliance"], evidence:"Strong", annualBenefit:1200000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -2522,7 +2564,10 @@ const SCENARIOS = [
     }
   },
   // MANUFACTURING
-  { id:"MTL-01", name:"Tool & Asset Loss Reduction",
+  { id:"MTL-01",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_loss_rate","tool_loss_reduction_pct","total_tool_value"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Tool & Asset Loss Reduction",
     theme:"Direct Cost & Spend", verticalKey:"manufacturing",
     facilityKeys:["Plant / Factory","Depot / MRO","Warehouse / DC"], techKeys:["RFID Core"],
     themeKeys:["Direct Cost & Spend","Labor & Human Capacity"], evidence:"Medium-Strong", annualBenefit:220000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -2537,7 +2582,10 @@ const SCENARIOS = [
     }
   },
   // CARRIERS
-  { id:"CAR-01", name:"Trailer Utilization & Yard Visibility",
+  { id:"CAR-01",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["operating_days","revenue_per_trailer_per_day","total_trailers","utilization_improvement_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Trailer Utilization & Yard Visibility",
     theme:"Operational Efficiency", verticalKey:"carriers",
     facilityKeys:["Terminal / Port","Warehouse / DC"], techKeys:["RFID Core","Fixed RFID Infrastructure"],
     themeKeys:["Operational Efficiency","Revenue / Margin"], evidence:"Medium-Strong", annualBenefit:380000, rampType:"revenue", accessibilityTier:"configured", haircut:0.10,
@@ -2553,7 +2601,10 @@ const SCENARIOS = [
     }
   },
   // TRANSPORT & LOGISTICS
-  { id:"TL-01", name:"Detention & Dwell Cost Reduction",
+  { id:"TL-01",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_loads","avg_excess_dwell_hrs","detention_rate_pct","detention_rate_per_hour","dwell_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Detention & Dwell Cost Reduction",
     theme:"Direct Cost & Spend", verticalKey:"carriers",
     facilityKeys:["Terminal / Port","Warehouse / DC","Depot / MRO"], techKeys:["RFID Core"],
     themeKeys:["Direct Cost & Spend","Operational Efficiency"], evidence:"Medium-Strong", annualBenefit:290000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -2571,7 +2622,10 @@ const SCENARIOS = [
   },
 
 // == WAREHOUSE (4 new additions) ==========================================
-  { id:"WH-04", name:"SLA Compliance — 3PL Chargeback Reduction",
+  { id:"WH-04",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_contracted_revenue","chargeback_rate_pct","chargeback_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"SLA Compliance — 3PL Chargeback Reduction",
     theme:"Revenue / Margin", verticalKey:"warehouse",
     facilityKeys:["Warehouse / DC"], themeKeys:["Revenue / Margin","Direct Cost & Spend"],
     annualBenefit:210000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -2585,7 +2639,10 @@ const SCENARIOS = [
       chargeback_reduction_pct:{label:"Reduction from RFID",unit:"%",value:0.60,hint:"Lower bound: 60%"}
     }
   },
-  { id:"WH-05", name:"Safety Stock Reduction — Carrying Cost Savings",
+  { id:"WH-05",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["carrying_cost_rate","safety_stock_pct","safety_stock_reduction_pct","total_inventory_value"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Safety Stock Reduction — Carrying Cost Savings",
     theme:"Working Capital", verticalKey:"warehouse",
     facilityKeys:["Warehouse / DC"], themeKeys:["Working Capital","Operational Efficiency"],
     annualBenefit:175000, rampType:"working_cap", accessibilityTier:"configured", haircut:0.10,
@@ -2600,7 +2657,10 @@ const SCENARIOS = [
       carrying_cost_rate:{label:"Annual Carrying Cost Rate",unit:"%",value:0.25,hint:"Industry: 20–30%; use 25%"}
     }
   },
-  { id:"WH-06", name:"Cross-Dock & Outbound Verification Labor",
+  { id:"WH-06",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["labor_reduction_pct","loaded_rate","outbound_labor_hours"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Cross-Dock & Outbound Verification Labor",
     theme:"Labor & Human Capacity", verticalKey:"warehouse",
     facilityKeys:["Warehouse / DC"], themeKeys:["Labor & Human Capacity"],
     annualBenefit:165000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
@@ -2616,7 +2676,10 @@ const SCENARIOS = [
   },
 
 // == HEALTHCARE (5 new additions) ========================================
-  { id:"HC-03", name:"Patient Flow — ED Length of Stay Reduction",
+  { id:"HC-03",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_ed_visits","avg_los_hrs","los_reduction_pct","net_revenue_per_visit"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Patient Flow — ED Length of Stay Reduction",
     theme:"Operational Efficiency", verticalKey:"healthcare",
     facilityKeys:["Hospital / Clinic"], themeKeys:["Operational Efficiency","Revenue / Margin"],
     annualBenefit:420000, rampType:"revenue", accessibilityTier:"configured", haircut:0.10,
@@ -2631,7 +2694,10 @@ const SCENARIOS = [
       net_revenue_per_visit:{label:"Net Revenue per ED Visit ($)",unit:"$",value:800,hint:"Varies by payer mix"}
     }
   },
-  { id:"HC-04", name:"Medication Tracking — Dispensing Error Reduction",
+  { id:"HC-04",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_admissions","avg_cost_per_error","error_rate_pct","error_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Medication Tracking — Dispensing Error Reduction",
     theme:"Regulatory & Compliance", verticalKey:"healthcare",
     facilityKeys:["Hospital / Clinic"], themeKeys:["Regulatory & Compliance","Direct Cost & Spend"],
     annualBenefit:280000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -2646,7 +2712,10 @@ const SCENARIOS = [
       error_reduction_pct:{label:"Reduction from RFID",unit:"%",value:0.25,hint:"Conservative: 25%"}
     }
   },
-  { id:"HC-05", name:"Joint Commission Audit — Compliance Labor Reduction",
+  { id:"HC-05",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_audit_prep_hours","labor_reduction_pct","loaded_rate"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Joint Commission Audit — Compliance Labor Reduction",
     theme:"Regulatory & Compliance", verticalKey:"healthcare",
     facilityKeys:["Hospital / Clinic"], themeKeys:["Regulatory & Compliance","Labor & Human Capacity"],
     annualBenefit:195000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
@@ -2660,7 +2729,10 @@ const SCENARIOS = [
       loaded_rate:{label:"Loaded Clinical Support Rate ($/hr)",unit:"$/hr",value:45,hint:"Clinical support avg"}
     }
   },
-  { id:"HC-06", name:"Supply Stockout & Expiry Reduction",
+  { id:"HC-06",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_expired_writeoffs","annual_stockout_cost","expiry_reduction_pct","stockout_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Supply Stockout & Expiry Reduction",
     theme:"Direct Cost & Spend", verticalKey:"healthcare",
     facilityKeys:["Hospital / Clinic"], themeKeys:["Direct Cost & Spend","Working Capital"],
     annualBenefit:160000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -2675,7 +2747,10 @@ const SCENARIOS = [
       stockout_reduction_pct:{label:"Stockout Reduction from RFID",unit:"%",value:0.20,hint:"Conservative: 20%"}
     }
   },
-  { id:"HC-07", name:"Controlled Substance Diversion Prevention",
+  { id:"HC-07",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_cs_writeoffs","annual_investigation_cost","loss_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Controlled Substance Diversion Prevention",
     theme:"Direct Cost & Spend", verticalKey:"healthcare",
     facilityKeys:["Hospital / Clinic"], themeKeys:["Direct Cost & Spend","Regulatory & Compliance"],
     annualBenefit:230000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -2691,7 +2766,10 @@ const SCENARIOS = [
   },
 
 // == GOVERNMENT (4 new additions) ========================================
-  { id:"GOV-02", name:"Annual Physical Inventory Labor Reduction",
+  { id:"GOV-02",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["audit_cycles_per_year","loaded_rate","manual_hours_per_1000","rfid_hours_per_1000","total_accountable_items"], declaredStatus:{status:"gated",reason:"benchmark defaults pending"}, scale:null, provenance:{}, name:"Annual Physical Inventory Labor Reduction",
     theme:"Labor & Human Capacity", verticalKey:"government",
     facilityKeys:["Government Facility","Depot / MRO"], themeKeys:["Labor & Human Capacity"],
     annualBenefit:480000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
@@ -2706,7 +2784,10 @@ const SCENARIOS = [
       loaded_rate:{label:"Loaded Labor Rate ($/hr)",unit:"$/hr",value:75,hint:"Federal civilian/contractor"}
     }
   },
-  { id:"GOV-03", name:"Ghost Asset Elimination — Procurement Avoidance",
+  { id:"GOV-03",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_equipment_budget","ghost_asset_pct","reutilization_recovery_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Ghost Asset Elimination — Procurement Avoidance",
     theme:"Operational Efficiency", verticalKey:"government",
     facilityKeys:["Government Facility","Depot / MRO"], themeKeys:["Operational Efficiency","Direct Cost & Spend"],
     annualBenefit:650000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -2720,7 +2801,10 @@ const SCENARIOS = [
       reutilization_recovery_pct:{label:"Procurement Avoidance from Reutilization",unit:"%",value:0.30,hint:"Conservative: 30% of found assets reutilized"}
     }
   },
-  { id:"GOV-04", name:"Property Accountability Staff Overhead Reduction",
+  { id:"GOV-04",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["loaded_rate","pct_time_manual_recon","property_ftes","reduction_from_rfid"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Property Accountability Staff Overhead Reduction",
     theme:"Labor & Human Capacity", verticalKey:"government",
     facilityKeys:["Government Facility","Depot / MRO"], themeKeys:["Labor & Human Capacity"],
     annualBenefit:320000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
@@ -2735,7 +2819,10 @@ const SCENARIOS = [
       loaded_rate:{label:"Loaded Rate ($/hr)",unit:"$/hr",value:75,hint:"Federal civilian/contractor"}
     }
   },
-  { id:"GOV-05", name:"Sensitive Item Loss Prevention",
+  { id:"GOV-05",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_flipl_count","annual_sensitive_item_losses","avg_flipl_cost","flipl_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Sensitive Item Loss Prevention",
     theme:"Direct Cost & Spend", verticalKey:"government",
     facilityKeys:["Government Facility","Depot / MRO"], themeKeys:["Direct Cost & Spend","Regulatory & Compliance"],
     annualBenefit:900000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -2752,7 +2839,10 @@ const SCENARIOS = [
   },
 
 // == MANUFACTURING (7 new additions) ====================================
-  { id:"MTL-02", name:"WIP Inventory — Cycle Time & Carrying Cost Reduction",
+  { id:"MTL-02",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["carrying_cost_rate","total_wip_value","wip_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"WIP Inventory — Cycle Time & Carrying Cost Reduction",
     theme:"Working Capital", verticalKey:"manufacturing",
     facilityKeys:["Plant / Factory"], themeKeys:["Working Capital","Operational Efficiency"],
     annualBenefit:380000, rampType:"working_cap", accessibilityTier:"configured", haircut:0.10,
@@ -2766,7 +2856,10 @@ const SCENARIOS = [
       carrying_cost_rate:{label:"Annual Carrying Cost Rate",unit:"%",value:0.25,hint:"Typical: 20–30%"}
     }
   },
-  { id:"MTL-03", name:"Compliance & Traceability Documentation Labor",
+  { id:"MTL-03",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["compliance_labor_hours","labor_reduction_pct","loaded_rate"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Compliance & Traceability Documentation Labor",
     theme:"Regulatory & Compliance", verticalKey:"manufacturing",
     facilityKeys:["Plant / Factory","Depot / MRO"], themeKeys:["Regulatory & Compliance","Labor & Human Capacity"],
     annualBenefit:290000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
@@ -2780,7 +2873,10 @@ const SCENARIOS = [
       loaded_rate:{label:"Loaded Compliance Staff Rate ($/hr)",unit:"$/hr",value:55,hint:"QA/engineering avg"}
     }
   },
-  { id:"MTL-04", name:"Recall Scope Reduction — Targeted Traceability",
+  { id:"MTL-04",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["cost_reduction_pct","expected_annual_recall_cost","scope_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Recall Scope Reduction — Targeted Traceability",
     theme:"Direct Cost & Spend", verticalKey:"manufacturing",
     facilityKeys:["Plant / Factory"], themeKeys:["Direct Cost & Spend","Regulatory & Compliance"],
     annualBenefit:500000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -2794,7 +2890,10 @@ const SCENARIOS = [
       cost_reduction_pct:{label:"Cost Reduction from Scope Reduction",unit:"%",value:0.60,hint:"Linear with scope reduction"}
     }
   },
-  { id:"MTL-05", name:"MRO Inventory Optimization — Carrying Cost Reduction",
+  { id:"MTL-05",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_emergency_procurement","carrying_cost_rate","emergency_reduction_pct","excess_reduction_pct","total_mro_value"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"MRO Inventory Optimization — Carrying Cost Reduction",
     theme:"Working Capital", verticalKey:"manufacturing",
     facilityKeys:["Plant / Factory","Depot / MRO"], themeKeys:["Working Capital","Direct Cost & Spend"],
     annualBenefit:245000, rampType:"working_cap", accessibilityTier:"configured", haircut:0.10,
@@ -2810,7 +2909,10 @@ const SCENARIOS = [
       emergency_reduction_pct:{label:"Emergency Procurement Reduction",unit:"%",value:0.30,hint:"Conservative: 30%"}
     }
   },
-  { id:"MTL-06", name:"Finished Goods Shipment Accuracy — Chargeback Reduction",
+  { id:"MTL-06",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_revenue","avg_error_cost","error_rate_pct","error_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Finished Goods Shipment Accuracy — Chargeback Reduction",
     theme:"Direct Cost & Spend", verticalKey:"manufacturing",
     facilityKeys:["Plant / Factory","Warehouse / DC"], themeKeys:["Direct Cost & Spend","Operational Efficiency"],
     annualBenefit:180000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -2825,7 +2927,10 @@ const SCENARIOS = [
       error_reduction_pct:{label:"Reduction from RFID",unit:"%",value:0.80,hint:"Conservative: 80%"}
     }
   },
-  { id:"MTL-07", name:"Asset & Fixture Tracking — Utilization & Procurement Avoidance",
+  { id:"MTL-07",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_replacement_rate","reduction_from_rfid","total_asset_value"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Asset & Fixture Tracking — Utilization & Procurement Avoidance",
     theme:"Operational Efficiency", verticalKey:"manufacturing",
     facilityKeys:["Plant / Factory","Depot / MRO"], themeKeys:["Operational Efficiency","Direct Cost & Spend"],
     annualBenefit:165000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -2841,7 +2946,10 @@ const SCENARIOS = [
   },
 
 // == CARRIERS & LOGISTICS (5 new additions) ==============================
-  { id:"CAR-02", name:"OS&D Claim Reduction — Load Verification Accuracy",
+  { id:"CAR-02",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_shipments","avg_claim_cost","claim_reduction_pct","osd_rate_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"OS&D Claim Reduction — Load Verification Accuracy",
     theme:"Direct Cost & Spend", verticalKey:"carriers",
     facilityKeys:["Terminal / Port","Warehouse / DC"], themeKeys:["Direct Cost & Spend","Operational Efficiency"],
     annualBenefit:210000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -2856,7 +2964,10 @@ const SCENARIOS = [
       claim_reduction_pct:{label:"Reduction from RFID",unit:"%",value:0.85,hint:"Conservative: 85%"}
     }
   },
-  { id:"CAR-03", name:"Hub Sortation Labor — Barcode to RFID Throughput",
+  { id:"CAR-03",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["efficiency_improvement_pct","hours_per_shift","loaded_rate","manual_divert_ftes","shifts_per_year"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Hub Sortation Labor — Barcode to RFID Throughput",
     theme:"Labor & Human Capacity", verticalKey:"carriers",
     facilityKeys:["Terminal / Port"], themeKeys:["Labor & Human Capacity","Operational Efficiency"],
     annualBenefit:320000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
@@ -2872,7 +2983,10 @@ const SCENARIOS = [
       efficiency_improvement_pct:{label:"FTE Reduction from RFID",unit:"%",value:0.30,hint:"Conservative: 30%"}
     }
   },
-  { id:"CAR-04", name:"Misroute Reduction — Package Recovery Cost Avoidance",
+  { id:"CAR-04",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_package_volume","cost_per_misroute","misroute_rate_pct","misroute_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Misroute Reduction — Package Recovery Cost Avoidance",
     theme:"Operational Efficiency", verticalKey:"carriers",
     facilityKeys:["Terminal / Port"], themeKeys:["Operational Efficiency","Direct Cost & Spend"],
     annualBenefit:195000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -2887,7 +3001,10 @@ const SCENARIOS = [
       misroute_reduction_pct:{label:"Reduction from RFID",unit:"%",value:0.60,hint:"Conservative: 60%"}
     }
   },
-  { id:"CAR-05", name:"Trailer Search Time & Yard Labor Elimination",
+  { id:"CAR-05",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_hours_per_fte","loaded_rate","pct_time_searching","search_reduction_pct","yard_jockeys"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Trailer Search Time & Yard Labor Elimination",
     theme:"Labor & Human Capacity", verticalKey:"carriers",
     facilityKeys:["Terminal / Port","Warehouse / DC"], themeKeys:["Labor & Human Capacity","Operational Efficiency"],
     annualBenefit:145000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
@@ -2905,7 +3022,10 @@ const SCENARIOS = [
   },
 
 // == AVIATION / MRO (7 new scenarios) ====================================
-  { id:"AVN-01", name:"Baggage Mishandling Reduction — Claims & Re-delivery",
+  { id:"AVN-01",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_passengers","avg_cost_per_incident","mishandle_rate_per_1k","mishandle_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Baggage Mishandling Reduction — Claims & Re-delivery",
     theme:"Direct Cost & Spend", verticalKey:"aviation",
     facilityKeys:["Terminal / Port","Warehouse / DC"], themeKeys:["Direct Cost & Spend","Operational Efficiency"],
     annualBenefit:480000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -2920,7 +3040,10 @@ const SCENARIOS = [
       mishandle_reduction_pct:{label:"Reduction from RFID",unit:"%",value:0.22,hint:"Conservative: 22%"}
     }
   },
-  { id:"AVN-02", name:"MRO Tool Control — Search Time & FOD Risk Reduction",
+  { id:"AVN-02",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["avg_search_duration_hrs","monthly_tool_search_events","search_reduction_pct","technician_rate"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"MRO Tool Control — Search Time & FOD Risk Reduction",
     theme:"Labor & Human Capacity", verticalKey:"aviation",
     facilityKeys:["Terminal / Port","Depot / MRO"], themeKeys:["Labor & Human Capacity","Direct Cost & Spend"],
     annualBenefit:310000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
@@ -2935,7 +3058,10 @@ const SCENARIOS = [
       search_reduction_pct:{label:"Search Event Reduction from RFID",unit:"%",value:0.75,hint:"Conservative: 75%"}
     }
   },
-  { id:"AVN-03", name:"MRO Turnaround Time — Aircraft Utilization Improvement",
+  { id:"AVN-03",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_aircraft_through","avg_tat_days","daily_aog_cost","tat_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"MRO Turnaround Time — Aircraft Utilization Improvement",
     theme:"Revenue / Margin", verticalKey:"aviation",
     facilityKeys:["Terminal / Port","Depot / MRO"], themeKeys:["Revenue / Margin","Operational Efficiency"],
     annualBenefit:520000, rampType:"revenue", accessibilityTier:"configured", haircut:0.10,
@@ -2950,7 +3076,10 @@ const SCENARIOS = [
       daily_aog_cost:{label:"Cost per AOG Day ($)",unit:"$",value:50000,hint:"Lease + lost revenue: $30K–$150K"}
     }
   },
-  { id:"AVN-04", name:"Component Traceability — Compliance Labor & Grounding Risk",
+  { id:"AVN-04",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_compliance_hours","annual_grounding_events","avg_grounding_cost","labor_reduction_pct","loaded_rate"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Component Traceability — Compliance Labor & Grounding Risk",
     theme:"Regulatory & Compliance", verticalKey:"aviation",
     facilityKeys:["Terminal / Port","Depot / MRO"], themeKeys:["Regulatory & Compliance","Labor & Human Capacity"],
     annualBenefit:275000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
@@ -2966,7 +3095,10 @@ const SCENARIOS = [
       avg_grounding_cost:{label:"Avg Grounding Event Cost ($)",unit:"$",value:25000,hint:"Re-inspection + delays"}
     }
   },
-  { id:"AVN-05", name:"Safety Equipment Inspection Labor Reduction",
+  { id:"AVN-05",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["fleet_size","inspection_hours_manual","inspection_hours_rfid","inspections_per_year","loaded_rate"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Safety Equipment Inspection Labor Reduction",
     theme:"Labor & Human Capacity", verticalKey:"aviation",
     facilityKeys:["Terminal / Port","Depot / MRO"], themeKeys:["Labor & Human Capacity","Regulatory & Compliance"],
     annualBenefit:185000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
@@ -2982,7 +3114,10 @@ const SCENARIOS = [
       loaded_rate:{label:"Loaded Technician Rate ($/hr)",unit:"$/hr",value:60,hint:"Aviation tech avg"}
     }
   },
-  { id:"AVN-06", name:"Boarding Time Reduction — Passenger Throughput",
+  { id:"AVN-06",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_rebooking_spend","reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Boarding Time Reduction — Passenger Throughput",
     theme:"Operational Efficiency", verticalKey:"aviation",
     facilityKeys:["Terminal / Port"], themeKeys:["Operational Efficiency","Revenue / Margin"],
     annualBenefit:220000, rampType:"revenue", accessibilityTier:"configured", haircut:0.10,
@@ -2997,7 +3132,10 @@ const SCENARIOS = [
   },
 
 // == HOSPITALITY (vertical: "hospitality" — new) =========================
-  { id:"HOS-01", name:"Linen Lifecycle — Loss Reduction & Laundry Efficiency",
+  { id:"HOS-01",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_linen_spend","laundry_cost_annual","laundry_efficiency_gain","loss_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Linen Lifecycle — Loss Reduction & Laundry Efficiency",
     theme:"Direct Cost & Spend", verticalKey:"hospitality",
     facilityKeys:["Store / Branch"], themeKeys:["Direct Cost & Spend","Operational Efficiency"],
     annualBenefit:195000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -3012,7 +3150,10 @@ const SCENARIOS = [
       laundry_efficiency_gain:{label:"Laundry Efficiency Improvement",unit:"%",value:0.10,hint:"Conservative: 10%"}
     }
   },
-  { id:"HOS-02", name:"F&B Inventory — Counting Labor & Shrink Control",
+  { id:"HOS-02",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_fb_shrink","counting_labor_hours","labor_reduction_pct","loaded_rate","shrink_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"F&B Inventory — Counting Labor & Shrink Control",
     theme:"Labor & Human Capacity", verticalKey:"hospitality",
     facilityKeys:["Store / Branch"], themeKeys:["Labor & Human Capacity","Direct Cost & Spend"],
     annualBenefit:145000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
@@ -3030,7 +3171,10 @@ const SCENARIOS = [
   },
 
 // == DATA CENTER (vertical: "datacenter" — new) ==========================
-  { id:"DC-01", name:"Physical Audit Acceleration — CMDB Accuracy",
+  { id:"DC-01",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["audit_cycles_per_year","loaded_rate","manual_hours_per_1000","rfid_hours_per_1000","total_assets"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Physical Audit Acceleration — CMDB Accuracy",
     theme:"Operational Efficiency", verticalKey:"datacenter",
     facilityKeys:["Warehouse / DC"], themeKeys:["Operational Efficiency","Labor & Human Capacity"],
     annualBenefit:280000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
@@ -3046,7 +3190,10 @@ const SCENARIOS = [
       loaded_rate:{label:"Loaded IT Ops Rate ($/hr)",unit:"$/hr",value:75,hint:"IT ops + 30%"}
     }
   },
-  { id:"DC-02", name:"Stranded Asset Recovery — Capital Deferral",
+  { id:"DC-02",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_it_capex","reutilization_pct","stranded_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Stranded Asset Recovery — Capital Deferral",
     theme:"Operational Efficiency", verticalKey:"datacenter",
     facilityKeys:["Warehouse / DC"], themeKeys:["Operational Efficiency","Direct Cost & Spend"],
     annualBenefit:350000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -3062,7 +3209,10 @@ const SCENARIOS = [
   },
 
 // == ENERGY / INDUSTRIAL (vertical: "energy" — new) ======================
-  { id:"IE-01", name:"Tool, Vehicle & Equipment Tracking — Search & Loss",
+  { id:"IE-01",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_loss_rate","annual_rental_overage","loss_reduction_pct","rental_reduction_pct","total_tool_value"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Tool, Vehicle & Equipment Tracking — Search & Loss",
     theme:"Direct Cost & Spend", verticalKey:"energy",
     facilityKeys:["Plant / Factory","Depot / MRO","Warehouse / DC"], themeKeys:["Direct Cost & Spend","Labor & Human Capacity"],
     annualBenefit:380000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -3078,7 +3228,10 @@ const SCENARIOS = [
       rental_reduction_pct:{label:"Rental Reduction from RFID",unit:"%",value:0.20,hint:"Conservative: 20%"}
     }
   },
-  { id:"IE-02", name:"PPE Compliance & Safety Audit Automation",
+  { id:"IE-02",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_hse_labor_hours","annual_osha_fines","fine_reduction_pct","labor_reduction_pct","loaded_rate"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"PPE Compliance & Safety Audit Automation",
     theme:"Regulatory & Compliance", verticalKey:"energy",
     facilityKeys:["Plant / Factory","Depot / MRO"], themeKeys:["Regulatory & Compliance","Labor & Human Capacity"],
     annualBenefit:220000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -3094,7 +3247,10 @@ const SCENARIOS = [
       loaded_rate:{label:"Loaded HSE Rate ($/hr)",unit:"$/hr",value:60,hint:"HSE specialist avg"}
     }
   },
-  { id:"IE-03", name:"MRO Spare Parts — Carrying Cost & NPT Reduction",
+  { id:"IE-03",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_npt_events","avg_npt_cost","carrying_cost_rate","excess_reduction_pct","total_mro_value"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"MRO Spare Parts — Carrying Cost & NPT Reduction",
     theme:"Working Capital", verticalKey:"energy",
     facilityKeys:["Plant / Factory","Depot / MRO"], themeKeys:["Working Capital","Direct Cost & Spend"],
     annualBenefit:420000, rampType:"working_cap", accessibilityTier:"configured", haircut:0.10,
@@ -3112,7 +3268,10 @@ const SCENARIOS = [
   },
 
 // == FOOD SERVICE / CPG (vertical: "foodservice" — new) ==================
-  { id:"FS-01", name:"Food Waste Reduction — FEFO Management",
+  { id:"FS-01",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_food_spend","waste_rate_pct","waste_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Food Waste Reduction — FEFO Management",
     theme:"Direct Cost & Spend", verticalKey:"foodservice",
     facilityKeys:["Warehouse / DC","Store / Branch"], themeKeys:["Direct Cost & Spend","Operational Efficiency"],
     annualBenefit:240000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -3126,7 +3285,10 @@ const SCENARIOS = [
       waste_reduction_pct:{label:"Waste Reduction from RFID FEFO",unit:"%",value:0.25,hint:"Conservative: 25%"}
     }
   },
-  { id:"FS-02", name:"Food Recall Traceability — Scope & Response Time",
+  { id:"FS-02",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["cost_reduction_pct","expected_recall_cost","scope_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Food Recall Traceability — Scope & Response Time",
     theme:"Regulatory & Compliance", verticalKey:"foodservice",
     facilityKeys:["Warehouse / DC"], themeKeys:["Regulatory & Compliance","Direct Cost & Spend"],
     annualBenefit:500000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -3140,7 +3302,10 @@ const SCENARIOS = [
       cost_reduction_pct:{label:"Cost Reduction from Scope Reduction",unit:"%",value:0.65,hint:"Linear with scope"}
     }
   },
-  { id:"FS-03", name:"Cold Chain Compliance — Spoilage & HACCP Documentation",
+  { id:"FS-03",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_haccp_labor_hours","annual_spoilage_cost","labor_reduction_pct","loaded_rate","spoilage_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Cold Chain Compliance — Spoilage & HACCP Documentation",
     theme:"Regulatory & Compliance", verticalKey:"foodservice",
     facilityKeys:["Warehouse / DC"], themeKeys:["Regulatory & Compliance","Direct Cost & Spend"],
     annualBenefit:185000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -3160,7 +3325,10 @@ const SCENARIOS = [
 // == REMAINING ENGINE SCENARIOS — filling to 84 ===========================
 
   // RETAIL
-  { id:"RET-09", name:"RFID Data Foundation for Retail AI & Analytics",
+  { id:"RET-09",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_analytics_budget","data_quality_uplift_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"RFID Data Foundation for Retail AI & Analytics",
     theme:"Strategic / AI / Data", verticalKey:"retail",
     facilityKeys:["Store / Branch"], themeKeys:["Strategic / AI / Data","Operational Efficiency"],
     annualBenefit:120000, rampType:"strategic", accessibilityTier:"infrastructure", haircut:0.10,
@@ -3173,7 +3341,10 @@ const SCENARIOS = [
       data_quality_uplift_pct:{label:"Analytics Effectiveness Improvement",unit:"%",value:0.15,hint:"Conservative: 15% improvement in model accuracy"}
     }
   },
-  { id:"RET-10", name:"Vendor Chargeback & Compliance",
+  { id:"RET-10",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_chargeback_exposure","chargeback_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Vendor Chargeback & Compliance",
     theme:"Direct Cost & Spend", verticalKey:"retail",
     facilityKeys:["Store / Branch","Warehouse / DC"], techKeys:["RFID Core","Fixed RFID Infrastructure"],
     themeKeys:["Direct Cost & Spend"], evidence:"Medium-Strong", annualBenefit:90000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -3186,7 +3357,10 @@ const SCENARIOS = [
       chargeback_reduction_pct:{label:"Chargeback Reduction from RFID",unit:"%",value:0.25,hint:"Auburn Project Zipper: conservative 20–40%; use 25%"}
     }
   },
-  { id:"RET-11", name:"Asset Protection — Investigation Labor",
+  { id:"RET-11",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_ap_investigation_cost","reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Asset Protection — Investigation Labor",
     theme:"Labor & Human Capacity", verticalKey:"retail",
     facilityKeys:["Store / Branch"], techKeys:["RFID Core","Fixed RFID Infrastructure"],
     themeKeys:["Labor & Human Capacity","Direct Cost & Spend"], evidence:"Medium", annualBenefit:60000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
@@ -3201,7 +3375,10 @@ const SCENARIOS = [
   },
 
   // WAREHOUSE
-  { id:"WH-07", name:"RFID Data Foundation for Warehouse AI & Automation",
+  { id:"WH-07",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_automation_spend","rfid_uplift_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"RFID Data Foundation for Warehouse AI & Automation",
     theme:"Strategic / AI / Data", verticalKey:"warehouse",
     facilityKeys:["Warehouse / DC"], themeKeys:["Strategic / AI / Data","Operational Efficiency"],
     annualBenefit:140000, rampType:"strategic", accessibilityTier:"infrastructure", haircut:0.10,
@@ -3216,7 +3393,10 @@ const SCENARIOS = [
   },
 
   // HEALTHCARE
-  { id:"HC-08", name:"RFID Data Foundation for Healthcare AI & Predictive Ops",
+  { id:"HC-08",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_ai_investment","rfid_uplift_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"RFID Data Foundation for Healthcare AI & Predictive Ops",
     theme:"Strategic / AI / Data", verticalKey:"healthcare",
     facilityKeys:["Hospital / Clinic"], themeKeys:["Strategic / AI / Data","Operational Efficiency"],
     annualBenefit:160000, rampType:"strategic", accessibilityTier:"infrastructure", haircut:0.10,
@@ -3231,7 +3411,10 @@ const SCENARIOS = [
   },
 
   // GOVERNMENT
-  { id:"GOV-06", name:"Excess & Redundant Procurement Reduction",
+  { id:"GOV-06",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_procurement_budget","avoidance_from_rfid","duplicate_procurement_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Excess & Redundant Procurement Reduction",
     theme:"Operational Efficiency", verticalKey:"government",
     facilityKeys:["Government Facility","Depot / MRO"], themeKeys:["Operational Efficiency","Direct Cost & Spend"],
     annualBenefit:750000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -3247,7 +3430,10 @@ const SCENARIOS = [
   },
 
   // MANUFACTURING — AI
-  { id:"MTL-08", name:"RFID Data Foundation for Manufacturing AI & Digital Twin",
+  { id:"MTL-08",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_industry40_investment","rfid_uplift_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"RFID Data Foundation for Manufacturing AI & Digital Twin",
     theme:"Strategic / AI / Data", verticalKey:"manufacturing",
     facilityKeys:["Plant / Factory"], themeKeys:["Strategic / AI / Data","Operational Efficiency"],
     annualBenefit:180000, rampType:"strategic", accessibilityTier:"infrastructure", haircut:0.10,
@@ -3262,7 +3448,10 @@ const SCENARIOS = [
   },
 
   // HOSPITALITY — remaining 4
-  { id:"HOS-03", name:"Guest Experience & Cashless Revenue — RFID Wristbands",
+  { id:"HOS-03",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_visitors","current_ancillary_per_cap","spend_uplift_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Guest Experience & Cashless Revenue — RFID Wristbands",
     theme:"Revenue / Margin", verticalKey:"hospitality",
     facilityKeys:["Store / Branch"], themeKeys:["Revenue / Margin","Operational Efficiency"],
     annualBenefit:320000, rampType:"revenue", accessibilityTier:"configured", haircut:0.10,
@@ -3276,7 +3465,10 @@ const SCENARIOS = [
       spend_uplift_pct:{label:"Ancillary Spend Uplift from RFID",unit:"%",value:0.12,hint:"Conservative: 12%"}
     }
   },
-  { id:"HOS-04", name:"Event & Venue Asset Management — Loss & Overtime",
+  { id:"HOS-04",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_asset_replacement","annual_setup_overtime","loss_reduction_pct","overtime_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Event & Venue Asset Management — Loss & Overtime",
     theme:"Direct Cost & Spend", verticalKey:"hospitality",
     facilityKeys:["Store / Branch"], themeKeys:["Direct Cost & Spend","Labor & Human Capacity"],
     annualBenefit:155000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -3291,7 +3483,10 @@ const SCENARIOS = [
       overtime_reduction_pct:{label:"Overtime Reduction from RFID",unit:"%",value:0.20,hint:"Conservative: 20%"}
     }
   },
-  { id:"HOS-05", name:"Security & Access Control — Unauthorized Entry Reduction",
+  { id:"HOS-05",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_gate_revenue","reduction_from_rfid","security_efficiency_gain","security_labor_annual","unauthorized_entry_rate"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Security & Access Control — Unauthorized Entry Reduction",
     theme:"Regulatory & Compliance", verticalKey:"hospitality",
     facilityKeys:["Store / Branch"], themeKeys:["Regulatory & Compliance","Labor & Human Capacity"],
     annualBenefit:120000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -3307,7 +3502,10 @@ const SCENARIOS = [
       security_efficiency_gain:{label:"Security Labor Efficiency Gain",unit:"%",value:0.12,hint:"Conservative: 12%"}
     }
   },
-  { id:"HOS-06", name:"Hospitality AI & Guest Personalization Data Foundation",
+  { id:"HOS-06",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_guest_tech_investment","rfid_uplift_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Hospitality AI & Guest Personalization Data Foundation",
     theme:"Strategic / AI / Data", verticalKey:"hospitality",
     facilityKeys:["Store / Branch"], themeKeys:["Strategic / AI / Data","Operational Efficiency"],
     annualBenefit:100000, rampType:"strategic", accessibilityTier:"infrastructure", haircut:0.10,
@@ -3322,7 +3520,10 @@ const SCENARIOS = [
   },
 
   // DATA CENTER — remaining 5
-  { id:"DC-03", name:"Stranded Asset Recovery — Capital Deferral & Capacity",
+  { id:"DC-03",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_it_capex","reutilization_pct","stranded_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Stranded Asset Recovery — Capital Deferral & Capacity",
     theme:"Operational Efficiency", verticalKey:"datacenter",
     facilityKeys:["Warehouse / DC"], themeKeys:["Operational Efficiency","Direct Cost & Spend"],
     annualBenefit:350000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -3336,7 +3537,10 @@ const SCENARIOS = [
       reutilization_pct:{label:"% Reutilized After Discovery",unit:"%",value:0.35,hint:"Conservative: 35%"}
     }
   },
-  { id:"DC-04", name:"Compliance Audit Burden — SOC2, PCI, ISO 27001",
+  { id:"DC-04",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_assessor_fees","annual_audit_prep_hours","assessor_fee_reduction","labor_reduction_pct","loaded_rate"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Compliance Audit Burden — SOC2, PCI, ISO 27001",
     theme:"Regulatory & Compliance", verticalKey:"datacenter",
     facilityKeys:["Warehouse / DC"], themeKeys:["Regulatory & Compliance","Labor & Human Capacity"],
     annualBenefit:195000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
@@ -3352,7 +3556,10 @@ const SCENARIOS = [
       assessor_fee_reduction:{label:"Assessor Fee Reduction from Self-Service Evidence",unit:"%",value:0.15,hint:"Conservative: 15%"}
     }
   },
-  { id:"DC-05", name:"Asset Loss & Data Security Risk Reduction",
+  { id:"DC-05",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_device_loss_events","annual_investigation_labor","avg_cost_per_loss","loss_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Asset Loss & Data Security Risk Reduction",
     theme:"Direct Cost & Spend", verticalKey:"datacenter",
     facilityKeys:["Warehouse / DC"], themeKeys:["Direct Cost & Spend","Regulatory & Compliance"],
     annualBenefit:280000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -3367,7 +3574,10 @@ const SCENARIOS = [
       annual_investigation_labor:{label:"Annual Investigation Labor ($)",unit:"$",value:100000,hint:"IT security + HR + legal"}
     }
   },
-  { id:"DC-06", name:"Incident Response — Asset Locate Time & MTTR Reduction",
+  { id:"DC-06",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_hardware_incidents","avg_locate_time_hrs","cost_per_incident_hr","locate_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Incident Response — Asset Locate Time & MTTR Reduction",
     theme:"Operational Efficiency", verticalKey:"datacenter",
     facilityKeys:["Warehouse / DC"], themeKeys:["Operational Efficiency","Labor & Human Capacity"],
     annualBenefit:140000, rampType:"soft", accessibilityTier:"configured", haircut:0.10,
@@ -3382,7 +3592,10 @@ const SCENARIOS = [
       cost_per_incident_hr:{label:"Cost per Incident Hour ($)",unit:"$",value:5000,hint:"Downtime + labor + SLA risk"}
     }
   },
-  { id:"DC-07", name:"RFID Data Foundation for DCIM & Capacity Planning",
+  { id:"DC-07",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_dcim_investment","rfid_uplift_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"RFID Data Foundation for DCIM & Capacity Planning",
     theme:"Strategic / AI / Data", verticalKey:"datacenter",
     facilityKeys:["Warehouse / DC"], themeKeys:["Strategic / AI / Data","Operational Efficiency"],
     annualBenefit:120000, rampType:"strategic", accessibilityTier:"infrastructure", haircut:0.10,
@@ -3397,7 +3610,10 @@ const SCENARIOS = [
   },
 
   // CARRIERS — remaining 3
-  { id:"CAR-06", name:"Last-Mile Visibility — WISMO Contact Deflection",
+  { id:"CAR-06",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_wismo_contacts","cost_per_contact","wismo_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Last-Mile Visibility — WISMO Contact Deflection",
     theme:"Operational Efficiency", verticalKey:"carriers",
     facilityKeys:["Terminal / Port"], themeKeys:["Operational Efficiency","Direct Cost & Spend"],
     annualBenefit:175000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -3411,7 +3627,10 @@ const SCENARIOS = [
       wismo_reduction_pct:{label:"Reduction from RFID Real-Time Visibility",unit:"%",value:0.20,hint:"Conservative: 20%"}
     }
   },
-  { id:"CAR-07", name:"Regulated Mail & High-Value Parcel Compliance",
+  { id:"CAR-07",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["compliance_labor_hours","labor_reduction_pct","loaded_rate"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Regulated Mail & High-Value Parcel Compliance",
     theme:"Regulatory & Compliance", verticalKey:"carriers",
     facilityKeys:["Terminal / Port"], themeKeys:["Regulatory & Compliance","Labor & Human Capacity"],
     annualBenefit:145000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
@@ -3426,7 +3645,10 @@ const SCENARIOS = [
       loaded_rate:{label:"Loaded Compliance Rate ($/hr)",unit:"$/hr",value:28,hint:"Postal/carrier ops avg"}
     }
   },
-  { id:"CAR-08", name:"RFID Data Foundation for Carrier AI & Network Optimization",
+  { id:"CAR-08",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_network_opt_investment","rfid_uplift_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"RFID Data Foundation for Carrier AI & Network Optimization",
     theme:"Strategic / AI / Data", verticalKey:"carriers",
     facilityKeys:["Terminal / Port"], themeKeys:["Strategic / AI / Data","Operational Efficiency"],
     annualBenefit:130000, rampType:"strategic", accessibilityTier:"infrastructure", haircut:0.10,
@@ -3441,7 +3663,10 @@ const SCENARIOS = [
   },
 
   // TRANSPORT & LOGISTICS — remaining 2
-  { id:"TL-02", name:"Routing Guide Compliance — Shipper-Side Visibility",
+  { id:"TL-02",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_routing_chargebacks","chargeback_reduction_pct","compliance_labor_hours","labor_reduction_pct","loaded_rate"], declaredStatus:{status:"gated",reason:"benchmark defaults pending"}, scale:null, provenance:{}, name:"Routing Guide Compliance — Shipper-Side Visibility",
     theme:"Regulatory & Compliance", verticalKey:"carriers",
     facilityKeys:["Terminal / Port","Warehouse / DC"], themeKeys:["Regulatory & Compliance","Direct Cost & Spend"],
     annualBenefit:185000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -3456,7 +3681,10 @@ const SCENARIOS = [
       loaded_rate:{label:"Loaded Ops Rate ($/hr)",unit:"$/hr",value:35,hint:"Transport ops avg"}
     }
   },
-  { id:"TL-03", name:"RFID Data Foundation for Logistics AI & Network Optimization",
+  { id:"TL-03",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_logistics_tech_investment","rfid_uplift_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"RFID Data Foundation for Logistics AI & Network Optimization",
     theme:"Strategic / AI / Data", verticalKey:"carriers",
     facilityKeys:["Terminal / Port","Warehouse / DC"], themeKeys:["Strategic / AI / Data","Operational Efficiency"],
     annualBenefit:140000, rampType:"strategic", accessibilityTier:"infrastructure", haircut:0.10,
@@ -3471,7 +3699,10 @@ const SCENARIOS = [
   },
 
   // ENERGY / INDUSTRIAL — remaining 4
-  { id:"IE-04", name:"Oil & Gas Field Materials Management — Shrink & NPT",
+  { id:"IE-04",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_npt_events","avg_npt_duration","field_material_value","npt_cost_per_hr","shrink_rate_pct","shrink_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Oil & Gas Field Materials Management — Shrink & NPT",
     theme:"Direct Cost & Spend", verticalKey:"energy",
     facilityKeys:["Plant / Factory","Depot / MRO"], themeKeys:["Direct Cost & Spend","Labor & Human Capacity"],
     annualBenefit:480000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -3488,7 +3719,10 @@ const SCENARIOS = [
       avg_npt_duration:{label:"Avg NPT Event Duration (hrs)",unit:"hrs",value:4,hint:"Conservative: 4 hrs"}
     }
   },
-  { id:"IE-05", name:"Asset Integrity Inspection — Documentation & Compliance",
+  { id:"IE-05",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_compliance_exceptions","annual_inspection_labor_hours","avg_exception_cost","labor_reduction_pct","loaded_rate"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Asset Integrity Inspection — Documentation & Compliance",
     theme:"Regulatory & Compliance", verticalKey:"energy",
     facilityKeys:["Plant / Factory","Depot / MRO"], themeKeys:["Regulatory & Compliance","Labor & Human Capacity"],
     annualBenefit:260000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
@@ -3504,7 +3738,10 @@ const SCENARIOS = [
       avg_exception_cost:{label:"Avg Cost per Compliance Exception ($)",unit:"$",value:8000,hint:"Fine + remediation + legal"}
     }
   },
-  { id:"IE-06", name:"Rental & High-Value Equipment — Billing Dispute Reduction",
+  { id:"IE-06",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_billing_disputes","annual_rental_spend","avg_dispute_cost","overage_pct","overage_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Rental & High-Value Equipment — Billing Dispute Reduction",
     theme:"Direct Cost & Spend", verticalKey:"energy",
     facilityKeys:["Plant / Factory","Depot / MRO"], themeKeys:["Direct Cost & Spend","Operational Efficiency"],
     annualBenefit:310000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -3520,7 +3757,10 @@ const SCENARIOS = [
       avg_dispute_cost:{label:"Avg Cost per Dispute ($)",unit:"$",value:3000,hint:"Admin + legal + resolution time"}
     }
   },
-  { id:"IE-07", name:"RFID Data Foundation for Energy & Construction AI",
+  { id:"IE-07",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_digital_ops_investment","rfid_uplift_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"RFID Data Foundation for Energy & Construction AI",
     theme:"Strategic / AI / Data", verticalKey:"energy",
     facilityKeys:["Plant / Factory","Depot / MRO"], themeKeys:["Strategic / AI / Data","Regulatory & Compliance"],
     annualBenefit:150000, rampType:"strategic", accessibilityTier:"infrastructure", haircut:0.10,
@@ -3535,7 +3775,10 @@ const SCENARIOS = [
   },
 
   // FOOD SERVICE — remaining 5
-  { id:"FS-04", name:"Food Recall Traceability — Scope & Response Time",
+  { id:"FS-04",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["cost_reduction_pct","expected_recall_cost","scope_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Food Recall Traceability — Scope & Response Time",
     theme:"Regulatory & Compliance", verticalKey:"foodservice",
     facilityKeys:["Warehouse / DC"], themeKeys:["Regulatory & Compliance","Direct Cost & Spend"],
     annualBenefit:500000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -3549,7 +3792,10 @@ const SCENARIOS = [
       cost_reduction_pct:{label:"Cost Reduction from Scope Reduction",unit:"%",value:0.65,hint:"Linear with scope"}
     }
   },
-  { id:"FS-05", name:"High-Value Inventory Shrink — Proteins, Alcohol, Premiums",
+  { id:"FS-05",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_hv_shrink","shrink_reduction_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"High-Value Inventory Shrink — Proteins, Alcohol, Premiums",
     theme:"Direct Cost & Spend", verticalKey:"foodservice",
     facilityKeys:["Warehouse / DC","Store / Branch"], themeKeys:["Direct Cost & Spend"],
     annualBenefit:195000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -3562,7 +3808,10 @@ const SCENARIOS = [
       shrink_reduction_pct:{label:"Shrink Reduction from RFID",unit:"%",value:0.18,hint:"Conservative: 18%"}
     }
   },
-  { id:"FS-06", name:"Demand Planning & Forecast Accuracy — Prep Waste Reduction",
+  { id:"FS-06",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_food_spend","forecast_improvement_pct","overprep_waste_pct"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Demand Planning & Forecast Accuracy — Prep Waste Reduction",
     theme:"Operational Efficiency", verticalKey:"foodservice",
     facilityKeys:["Warehouse / DC","Store / Branch"], themeKeys:["Operational Efficiency","Direct Cost & Spend"],
     annualBenefit:170000, rampType:"soft", accessibilityTier:"configured", haircut:0.10,
@@ -3576,7 +3825,10 @@ const SCENARIOS = [
       forecast_improvement_pct:{label:"Forecast Improvement from RFID Signals",unit:"%",value:0.12,hint:"Conservative: 12%"}
     }
   },
-  { id:"FS-07", name:"Order Accuracy & Customer Refund Reduction",
+  { id:"FS-07",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_refunds_credits","completeness_error_pct","reduction_from_rfid"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"Order Accuracy & Customer Refund Reduction",
     theme:"Operational Efficiency", verticalKey:"foodservice",
     facilityKeys:["Store / Branch"], themeKeys:["Operational Efficiency","Direct Cost & Spend"],
     annualBenefit:140000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -3590,7 +3842,10 @@ const SCENARIOS = [
       reduction_from_rfid:{label:"Reduction from RFID Kit Validation",unit:"%",value:0.20,hint:"Conservative: 20%"}
     }
   },
-  { id:"FS-08", name:"ESG & Sustainability Reporting Automation",
+  { id:"FS-08",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:["annual_esg_audit_fees","annual_esg_labor_hours","audit_fee_reduction","labor_reduction_pct","loaded_rate"], declaredStatus:{status:"available",reason:""}, scale:null, provenance:{}, name:"ESG & Sustainability Reporting Automation",
     theme:"Regulatory & Compliance", verticalKey:"foodservice",
     facilityKeys:["Warehouse / DC"], themeKeys:["Regulatory & Compliance","Labor & Human Capacity"],
     annualBenefit:120000, rampType:"hard_labor", accessibilityTier:"configured", haircut:0.10,
@@ -3607,7 +3862,10 @@ const SCENARIOS = [
     }
   },
   // == CARBON / CLIMATE — DC-08, DC-09, AVN-08 ===============================
-  { id:"DC-08", name:"Ghost Server Carbon Overpurchase Reduction",
+  { id:"DC-08",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:[], declaredStatus:{status:"gated",reason:"formula not implemented"}, scale:null, provenance:{}, name:"Ghost Server Carbon Overpurchase Reduction",
     theme:"Direct Cost & Spend", verticalKey:"datacenter",
     facilityKeys:["Warehouse / DC"], themeKeys:["Direct Cost & Spend","Regulatory & Compliance"],
     annualBenefit:675000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -3625,7 +3883,10 @@ const SCENARIOS = [
     }
   },
 
-  { id:"DC-09", name:"SEC Scope 2 Disclosure — Assurance Cost & Restatement Risk",
+  { id:"DC-09",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:[], declaredStatus:{status:"gated",reason:"formula not implemented"}, scale:null, provenance:{}, name:"SEC Scope 2 Disclosure — Assurance Cost & Restatement Risk",
     theme:"Regulatory & Compliance", verticalKey:"datacenter",
     facilityKeys:["Warehouse / DC"], themeKeys:["Regulatory & Compliance","Direct Cost & Spend"],
     annualBenefit:135000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -3648,7 +3909,10 @@ const SCENARIOS = [
   // rebinding the id would silently attach old customer inputs to a new lever.
   // Registered in RETIRED_LEVER_IDS so the boot validator reports the gap as
   // INFO rather than an error. applyEngagement() drops the id with a banner.
-  { id:"AVN-08", name:"CORSIA Carbon Credit Overpurchase Reduction",
+  { id:"AVN-08",
+    // PR 6: declarative. requiredInputs is the runtime source of truth;
+    // the selftest drift-checks it against calcSc in both directions.
+    requiredInputs:[], declaredStatus:{status:"gated",reason:"formula not implemented"}, scale:null, provenance:{}, name:"CORSIA Carbon Credit Overpurchase Reduction",
     theme:"Direct Cost & Spend", verticalKey:"aviation",
     facilityKeys:["Airport / Terminal"], themeKeys:["Direct Cost & Spend","Regulatory & Compliance"],
     annualBenefit:315000, rampType:"hard_cost", accessibilityTier:"configured", haircut:0.10,
@@ -8659,8 +8923,11 @@ function validateRegistry() {
     if (!m) { infos.push(sc.id + ': no calcSc branch found (custom or unreferenced)'); return; }
     const used = [...new Set([...m[1].matchAll(/\bp\.([A-Za-z_]\w*)/g)].map(x => x[1]))];
     used.forEach(varName => {
-      if (!(sc.inputs && Object.prototype.hasOwnProperty.call(sc.inputs, varName)))
-        errors.push(sc.id + ': formula reads p.' + varName + ' but that input is not defined');
+      if (!(sc.inputs && Object.prototype.hasOwnProperty.call(sc.inputs, varName))) {
+        const gated = sc.declaredStatus && sc.declaredStatus.status === 'gated';
+        (gated ? infos : errors).push(sc.id + ': formula reads p.' + varName
+          + ' but that input is not defined' + (gated ? ' (lever is declared gated)' : ''));
+      }
     });
   });
 
@@ -8702,19 +8969,35 @@ function validateRegistry() {
   return { errors, infos };
 }
 
-// Levers withheld from selection. Visible in the catalog so the analyst can see
-// they exist and why they are unavailable, but not selectable — each would
-// otherwise contribute a non-finite value. No benchmark value is invented here.
-const UNAVAILABLE_LEVERS = {
-  'GOV-02': 'benchmark defaults pending',
-  'TL-02':  'benchmark defaults pending',
-  // No calcSc branch: these returned their static annualBenefit regardless of
-  // what the analyst discovered. Gated until a real formula exists.
-  'DC-08':  'formula not implemented',
-  'DC-09':  'formula not implemented',
-  'AVN-08': 'formula not implemented',
+// PR 6: UNAVAILABLE_LEVERS retired. Gating is declared per lever in LIBRARY
+// (declaredStatus), so the registry validator, the gating below and PR 8's
+// provenance all key off that one declaration.
+function leverUnavailableReason(id) {
+  const l = LIBRARY.leverById(id);
+  return (l && l.declaredStatus && l.declaredStatus.status === 'gated')
+    ? (l.declaredStatus.reason || 'unavailable') : null;
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// LIBRARY  (PR 6)
+//
+// The single data entry point: verticals, levers, evidence. Content lives here;
+// FORMULAS DO NOT. calcSc stays code keyed by lever id — there is no formula
+// DSL, no eval, no new Function. Adding a lever is a data edit plus one calcSc
+// case.
+//
+// Per lever the declaration carries: id, name, verticalKey, themeKeys,
+// evidence (maturity), discoveryQuestions, inputs (key/label/unit/value/hint),
+// requiredInputs, declaredStatus, evidenceIds, plus unpopulated placeholders
+// scale (PR 7) and provenance (PR 8).
+// ══════════════════════════════════════════════════════════════════════════════
+const LIBRARY = {
+  verticals: VERTICALS,
+  levers:    SCENARIOS,
+  evidence:  EVIDENCE,
+  leverById(id) { return this.levers.find(l => l.id === id) || null; },
 };
-function leverUnavailableReason(id) { return UNAVAILABLE_LEVERS[id] || null; }
 
 // ── LEVER STATUS (PR 5.1) ─────────────────────────────────────────────────────
 // Three distinct states, deliberately not collapsed into one:
@@ -8728,18 +9011,13 @@ function leverUnavailableReason(id) { return UNAVAILABLE_LEVERS[id] || null; }
 // PR 6 replaces the derivation below with an explicit requiredInputs
 // declaration per lever; the three-state contract stays the same.
 
-// Which p.<var> a lever's formula actually reads, parsed from calcSc itself so
-// it cannot drift from the formulas. Cached per lever id.
-const _requiredInputCache = {};
+// PR 6: read from the lever's own declaration. The calcSc parser that used to
+// derive this now lives in the selftest as a two-way drift check, so runtime
+// never re-parses code and the two cannot silently diverge.
 function requiredInputsFor(sc) {
-  if (_requiredInputCache[sc.id]) return _requiredInputCache[sc.id];
-  let out = [];
-  try {
-    const m = String(calcSc).match(new RegExp('case\\s*"' + sc.id + '"\\s*:([\\s\\S]*?)(?=case\\s*"|\\n\\s*// PR 5.1|default:)'));
-    if (m) out = [...new Set([...m[1].matchAll(/\bp\.([A-Za-z_]\w*)/g)].map(x => x[1]))];
-  } catch (e) { out = []; }
-  _requiredInputCache[sc.id] = out;
-  return out;
+  if (Array.isArray(sc.requiredInputs)) return sc.requiredInputs;
+  const l = LIBRARY.leverById(sc.id);
+  return (l && Array.isArray(l.requiredInputs)) ? l.requiredInputs : [];
 }
 
 function missingInputsFor(sc) {
@@ -8751,7 +9029,7 @@ function missingInputsFor(sc) {
 }
 
 function leverStatus(sc) {
-  const gate = leverUnavailableReason(sc.id);
+  const gate = leverUnavailableReason(sc.id);   // from declaredStatus
   if (gate) return { status: 'gated', reason: gate, missing: [] };
   if (sc.custom) return { status: 'available', reason: '', missing: [] };
   const missing = missingInputsFor(sc);
@@ -8766,24 +9044,10 @@ function leverStatus(sc) {
 function leverCollectsDiscovery(sc) { return leverStatus(sc).status !== 'gated'; }
 
 
-// Pre-existing data defects found by validateRegistry(). Listed here so the tool
-// still boots: quarantining them as ERRORs would take the whole app down for a
-// fault that predates this validator. Each entry needs a real fix — the missing
-// input has to be DEFINED with a benchmark default, which is a content decision,
-// not something this file should invent.
-//
-//   GOV-02  formula reads p.audit_cycles_per_year — input never defined
-//   TL-02   formula reads p.labor_reduction_pct   — input never defined
-//
-// Consequence while unfixed: calcSc() returns NaN for these two levers, and
-// because calcNRV() sums levers, selecting either turns EVERY figure in the
-// engagement into NaN (verified: WH-01 alone -> 837779; WH-01 + GOV-02 -> NaN).
-// They remain selectable — making them unavailable is a product change that has
-// not been approved — but the banner names them on every boot.
-const KNOWN_REGISTRY_DEFECTS = new Set([
-  'GOV-02: formula reads p.audit_cycles_per_year but that input is not defined',
-  'TL-02: formula reads p.labor_reduction_pct but that input is not defined',
-]);
+// PR 6: KNOWN_REGISTRY_DEFECTS retired. A lever that cannot compute declares
+// declaredStatus.status === 'gated' in LIBRARY, and the validator treats a
+// declared gate as expected rather than as a boot-blocking error.
+const KNOWN_REGISTRY_DEFECTS = new Set();
 
 // Blocks the app when the registry cannot be trusted. Silent when clean.
 function runBootValidation() {
@@ -8874,6 +9138,41 @@ const SELFTEST_FIXTURES = [
    expected:{"nrv":832779,"mirr":1.5125195798,"paybackMo":1,"bcr":21.484172691,"peakAnnual":270949.72,"roi5":2048,"B0":320000,"totalAnnOpex":8000,"capex":15000,"y1net":140000,"y3net":262949.72,"y5net":246459.617807}
   }
  ];
+
+// ── requiredInputs DRIFT CHECK (PR 6) ────────────────────────────────────────
+// Runtime now reads requiredInputs from the LIBRARY declaration. This test is
+// the only thing that still parses calcSc, and it asserts BOTH directions:
+//   forward  — every variable the formula reads is declared requiredInput
+//   backward — every declared requiredInput is actually read by the formula
+// A failure means the declaration and the code have fallen out of sync, which
+// is exactly the drift the declaration was introduced to make visible.
+// It is a test, not runtime behavior: no eval, no new Function — regex only.
+function _selftestDrift() {
+  const srcTxt = String(calcSc);
+  const forward = [], backward = [], noBranch = [];
+  LIBRARY.levers.forEach(sc => {
+    const m = srcTxt.match(new RegExp('case\\s*"' + sc.id + '"\\s*:([\\s\\S]*?)(?=case\\s*"|\\n\\s*// PR 5\\.1|default:)'));
+    const declared = Array.isArray(sc.requiredInputs) ? sc.requiredInputs : [];
+    if (!m) {
+      // No formula branch is legitimate only for a lever declared gated.
+      if (!(sc.declaredStatus && sc.declaredStatus.status === 'gated')) noBranch.push(sc.id);
+      return;
+    }
+    const used = [...new Set([...m[1].matchAll(/\bp\.([A-Za-z_]\w*)/g)].map(x => x[1]))];
+    used.forEach(v => { if (!declared.includes(v)) forward.push(sc.id + '.' + v); });
+    declared.forEach(v => { if (!used.includes(v)) backward.push(sc.id + '.' + v); });
+  });
+  return {
+    undeclaredButUsed: forward.join(',') || '(none)',
+    declaredButUnused: backward.join(',') || '(none)',
+    missingBranchNotGated: noBranch.join(',') || '(none)',
+  };
+}
+const SELFTEST_DRIFT_FIXTURE = {
+  name: 'D1_requiredInputs_matches_calcSc',
+  note: 'the LIBRARY declaration and calcSc must reference the same variables, both ways',
+  expected: { undeclaredButUsed:'(none)', declaredButUnused:'(none)', missingBranchNotGated:'(none)' },
+};
 
 // ── STATUS / FAILURE FIXTURES (PR 5.1) ───────────────────────────────────────
 // The distinction these pin: a lever awaiting discovery is INCOMPLETE and
@@ -9141,6 +9440,19 @@ function runSelfTest() {
     });
     rows.push({ fixture: fx.name, note: fx.note, error: null, fields });
   });
+  (function(){
+    const fx = SELFTEST_DRIFT_FIXTURE;
+    let actual = null, err = null;
+    try { actual = _selftestDrift(); }
+    catch (e) { err = e && e.message ? e.message : String(e); }
+    if (err) { errN++; rows.push({ fixture: fx.name, note: fx.note, error: err, fields: [] }); return; }
+    const fields = Object.keys(fx.expected).map(k => {
+      const ok = String(fx.expected[k]) === String(actual[k]);
+      if (ok) passN++; else failN++;
+      return { field: k, expected: String(fx.expected[k]), actual: String(actual[k]), ok, delta: null };
+    });
+    rows.push({ fixture: fx.name, note: fx.note, error: null, fields });
+  })();
   SELFTEST_STATUS_FIXTURES.forEach(fx => {
     let actual = null, err = null;
     try { actual = _selftestStatus(fx); }
