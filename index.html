@@ -2515,8 +2515,8 @@ const SCENARIOS = [
     inputs:{
       total_pallet_positions:{label:"Total Pallet Positions",unit:"count",value:25000,hint:"DC positions in scope"},
       count_cycles_per_year:{label:"Count Cycles per Year",unit:"count",value:12,hint:"Monthly=12; Weekly=52"},
-      time_per_position_manual_min:{label:"Manual Count Time/Position (min)",unit:"count",value:3,hint:"Zebra lower bound: 3 min"},
-      time_per_position_rfid_sec:{label:"RFID Count Time/Position (sec)",unit:"count",value:20,hint:"Zebra: 15–25 sec; use 20"},
+      time_per_position_manual_min:{label:"Manual Count Time/Position (min)",unit:"min",value:3,hint:"Zebra lower bound: 3 min"},
+      time_per_position_rfid_sec:{label:"RFID Count Time/Position (sec)",unit:"sec",value:20,hint:"Zebra: 15–25 sec; use 20"},
       loaded_rate:{label:"Loaded Labor Rate ($/hr)",unit:"$/hr",value:24,hint:"DC warehouse rate"}
     }
   },
@@ -3722,6 +3722,12 @@ const SCENARIOS = [
     }
   },
 
+  // ── AVN-07 — RETIRED, id permanently withdrawn ───────────────────────────
+  // The aviation sequence deliberately jumps AVN-06 -> AVN-08. AVN-07 must
+  // NEVER be reused: saved engagements in the wild may still reference it, and
+  // rebinding the id would silently attach old customer inputs to a new lever.
+  // Registered in RETIRED_LEVER_IDS so the boot validator reports the gap as
+  // INFO rather than an error. applyEngagement() drops the id with a banner.
   { id:"AVN-08", name:"CORSIA Carbon Credit Overpurchase Reduction",
     theme:"Direct Cost & Spend", verticalKey:"aviation",
     facilityKeys:["Airport / Terminal"], themeKeys:["Direct Cost & Spend","Regulatory & Compliance"],
@@ -3843,6 +3849,67 @@ const EVIDENCE = [
 
 
 // ── VERTICAL MAP ──
+// ── CANONICAL VERTICAL REGISTRY ───────────────────────────────────────────────
+// The single source of truth for vertical keys. The Step-2 picker, the
+// forecast-signal chip priorities, and the boot validator all derive from this
+// list; VMAP and VERTICAL_SLIDER_DEFAULTS are validated against it at boot.
+//
+// fsPriority: ordered forecast-signal chips for that vertical. `null` means the
+// legacy hand-maintained map had NO entry for this vertical, so it falls back to
+// 'inventoryAccuracy' exactly as before. These are left null deliberately —
+// inventing a priority would silently change what six verticals display.
+const VERTICALS = [
+  { key:'retail',        label:'Retail',                  fsPriority:['inventoryAccuracy','shrink','markdown','mispick'] },
+  { key:'warehouse',     label:'Warehouse / 3PL',         fsPriority:null },
+  { key:'manufacturing', label:'Manufacturing & MRO',     fsPriority:['labor','mispick','dwell','inventoryAccuracy'] },
+  { key:'healthcare',    label:'Healthcare',              fsPriority:['inventoryAccuracy','labor','dwell','mispick'] },
+  { key:'government',    label:'Government / Federal',    fsPriority:['inventoryAccuracy','labor','dwell','mispick'] },
+  { key:'carriers',      label:'Carriers & Logistics',    fsPriority:null },
+  { key:'aviation',      label:'Aviation / MRO',          fsPriority:null },
+  { key:'hospitality',   label:'Hospitality & Venues',    fsPriority:['inventoryAccuracy','labor','shrink','markdown'] },
+  { key:'datacenter',    label:'Data Center / IT',        fsPriority:null },
+  { key:'energy',        label:'Energy & Industrial',     fsPriority:null },
+  { key:'foodservice',   label:'Food Service / CPG',      fsPriority:null },
+];
+const VERTICAL_KEYS = VERTICALS.map(v => v.key);
+function verticalDef(key) { return VERTICALS.find(v => v.key === key) || null; }
+
+// Ids withdrawn from the registry. Never reuse one: a saved engagement may still
+// name it, and rebinding would attach old customer inputs to a different lever.
+const RETIRED_LEVER_IDS = new Set(['AVN-07']);
+
+// Every unit string an input may declare. Derived from the shipped registry;
+// boot fails on anything outside it so a typo cannot reach the aggregation
+// rules PR 7 will key off these units.
+const UNIT_WHITELIST = new Set([
+  '%',        // ratio, dimensionless
+  '$',        // currency, extensive (sums across site groups)
+  '$/hr',     // rate, intensive (count-weighted)
+  '$/ton',    // rate, intensive
+  'count',    // quantity, extensive
+  'hrs',      // time quantity, extensive
+  'min',      // time quantity, extensive
+  'sec',      // time quantity, extensive
+  'days',     // time quantity, extensive
+  'W',        // power, extensive
+  'kg/kWh',   // intensity rate, intensive
+  'tonnes',   // mass quantity, extensive
+]);
+
+// Rebuild the Step-2 vertical picker from VERTICALS.
+// IDEMPOTENT BY CONSTRUCTION: assigns innerHTML rather than appending. The
+// file:// standalone export serializes the live DOM, so a previously-rendered
+// picker can be baked into an exported file; re-rendering must replace it, not
+// stack a second copy.
+function renderVerticalPicker() {
+  const host = document.getElementById('vertical-btns');
+  if (!host) return;
+  host.innerHTML = VERTICALS.map(v =>
+    '<button class="vbtn' + (activeIndustries.has(v.key) ? ' active' : '') + '"'
+    + ' data-v="' + v.key + '" onclick="toggleIndustry(this)">'
+    + v.label.replace(/&/g, '&amp;') + '</button>').join('');
+}
+
 const VMAP = {
   retail:        {facility:["Store / Branch"], themes:["Labor & Human Capacity","Operational Efficiency","Revenue / Margin","Direct Cost & Spend"]},
   warehouse:     {facility:["Warehouse / DC"], themes:["Labor & Human Capacity","Operational Efficiency","Direct Cost & Spend"]},
@@ -4192,16 +4259,25 @@ function applyEngagement(p) {
   //     Incomplete `verticals` -> union the missing ones in and name them.
   //     Neither case deletes a lever to satisfy the vertical list.
   const sel = [...state.selectedIds];
-  if(!declaredVerticals && sel.length) {
+  if(!declaredVerticals && Array.isArray(p.selectedIds)) {
+    // The payload defines a selection but no vertical list: the selection is
+    // the only evidence of intent, so derive from it. If it yields nothing,
+    // leave activeIndustries EMPTY and ask. Never substitute a default —
+    // a guessed vertical silently changes which cases the analyst sees.
     const derived = [...new Set(sel.map(verticalForLeverId).filter(Boolean))];
+    activeIndustries.clear();
+    derived.forEach(v => activeIndustries.add(v));
+    syncVerticalButtons();
     if(derived.length) {
-      activeIndustries.clear();
-      derived.forEach(v => activeIndustries.add(v));
-      syncVerticalButtons();
       setSliderDefaults(derived[0]);
       loadNotes.push(
         `The saved file listed no verticals, so ${derived.length > 1 ? 'they were' : 'it was'} ` +
         `derived from the selected value cases: ${derived.join(', ')}.`
+      );
+    } else {
+      loadNotes.push(
+        'The saved file listed no verticals and none could be determined from its ' +
+        'value cases. Pick a vertical in Step 2 to continue — none has been assumed.'
       );
     }
   } else if(declaredVerticals) {
@@ -4216,7 +4292,6 @@ function applyEngagement(p) {
       );
     }
   }
-  if(!activeIndustries.size) { activeIndustries.add('retail'); syncVerticalButtons(); }
   if(loadNotes.length) showLoadWarning(loadNotes);
 
   // 4) Discovery inputs — merge onto the benchmark defaults
@@ -8959,6 +9034,143 @@ Keep it conversational. One paragraph, then the question.
 }
 
 
+// ── BOOT REGISTRY VALIDATOR ───────────────────────────────────────────────────
+// Structural checks on the shipped registry. ERROR-level findings block boot:
+// they mean the data cannot produce trustworthy numbers. INFO-level findings are
+// logged only.
+//
+// NOTE ON "tag": PR 3 asked for "every lever has a tag". There is no field
+// literally named `tag` on any of the 88 scenarios. `themeKeys` (present on
+// 88/88) is the actual tagging mechanism and is what this validates. Flagged
+// rather than silently renamed.
+function validateRegistry() {
+  const errors = [], infos = [];
+
+  // 1) lever ids unique
+  const seen = new Map();
+  SCENARIOS.forEach(sc => {
+    if (seen.has(sc.id)) errors.push('Duplicate lever id: ' + sc.id);
+    seen.set(sc.id, sc);
+  });
+
+  // 2) vertical keys valid, and id prefix consistent within a vertical
+  const prefixOwner = {};
+  SCENARIOS.forEach(sc => {
+    if (!VERTICAL_KEYS.includes(sc.verticalKey))
+      errors.push(sc.id + ': verticalKey "' + sc.verticalKey + '" is not in VERTICALS');
+    const prefix = String(sc.id).split('-')[0];
+    if (prefixOwner[prefix] && prefixOwner[prefix] !== sc.verticalKey)
+      errors.push('Prefix ' + prefix + ' maps to both "' + prefixOwner[prefix] + '" and "' + sc.verticalKey + '"');
+    prefixOwner[prefix] = prefixOwner[prefix] || sc.verticalKey;
+  });
+
+  // 3) unit whitelist
+  SCENARIOS.forEach(sc => Object.entries(sc.inputs || {}).forEach(([k, v]) => {
+    if (!UNIT_WHITELIST.has(v.unit))
+      errors.push(sc.id + '.' + k + ': unit "' + v.unit + '" is not in UNIT_WHITELIST');
+  }));
+
+  // 4) every variable the formula reads must exist in that lever's inputs.
+  //    Reads calcSc's own source so the check cannot drift from the formulas.
+  const srcTxt = String(calcSc);
+  SCENARIOS.forEach(sc => {
+    const m = srcTxt.match(new RegExp('case\\s*"' + sc.id + '"\\s*:([\\s\\S]*?)(?=case\\s*"|\\n\\s*\\}|default:)'));
+    if (!m) { infos.push(sc.id + ': no calcSc branch found (custom or unreferenced)'); return; }
+    const used = [...new Set([...m[1].matchAll(/\bp\.([A-Za-z_]\w*)/g)].map(x => x[1]))];
+    used.forEach(varName => {
+      if (!(sc.inputs && Object.prototype.hasOwnProperty.call(sc.inputs, varName)))
+        errors.push(sc.id + ': formula reads p.' + varName + ' but that input is not defined');
+    });
+  });
+
+  // 5) tagging + evidence integrity
+  const evIds = new Set(EVIDENCE.map(e => e.id));
+  SCENARIOS.forEach(sc => {
+    if (!Array.isArray(sc.themeKeys) || !sc.themeKeys.length)
+      errors.push(sc.id + ': no themeKeys (tag) declared');
+    (sc.evidenceIds || []).forEach(id => {
+      if (!evIds.has(id)) errors.push(sc.id + ': evidenceId "' + id + '" is not in EVIDENCE');
+    });
+  });
+
+  // 6) the parallel vertical tables must agree with VERTICALS
+  [['VMAP', typeof VMAP !== 'undefined' ? VMAP : null],
+   ['VERTICAL_SLIDER_DEFAULTS', typeof VERTICAL_SLIDER_DEFAULTS !== 'undefined' ? VERTICAL_SLIDER_DEFAULTS : null]
+  ].forEach(([name, tbl]) => {
+    if (!tbl) return;
+    VERTICAL_KEYS.forEach(k => { if (!(k in tbl)) errors.push(name + ' is missing vertical "' + k + '"'); });
+    Object.keys(tbl).forEach(k => { if (!VERTICAL_KEYS.includes(k)) errors.push(name + ' has unknown vertical "' + k + '"'); });
+  });
+
+  // 7) sequence gaps -> INFO, allowlisted retirements named explicitly
+  const byPrefix = {};
+  SCENARIOS.forEach(sc => {
+    const [pfx, num] = String(sc.id).split('-');
+    if (!/^\d+$/.test(num || '')) return;
+    (byPrefix[pfx] = byPrefix[pfx] || []).push(+num);
+  });
+  Object.entries(byPrefix).forEach(([pfx, nums]) => {
+    nums.sort((a, b) => a - b);
+    for (let n = nums[0]; n < nums[nums.length - 1]; n++) {
+      if (nums.includes(n)) continue;
+      const id = pfx + '-' + String(n).padStart(2, '0');
+      infos.push('Sequence gap ' + id + (RETIRED_LEVER_IDS.has(id) ? ' (retired, allowlisted)' : ' (not allowlisted)'));
+    }
+  });
+
+  return { errors, infos };
+}
+
+// Pre-existing data defects found by validateRegistry(). Listed here so the tool
+// still boots: quarantining them as ERRORs would take the whole app down for a
+// fault that predates this validator. Each entry needs a real fix — the missing
+// input has to be DEFINED with a benchmark default, which is a content decision,
+// not something this file should invent.
+//
+//   GOV-02  formula reads p.audit_cycles_per_year — input never defined
+//   TL-02   formula reads p.labor_reduction_pct   — input never defined
+//
+// Consequence while unfixed: calcSc() returns NaN for these two levers, and
+// because calcNRV() sums levers, selecting either turns EVERY figure in the
+// engagement into NaN (verified: WH-01 alone -> 837779; WH-01 + GOV-02 -> NaN).
+// They remain selectable — making them unavailable is a product change that has
+// not been approved — but the banner names them on every boot.
+const KNOWN_REGISTRY_DEFECTS = new Set([
+  'GOV-02: formula reads p.audit_cycles_per_year but that input is not defined',
+  'TL-02: formula reads p.labor_reduction_pct but that input is not defined',
+]);
+
+// Blocks the app when the registry cannot be trusted. Silent when clean.
+function runBootValidation() {
+  let r;
+  try { r = validateRegistry(); }
+  catch (e) { r = { errors: ['Validator itself threw: ' + (e && e.message)], infos: [] }; }
+  if (r.infos.length) console.info('[registry] ' + r.infos.length + ' info:', r.infos);
+  // Split known pre-existing defects from newly-introduced ones. Known defects
+  // warn loudly but let the app start; anything new blocks boot.
+  const known = r.errors.filter(e => KNOWN_REGISTRY_DEFECTS.has(e));
+  const fresh = r.errors.filter(e => !KNOWN_REGISTRY_DEFECTS.has(e));
+  if (known.length) {
+    console.error('[registry] KNOWN DEFECTS (levers produce NaN if selected):', known);
+    showLoadWarning(known.map(e =>
+      'Registry defect — ' + e.split(':')[0] + ' cannot be calculated: ' + e.split(': ').slice(1).join(': ')
+      + '. Selecting it makes every figure in the analysis NaN. Do not use this lever until it is fixed.'));
+  }
+  if (!fresh.length) return true;
+  console.error('[registry] BOOT FAILED:', fresh);
+  const r2 = { errors: fresh };
+  r = r2;
+  document.body.innerHTML =
+    '<div style="max-width:820px;margin:0 auto;padding:40px 24px;font-family:system-ui,sans-serif">'
+    + '<h1 style="font-size:22px;margin:0 0 6px">Registry validation failed</h1>'
+    + '<p style="color:#555;font-size:13px;line-height:1.6;margin:0 0 16px">The scenario registry is '
+    + 'internally inconsistent, so the tool will not start. Numbers produced from this data could not be trusted.</p>'
+    + '<ul style="font-family:monospace;font-size:12px;color:#7a1500;line-height:1.7">'
+    + r.errors.map(e => '<li>' + String(e).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])) + '</li>').join('')
+    + '</ul></div>';
+  return false;
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // GOLDEN FIXTURES + SELF-TEST  (?selftest=1)
 //
@@ -9012,6 +9224,54 @@ const SELFTEST_FIXTURES = [
    expected:{"nrv":832779,"mirr":1.5125195798,"paybackMo":1,"bcr":21.484172691,"peakAnnual":270949.72,"roi5":2048,"B0":320000,"totalAnnOpex":8000,"capex":15000,"y1net":140000,"y3net":262949.72,"y5net":246459.617807}
   }
  ];
+
+// ── FORECAST-SIGNAL FIXTURES (PR 3) ───────────────────────────────────────────
+// Captured BEFORE the canonical-VERTICALS refactor so that refactor cannot move
+// forecast output without failing here. The map only decides which chip
+// auto-activates when panel-8 opens: getBestScenario()/prioritizeChips() take
+// priority[0], and any vertical with no entry falls back to inventoryAccuracy.
+// Expected values are derived from that rule, not captured blindly:
+//   retail/healthcare/hospitality/government -> their entry starts with
+//     inventoryAccuracy; manufacturing -> 'labor'; the six verticals absent
+//     from the legacy map -> the inventoryAccuracy fallback.
+const SELFTEST_FS_FIXTURES = [
+  { vertical:'retail',        expected:'inventoryAccuracy', note:'legacy entry, starts inventoryAccuracy' },
+  { vertical:'warehouse',     expected:'inventoryAccuracy', note:'ABSENT from legacy map -> fallback' },
+  { vertical:'manufacturing', expected:'labor',             note:'legacy entry, starts labor — the one that can move' },
+  { vertical:'healthcare',    expected:'inventoryAccuracy', note:'legacy entry' },
+  { vertical:'government',    expected:'inventoryAccuracy', note:'legacy entry' },
+  { vertical:'carriers',      expected:'inventoryAccuracy', note:'ABSENT from legacy map -> fallback' },
+  { vertical:'aviation',      expected:'inventoryAccuracy', note:'ABSENT from legacy map -> fallback' },
+  { vertical:'hospitality',   expected:'inventoryAccuracy', note:'legacy entry' },
+  { vertical:'datacenter',    expected:'inventoryAccuracy', note:'ABSENT from legacy map -> fallback' },
+  { vertical:'energy',        expected:'inventoryAccuracy', note:'ABSENT from legacy map -> fallback' },
+  { vertical:'foodservice',   expected:'inventoryAccuracy', note:'ABSENT from legacy map -> fallback' },
+];
+
+// Drives the real initForecastSignal() with one vertical active and reports
+// which chip it selected.
+//
+// COVERAGE LIMIT: this asserts chip SELECTION only, not chart output. The
+// forecast charts need Chart.js, which is CDN-loaded and absent when the file
+// runs offline, so renderForecastSignal() throws after the chips are set. The
+// throw is swallowed deliberately — chip state is already final at that point
+// (initForecastSignal: prioritizeChips() runs before renderForecastSignal()).
+// If the vertical->chip mapping is ever refactored, these fixtures catch it;
+// chart rendering itself remains uncovered.
+function _selftestFS(vertical) {
+  const savedActive = [...activeIndustries];
+  const savedScenario = fsCurrentScenario;
+  try {
+    activeIndustries.clear(); activeIndustries.add(vertical);
+    try { initForecastSignal(); }
+    catch (e) { if (!/Chart is not defined/.test(String(e && e.message))) throw e; }
+    const on = document.querySelector('.fs-chip.active');
+    return { chip: on ? on.dataset.fs : '(none)' };
+  } finally {
+    activeIndustries.clear(); savedActive.forEach(v => activeIndustries.add(v));
+    fsCurrentScenario = savedScenario;
+  }
+}
 
 // ── LOAD-PATH FIXTURES (PR 2.1) ───────────────────────────────────────────────
 // The three payload shapes that used to lose levers silently in
@@ -9124,6 +9384,16 @@ function runSelfTest() {
     });
     rows.push({ fixture: fx.name, note: fx.note, error: null, fields });
   });
+  SELFTEST_FS_FIXTURES.forEach(fx => {
+    let actual = null, err = null;
+    try { actual = _selftestFS(fx.vertical); }
+    catch (e) { err = e && e.message ? e.message : String(e); }
+    if (err) { errN++; rows.push({ fixture: 'FS_' + fx.vertical, note: fx.note, error: err, fields: [] }); return; }
+    const ok = actual.chip === fx.expected;
+    if (ok) passN++; else failN++;
+    rows.push({ fixture: 'FS_' + fx.vertical, note: fx.note, error: null,
+      fields: [{ field: 'autoSelectedChip', expected: fx.expected, actual: actual.chip, ok, delta: null }] });
+  });
   SELFTEST_FIXTURES.forEach(fx => {
     let actual = null, err = null;
     try { actual = _selftestCompute(fx.input); }
@@ -9194,7 +9464,9 @@ function renderSelfTest() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  if (!runBootValidation()) return;   // refuse to start on an inconsistent registry
   if (new URLSearchParams(location.search).get('selftest') === '1') { renderSelfTest(); return; }
+  renderVerticalPicker();             // Step-2 picker derives from VERTICALS
   renderLeverGrid();
   selCount(); // fire on load so warning shows if defaults exceed 6
   // Init cost state from slider defaults (sliders have value= attrs so this works)
@@ -9316,25 +9588,20 @@ const ZEBRA_GREEN = '#A8F931';
 const ZEBRA_TEAL = '#01696f';
 
 function initForecastSignal() {
-  // Map verticals to their most relevant forecast scenario
-  const VERTICAL_SCENARIO_MAP = {
-    retail:       ['inventoryAccuracy','shrink','markdown','mispick'],
-    apparel:      ['inventoryAccuracy','markdown','shrink','mispick'],
-    cpg:          ['inventoryAccuracy','labor','mispick','shrink'],
-    grocery:      ['inventoryAccuracy','shrink','labor','markdown'],
-    manufacturing:['labor','mispick','dwell','inventoryAccuracy'],
-    logistics:    ['dwell','labor','mispick','inventoryAccuracy'],
-    healthcare:   ['inventoryAccuracy','labor','dwell','mispick'],
-    hospitality:  ['inventoryAccuracy','labor','shrink','markdown'],
-    aerospace:    ['labor','inventoryAccuracy','dwell','mispick'],
-    government:   ['inventoryAccuracy','labor','dwell','mispick'],
-  };
+  // Forecast-scenario priority now comes from the canonical VERTICALS registry.
+  // The previous hand-maintained map keyed 10 verticals that did not match the
+  // 11 picker keys: it carried entries for apparel/cpg/grocery/logistics/aerospace
+  // (unreachable — no picker button ever sets those) and had NO entry for
+  // warehouse/carriers/aviation/datacenter/energy/foodservice. Those six kept the
+  // 'inventoryAccuracy' fallback and still do: their fsPriority is null, so
+  // behavior is unchanged. See SELFTEST_FS_FIXTURES.
+  const fsPriorityFor = v => (verticalDef(v) && verticalDef(v).fsPriority) || ['inventoryAccuracy'];
 
   // Pick best scenario based on active industries
   function getBestScenario() {
     const industries = [...activeIndustries];
     if (!industries.length) return 'inventoryAccuracy';
-    const priority = VERTICAL_SCENARIO_MAP[industries[0]] || ['inventoryAccuracy'];
+    const priority = fsPriorityFor(industries[0]);
     return priority[0];
   }
 
@@ -9356,7 +9623,7 @@ function initForecastSignal() {
   function prioritizeChips() {
     const industries = [...activeIndustries];
     if (!industries.length) return;
-    const priority = (VERTICAL_SCENARIO_MAP[industries[0]] || ['inventoryAccuracy']);
+    const priority = fsPriorityFor(industries[0]);
     // Reorder chips visually and set active to best match
     const bestKey = priority.find(k => document.querySelector(`.fs-chip[data-fs="${k}"]`)) || 'inventoryAccuracy';
     document.querySelectorAll('.fs-chip').forEach(c => {
