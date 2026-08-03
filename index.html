@@ -5496,9 +5496,108 @@ function ensureCosts() {
     rebuildCostState();
   }
 }
+// ══════════════════════════════════════════════════════════════════════════════
+// FORMATTER  (PR 4)
+//
+// One money/percent formatter for screen, PDF, PPTX, JSON and the LLM prompt.
+// Replaces 13 local definitions that had drifted apart (1- vs 2-decimal
+// millions, and — worse — several that rendered a non-finite value as a
+// plausible "$0" because they used `v||0` and NaN is falsy).
+//
+// The distinction those locals lost, and this one keeps: a real zero formats as
+// "$0"; a value that is missing or non-finite formats as the dash. They must
+// never look the same.
+//
+// opts: { compact, decimals, dash, sign, cents }
+//   compact  true  -> 1.5M / 250K magnitude suffixes (charts, axes, slides)
+//            false -> full thousands separators (tables, prose)
+//   decimals digits after the point in compact millions (default 1)
+//   dash     string for null/undefined/NaN/Infinity (default '—')
+//   sign     true  -> keep a leading '-' on negatives (default true)
+// ══════════════════════════════════════════════════════════════════════════════
+function fmtMoney(v, opts) {
+  const o = opts || {};
+  const dash = o.dash !== undefined ? o.dash : '—';
+  if (v === null || v === undefined || v === '') return dash;
+  const n = typeof v === 'number' ? v : parseFloat(v);
+  if (!Number.isFinite(n)) return dash;          // NaN / Infinity are NOT zero
+  const neg = n < 0, a = Math.abs(n);
+  const s = (neg && o.sign !== false) ? '-' : '';
+  if (o.compact) {
+    const d = o.decimals !== undefined ? o.decimals : 1;
+    if (a >= 1e6) return s + '$' + (a / 1e6).toFixed(d) + 'M';
+    if (a >= 1e3) return s + '$' + Math.round(a / 1e3) + 'K';
+    return s + '$' + Math.round(a);              // a real 0 -> "$0"
+  }
+  if (a > 0 && a < 1) return s + '$' + a.toFixed(2);
+  return s + '$' + Math.round(a).toLocaleString();
+}
+
+// Percent. A non-finite input yields the dash, never "NaN%" and never "0%".
+function fmtPct(v, opts) {
+  const o = opts || {};
+  const dash = o.dash !== undefined ? o.dash : '—';
+  if (v === null || v === undefined || v === '') return dash;
+  const n = typeof v === 'number' ? v : parseFloat(v);
+  if (!Number.isFinite(n)) return dash;
+  const d = o.decimals !== undefined ? o.decimals : 0;
+  return (n * 100).toFixed(d) + '%';
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// computeEngagement  (PR 4)
+//
+// The single arithmetic entry point. Everything that renders — screen, PDF,
+// PPTX, JSON, standalone/customer HTML, LLM prompt — consumes this object and
+// performs no arithmetic of its own.
+//
+// financeRate / reinvestRate are separate parameters that BOTH default to the
+// engagement WACC, which is exactly what calcNRV does today. They are split out
+// so decoupling them later is a one-line change at the call site rather than a
+// change to the model. No behavior change: the fixtures pin that.
+// ══════════════════════════════════════════════════════════════════════════════
+function computeEngagement(st, opts) {
+  const o = opts || {};
+  st = st || state;
+  const waccEl = document.getElementById('nrv-wacc');
+  const wacc = o.wacc !== undefined ? o.wacc
+             : (st.wacc !== undefined && st.wacc !== null) ? st.wacc
+             : (waccEl ? +waccEl.value : 0.10);
+  const financeRate  = o.financeRate  !== undefined ? o.financeRate  : wacc;
+  const reinvestRate = o.reinvestRate !== undefined ? o.reinvestRate : wacc;
+
+  const active = SCENARIOS.filter(s => st.selectedIds.has(s.id))
+    .concat((st.customScenarios || []).filter(s => s.active));
+  const costs = st.costs || { yr0: 0, yr1: 0, yr2: 0 };
+  const r = calcNRV(active, costs, wacc, { financeRate, reinvestRate });
+  const excluded = r.excludedLevers || [];
+  const scored = active.filter(sc => !excluded.includes(sc.id));
+
+  return Object.assign({}, r, {
+    active, scored, costs, financeRate, reinvestRate,
+    totAnnual: r.peakAnnual,
+    totY1: r.yearlyData[0].netBenefit,
+    totY2: r.yearlyData[1].netBenefit,
+    totY3: r.yearlyData[2].netBenefit,
+    totY4: r.yearlyData[3].netBenefit,
+    totY5: r.yearlyData[4].netBenefit,
+    rows: scored.map(sc => {
+      const ann = Math.max(0, calcSc(sc));
+      const ramp = RAMP[sc.rampType].y;
+      return { sc, ann, y1: ann*ramp[0], y2: ann*ramp[1], y3: ann*ramp[2], y4: ann*ramp[3], y5: ann*ramp[4] };
+    })
+  });
+}
+
 // ── NRV ENGINE HELPERS ──
-function calcNRV(activeScenarios, costs, wacc) {
+function calcNRV(activeScenarios, costs, wacc, rates) {
   wacc = wacc || 0.10;
+  // PR 4 seam: MIRR's financing and reinvestment rates are separate inputs that
+  // BOTH DEFAULT TO THE SAME VALUE (wacc) — which is what this function has
+  // always done implicitly. Splitting them is a call-site change from here.
+  const _r = rates || {};
+  const financeRate  = _r.financeRate  !== undefined ? _r.financeRate  : wacc;
+  const reinvestRate = _r.reinvestRate !== undefined ? _r.reinvestRate : wacc;
   // NaN CONTAINMENT (PR 3.1): a lever whose formula yields a non-finite value is
   // EXCLUDED from every sum below rather than propagated. Without this, one bad
   // lever turns B0, every yearly netBenefit, npv, mirr and bcr into NaN, and
@@ -5547,9 +5646,11 @@ function calcNRV(activeScenarios, costs, wacc) {
     npv += discounted;
 
     if (netCF >= 0) {
-      fvPositives += netCF * Math.pow(1 + wacc, 5 - t);
+      // reinvestRate === wacc today; see the PR 4 seam note above.
+      fvPositives += netCF * Math.pow(1 + reinvestRate, 5 - t);
     } else {
-      pvNegatives += Math.abs(netCF) / Math.pow(1 + wacc, yr);
+      // financeRate === wacc today; see the PR 4 seam note above.
+      pvNegatives += Math.abs(netCF) / Math.pow(1 + financeRate, yr);
     }
 
     if (paybackMo === null && cumCF >= 0) {
@@ -5972,7 +6073,8 @@ function renderROI() {
 
   ensureCosts();
   const c = state.costs;
-  const result = calcNRV(active, c, wacc);
+  // PR 4: all arithmetic comes from computeEngagement(). renderROI() only draws.
+  const result = computeEngagement(state, { wacc });
   const { nrv, mirr, paybackMo, bcr, peakAnnual, roi5, yearlyData } = result;
 
   state.nrvResult = result;
@@ -5986,23 +6088,11 @@ function renderROI() {
       + '. Every other lever is unaffected. Totals shown do not include '
       + (excluded.length > 1 ? 'them' : 'it') + '.');
   }
-  const scored = active.filter(sc => !excluded.includes(sc.id));
+  // Straight from computeEngagement — no arithmetic here.
   state.benefits = {
-    totAnnual: peakAnnual,
-    totY1: yearlyData[0].netBenefit,
-    totY2: yearlyData[1].netBenefit,
-    totY3: yearlyData[2].netBenefit,
-    rows: scored.map(sc => {
-      const ann = Math.max(0, calcSc(sc));
-      return {
-        sc, ann,
-        y1: ann * RAMP[sc.rampType].y[0],
-        y2: ann * RAMP[sc.rampType].y[1],
-        y3: ann * RAMP[sc.rampType].y[2],
-        y4: ann * RAMP[sc.rampType].y[3],
-        y5: ann * RAMP[sc.rampType].y[4],
-      };
-    })
+    totAnnual: result.totAnnual,
+    totY1: result.totY1, totY2: result.totY2, totY3: result.totY3,
+    rows: result.rows
   };
 
   // Reconstruct legacy chart variables from NRV result for SVG charts below
@@ -6097,7 +6187,7 @@ function renderROI() {
 
     // X-axis ticks — 4 evenly spaced
     const ticks = [0, 0.25, 0.5, 0.75, 1].map(f => axisMax * f);
-    const fmtAx = v => v === 0 ? '$0' : v >= 1e6 ? '$'+(v/1e6).toFixed(1)+'M' : '$'+(v/1e3).toFixed(0)+'K';
+    const fmtAx = v => fmtMoney(v, {compact:true});
     const toBarW = v => Math.max(2, Math.round((v / axisMax) * AXIS_W));
 
     // Calculate total height
@@ -6192,12 +6282,7 @@ function renderROI() {
     // Y-axis ticks
     const ticks = [minV, 0, maxV/2, maxV].filter((v,i,a)=>a.findIndex(x=>Math.abs(x-v)<range*.05)===i);
 
-    const fmtAxis = v => {
-      const abs=Math.abs(v),s=v<0?'-':'';
-      if(abs>=1e6) return s+'$'+(abs/1e6).toFixed(1)+'M';
-      if(abs>=1e3) return s+'$'+(abs/1e3).toFixed(0)+'K';
-      return s+'$0';
-    };
+    const fmtAxis = v => fmtMoney(v, {compact:true});
 
     document.getElementById('cf-chart').innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="overflow:visible;display:block">
       <defs>
@@ -6252,7 +6337,7 @@ function renderROI() {
     const maxV = Math.max(...bYears.map(p=>Math.max(p.b,p.cost))) || 1;
     const toX = yr => PL + (yr/5)*iW;
     const toY = v => PT + iH*(1 - v/maxV);
-    const fmtAx = v => { const a=Math.abs(v); return a>=1e6?'$'+(a/1e6).toFixed(1)+'M':a>=1e3?'$'+(a/1e3).toFixed(0)+'K':'$0'; };
+    const fmtAx = v => fmtMoney(v, {compact:true, sign:false});
     const bPts = bYears.map(p=>toX(p.yr)+','+toY(p.b)).join(' ');
     const cPts = bYears.map(p=>toX(p.yr)+','+toY(p.cost)).join(' ');
     // Y ticks
@@ -6552,7 +6637,7 @@ function renderExec() {
       ];
       const maxV=Math.max(...bYears.map(p=>Math.max(p.b,p.cost)))||1;
       const toX=yr=>PL+(yr/5)*iW, toY=v=>PT+iH*(1-v/maxV);
-      const fmtAx=v=>{const a=Math.abs(v);return a>=1e6?'$'+(a/1e6).toFixed(1)+'M':a>=1e3?'$'+(a/1e3).toFixed(0)+'K':'$0';};
+      const fmtAx=v=>fmtMoney(v,{compact:true, sign:false});
       const bPts=bYears.map(p=>toX(p.yr)+','+toY(p.b)).join(' ');
       const cPts=bYears.map(p=>toX(p.yr)+','+toY(p.cost)).join(' ');
       const yticks=[0,maxV*.25,maxV*.5,maxV*.75,maxV];
@@ -6641,13 +6726,12 @@ function renderEvidence() {
     + (libraryEv.length && activeEv.length ? `<div style="font-family:var(--mono);font-size:9px;color:var(--muted);padding:14px 0 6px;letter-spacing:.5px;border-top:1px solid var(--border);margin-top:10px">FULL LIBRARY</div>` : '')
     + libraryEv.map(e=>renderCard(e,false)).join('');
 }
+// PR 4: the long-standing global formatter, now a thin alias so screen, PDF,
+// PPTX and prose all round identically. Compact millions, full thousands —
+// the behavior it already had.
 function fmt(n) {
-  if(n===null||n===undefined||isNaN(n)||!isFinite(n)) return '—';
-  const abs=Math.abs(n), sign=n<0?'-':'';
-  if(abs>=1000000) return sign+'$'+(abs/1000000).toFixed(1)+'M';
-  if(abs>=1000) return sign+'$'+Math.round(abs).toLocaleString();
-  if(abs>0&&abs<1) return sign+'$'+abs.toFixed(2);
-  return sign+'$'+Math.round(abs).toLocaleString();
+  const a = Math.abs(typeof n === 'number' ? n : parseFloat(n));
+  return fmtMoney(n, { compact: Number.isFinite(a) && a >= 1e6 });
 }
 function fmtVal(v,unit) {
   if(v===undefined||v===null) return '—';
@@ -6794,15 +6878,9 @@ function exportFullPDF() {
   active.forEach(sc=>{ const g=sc.theme||sc.verticalKey||'General'; (groups[g]=groups[g]||[]).push(sc); });
 
   // ── Helpers ─────────────────────────────────────────────────────────────
-  const F = v => {
-    if(v===null||v===undefined) return '—';
-    const n=parseFloat(v); if(isNaN(n)) return String(v);
-    const a=Math.abs(n),s=n<0?'-':'';
-    if(a>=1e6) return s+'$'+(a/1e6).toFixed(2)+'M';
-    if(a>=1e3) return s+'$'+Math.round(a).toLocaleString();
-    return s+'$'+Math.round(a);
-  };
-  const pct = v => Math.round(v*100)+'%';
+  // PR 4: was a local 2-decimal-millions variant; now the shared formatter.
+  const F = v => fmtMoney(v);
+  const pct = v => fmtPct(v);
   const pb  = paybackMo ? paybackMo.toFixed(1)+' months' : '—';
 
   // ── SVG Charts ───────────────────────────────────────────────────────────
@@ -6812,7 +6890,7 @@ function exportFullPDF() {
     const range=mx-mn||1; const maxMo=60;
     const toX=mo=>PL+(mo/maxMo)*iW, toY=v=>PT+iH*(1-(v-mn)/range);
     const zY=toY(0);
-    const fmtAx=v=>{const a=Math.abs(v);return (v<0?'-':'')+(a>=1e6?'$'+(a/1e6).toFixed(1)+'M':a>=1e3?'$'+(a/1e3).toFixed(0)+'K':'$0');};
+    const fmtAx=v=>fmtMoney(v,{compact:true});
     const ticks=[mn,mn/2,0,mx/2,mx].filter((v,i,a)=>a.findIndex(x=>Math.abs(x-v)<range*.04)===i);
     const polyPts=pts.map(p=>toX(p.mo)+','+toY(p.cash)).join(' ');
     let pbLine='';
@@ -6838,7 +6916,7 @@ function exportFullPDF() {
     const vals=pts.map(p=>p.npv); const mn=Math.min(...vals), mx=Math.max(...vals);
     const range=mx-mn||1; const maxMo=60;
     const toX=mo=>PL+(mo/maxMo)*iW, toY=v=>PT+iH*(1-(v-mn)/range);
-    const fmtAx=v=>{const a=Math.abs(v);return (v<0?'-':'')+(a>=1e6?'$'+(a/1e6).toFixed(1)+'M':a>=1e3?'$'+(a/1e3).toFixed(0)+'K':'$0');};
+    const fmtAx=v=>fmtMoney(v,{compact:true});
     const ticks=[mn,0,mx/2,mx].filter((v,i,a)=>a.findIndex(x=>Math.abs(x-v)<range*.04)===i);
     const polyPts=pts.map(p=>toX(p.mo)+','+toY(p.npv)).join(' ');
     return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block">
@@ -6863,7 +6941,7 @@ function exportFullPDF() {
     const niceMax=v=>{const m=Math.pow(10,Math.floor(Math.log10(v)));const n=v/m;return (n<=1?1:n<=2?2:n<=5?5:10)*m;};
     const ax=niceMax(mx);
     const totalH=AX_H+items.length*(ROW_H+GAP)+8;
-    const fmtAx=v=>v>=1e6?'$'+(v/1e6).toFixed(1)+'M':v>=1e3?'$'+(v/1e3).toFixed(0)+'K':'$0';
+    const fmtAx=v=>fmtMoney(v,{compact:true});
     let rows='';
     [0,.25,.5,.75,1].forEach(f=>{
       const tx=BAR_X+f*BAR_W;
@@ -7030,7 +7108,7 @@ function exportFullPDF() {
     const mx = Math.max.apply(null, vals.concat([1]));
     const toX = function(i){ return PL + (i/5)*iW; };
     const toY = function(v){ return PT + iH*(1 - v/mx); };
-    const fmt = function(v){ var a=Math.abs(v); return a>=1e6?'$'+(a/1e6).toFixed(1)+'M':a>=1e3?'$'+(a/1e3).toFixed(0)+'K':'$0'; };
+    const fmt = function(v){ return fmtMoney(v,{compact:true, sign:false}); };
     const pts = vals.map(function(v,i){ return toX(i)+','+toY(v); }).join(' ');
     const area = vals.map(function(v,i){ return toX(i)+','+toY(v); }).join(' ')
                  +' '+toX(5)+','+String(PT+iH)+' '+toX(0)+','+String(PT+iH);
@@ -7494,8 +7572,8 @@ async function exportPPTX() {
   const npv5 = _popNrv ? _popNrv.nrv : Math.round(((b.totY1-(yr1))/(1.1))+((b.totY2-(yr2))/(1.21))+((b.totY3-(yr2))/(1.331))+((b.totY3-(yr2))/(1.464))+((b.totY3-(yr2))/(1.611)));
   const roi3 = _popNrv ? _popNrv.roi5 : (yr0>0 ? Math.round(((b.totY1+b.totY2+b.totY3-(yr0+yr1+yr2*2))/(yr0+yr1+yr2*2))*100) : 0);
   const invRatio = yr0>0 ? ((b.totY1+b.totY2+b.totY3)/yr0).toFixed(2) : '—';
-  const F = v => v==null?'—':'$'+Math.round(v).toLocaleString();
-  const pct = v => Math.round((v||0)*100)+'%';
+  const F = v => fmtMoney(v);
+  const pct = v => fmtPct(v);
 
   // Group active scenarios by vertical
   const groups = {};
@@ -8019,7 +8097,7 @@ async function runPPTXDownload(callerBtn) {
     };
 
     // Utility
-    const fmt$ = v => '$'+Math.round(v||0).toLocaleString();
+    const fmt$ = v => fmtMoney(v);
     const pres  = new PptxGenJS();
     pres.layout  = 'LAYOUT_WIDE';
     pres.author  = 'Zebra Technologies';
@@ -8756,8 +8834,8 @@ function exportLLMPrompt() {
     const pain    = document.getElementById('i-pain')?.value      || '';
     const dateStr = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
 
-    const fmt  = v => v == null ? '—' : '$' + Math.round(v).toLocaleString();
-    const pct  = v => Math.round((v||0)*100) + '%';
+    const fmt  = v => fmtMoney(v);
+    const pct  = v => fmtPct(v);
     const _aiNrv = state.nrvResult;
     const r = _aiNrv;
     const hasCustom = (state.customScenarios||[]).some(s=>s.active);
