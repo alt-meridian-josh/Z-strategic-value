@@ -4062,8 +4062,60 @@ function showLoadWarning(msg) {
   const el = document.getElementById('load-warning');
   const txt = document.getElementById('load-warning-text');
   if(!el || !txt) { console.warn('Load warning (no banner):', msg); return; }
-  txt.textContent = msg;
+  const notes = Array.isArray(msg) ? msg.filter(Boolean) : [msg];
+  if(!notes.length) return;
+  txt.innerHTML = '';
+  notes.forEach(n => {
+    const d = document.createElement('div');
+    d.textContent = n;                       // textContent — never inject loaded strings as HTML
+    if(notes.length > 1) d.style.margin = '2px 0';
+    txt.appendChild(d);
+  });
   el.style.display = 'flex';
+}
+
+// Which vertical a lever id belongs to, or null if the id is not in the registry.
+function verticalForLeverId(id) {
+  const sc = SCENARIOS.find(s => s.id === id);
+  return sc ? sc.verticalKey : null;
+}
+
+// Reconcile the active-industry set with what the selection actually needs.
+// A payload naming WH-01 wants warehouse, whether or not it said so. Returns
+// the verticals that had to be inferred, so the caller can report them.
+// Never removes a vertical and never touches selectedIds.
+function reconcileIndustriesToSelection(ids) {
+  const inferred = [];
+  (ids || []).forEach(id => {
+    const v = verticalForLeverId(id);
+    if(v && !activeIndustries.has(v)) { activeIndustries.add(v); inferred.push(v); }
+  });
+  if(inferred.length) syncVerticalButtons();
+  return [...new Set(inferred)];
+}
+
+// Push activeIndustries onto the vertical-button visual state.
+function syncVerticalButtons() {
+  document.querySelectorAll('.vbtn').forEach(b =>
+    b.classList.toggle('active', activeIndustries.has(b.dataset.v)));
+}
+
+// Drop selections that no longer belong to any active industry, and say so.
+// This is the ONLY path that removes a lever for vertical reasons, and it is
+// only ever reached from a deliberate user action (deactivating a vertical).
+// renderLeverGrid() must not mutate selectedIds — see PR 2.1.
+function pruneSelectionToActiveIndustries(reasonVertical) {
+  const matched = matchScenarios();
+  const dropped = [...state.selectedIds].filter(id => !matched.find(s => s.id === id));
+  dropped.forEach(id => state.selectedIds.delete(id));
+  if(dropped.length) {
+    showLoadWarning(
+      `Turning off ${reasonVertical || 'a vertical'} removed ${dropped.length} selected ` +
+      `value case${dropped.length > 1 ? 's' : ''}: ${dropped.join(', ')}. ` +
+      `Turn the vertical back on to restore ${dropped.length > 1 ? 'them' : 'it'}.`
+    );
+  }
+  return dropped;
 }
 
 // Rehydrate the full live state + DOM from an engagement object, then re-render.
@@ -4107,26 +4159,65 @@ function applyEngagement(p) {
   }
 
   // 2) Industries — sync the Set and the vertical-button visual state
-  if(Array.isArray(p.verticals) && p.verticals.length) {
+  const declaredVerticals = Array.isArray(p.verticals) && p.verticals.length;
+  if(declaredVerticals) {
     activeIndustries.clear();
     p.verticals.forEach(v => activeIndustries.add(v));
-    document.querySelectorAll('.vbtn').forEach(b => b.classList.toggle('active', activeIndustries.has(b.dataset.v)));
+    syncVerticalButtons();
     setSliderDefaults(p.verticals[0]);
   }
 
-  // 3) Selected levers — validate against live registry; never drop silently
+  // 3) Selected levers — validate against live registry; never drop silently.
+  //    Unresolvable ids are the ONLY ids this function drops (PR 1). A lever
+  //    whose vertical simply wasn't declared is kept, and the vertical is
+  //    inferred below rather than the lever being discarded (PR 2.1).
+  const loadNotes = [];
   if(Array.isArray(p.selectedIds)) {
     const knownIds = new Set(SCENARIOS.map(s => s.id));
     const stale = p.selectedIds.filter(id => !knownIds.has(id));
     state.selectedIds = new Set(p.selectedIds.filter(id => knownIds.has(id)));
     if(stale.length) {
-      showLoadWarning(
+      loadNotes.push(
         `${stale.length} lever${stale.length > 1 ? 's were' : ' was'} not found in the ` +
         `current scenario library and ${stale.length > 1 ? 'have' : 'has'} been removed: ` +
-        stale.join(', ') + '. Their benefit contributions are excluded from this analysis.'
+        stale.join(', ') + '. ' + (stale.length > 1
+          ? 'Their benefit contributions are excluded from this analysis.'
+          : 'Its benefit contribution is excluded from this analysis.')
       );
     }
   }
+
+  // 3b) Make the active-industry set cover everything still selected.
+  //     No `verticals` field  -> derive the set from the selected lever ids.
+  //     Incomplete `verticals` -> union the missing ones in and name them.
+  //     Neither case deletes a lever to satisfy the vertical list.
+  const sel = [...state.selectedIds];
+  if(!declaredVerticals && sel.length) {
+    const derived = [...new Set(sel.map(verticalForLeverId).filter(Boolean))];
+    if(derived.length) {
+      activeIndustries.clear();
+      derived.forEach(v => activeIndustries.add(v));
+      syncVerticalButtons();
+      setSliderDefaults(derived[0]);
+      loadNotes.push(
+        `The saved file listed no verticals, so ${derived.length > 1 ? 'they were' : 'it was'} ` +
+        `derived from the selected value cases: ${derived.join(', ')}.`
+      );
+    }
+  } else if(declaredVerticals) {
+    const inferred = reconcileIndustriesToSelection(sel);
+    if(inferred.length) {
+      const byV = inferred.map(v =>
+        v + ' (' + sel.filter(id => verticalForLeverId(id) === v).join(', ') + ')');
+      loadNotes.push(
+        `Added ${inferred.length} vertical${inferred.length > 1 ? 's' : ''} the saved file did not list, ` +
+        `inferred from the selected value cases: ${byV.join('; ')}. ` +
+        `The cases were kept — nothing was dropped.`
+      );
+    }
+  }
+  if(!activeIndustries.size) { activeIndustries.add('retail'); syncVerticalButtons(); }
+  if(loadNotes.length) showLoadWarning(loadNotes);
 
   // 4) Discovery inputs — merge onto the benchmark defaults
   if(p.inputs) Object.entries(p.inputs).forEach(([scId, vals]) => {
@@ -4586,7 +4677,11 @@ function toggleIndustry(btn) {
   }
   const wasActive = activeIndustries.has(v);
   btn.classList.toggle('active');
-  if(wasActive) activeIndustries.delete(v);
+  if(wasActive) {
+    activeIndustries.delete(v);
+    // Deliberate user action — drop that vertical's selections, but say which.
+    pruneSelectionToActiveIndustries(v);
+  }
   else {
     activeIndustries.add(v);
     // Auto-select newly added vertical's scenarios
@@ -4670,8 +4765,11 @@ function renderLeverGrid() {
   if(!grid) return;
 
   const matched = matchScenarios();
-  // Sync selectedIds: remove any stale ids that no longer match active industries
-  [...state.selectedIds].forEach(id => { if(!matched.find(s=>s.id===id)) state.selectedIds.delete(id); });
+  // PR 2.1: this function is a pure renderer — it must NOT mutate selectedIds.
+  // Vertical-driven removal lives in pruneSelectionToActiveIndustries(), called
+  // only from toggleIndustry(); load paths widen activeIndustries instead via
+  // reconcileIndustriesToSelection(). Re-adding a prune here reintroduces the
+  // silent-drop bug where loading an engagement dropped levers with no notice.
 
   if(label) label.textContent = '— ' + matched.length + ' case' + (matched.length!==1?'s':'');
 
@@ -8915,6 +9013,53 @@ const SELFTEST_FIXTURES = [
   }
  ];
 
+// ── LOAD-PATH FIXTURES (PR 2.1) ───────────────────────────────────────────────
+// The three payload shapes that used to lose levers silently in
+// renderLeverGrid(), plus the PR-1 unresolvable-id path they must not disturb.
+// Expected values are written from the intended contract, not captured from
+// observed output:
+//   * a lever is dropped ONLY when its id is not in SCENARIOS
+//   * a declared-but-incomplete vertical list is widened, never enforced
+//   * a missing vertical list is derived from the selection
+//   * every drop or inference produces a visible banner note
+const SELFTEST_LOAD_FIXTURES = [
+  { name:'L1_no_verticals_field',
+    note:'no verticals field, warehouse lever — vertical derived, lever kept',
+    payload:{ _version:2, selectedIds:['WH-01'], inputs:{} },
+    expected:{ kept:['WH-01'], dropped:[], verticals:['warehouse'], notes:1 } },
+  { name:'L2_verticals_incomplete',
+    note:'verticals=[retail] with a warehouse lever — warehouse unioned in, lever kept',
+    payload:{ _version:2, verticals:['retail'], selectedIds:['WH-01','RET-01'], inputs:{} },
+    expected:{ kept:['RET-01','WH-01'], dropped:[], verticals:['retail','warehouse'], notes:1 } },
+  { name:'L3_verticals_cover_levers',
+    note:'verticals already cover the selection — no change, no banner',
+    payload:{ _version:2, verticals:['warehouse'], selectedIds:['WH-01'], inputs:{} },
+    expected:{ kept:['WH-01'], dropped:[], verticals:['warehouse'], notes:0 } },
+  { name:'L4_unresolvable_ids',
+    note:'PR-1 path — only ids absent from SCENARIOS are dropped',
+    payload:{ _version:2, verticals:['warehouse'], selectedIds:['WH-01','AVN-07','ZZZ-99'], inputs:{} },
+    expected:{ kept:['WH-01'], dropped:['AVN-07','ZZZ-99'], verticals:['warehouse'], notes:1 } },
+];
+
+// Runs one payload through the real applyEngagement() from a clean
+// activeIndustries baseline, so fixtures do not contaminate each other.
+function _selftestLoad(payload) {
+  const asked = (payload.selectedIds || []).slice();
+  activeIndustries.clear(); activeIndustries.add('retail');
+  const warn = document.getElementById('load-warning');
+  const warnTxt = document.getElementById('load-warning-text');
+  if (warn) warn.style.display = 'none';
+  if (warnTxt) warnTxt.innerHTML = '';
+  applyEngagement(payload);
+  const kept = [...state.selectedIds].sort();
+  return {
+    kept,
+    dropped: asked.filter(id => !kept.includes(id)).sort(),
+    verticals: [...activeIndustries].sort(),
+    notes: (warn && warn.style.display !== 'none' && warnTxt) ? warnTxt.childElementCount : 0
+  };
+}
+
 // Runs one fixture through the REAL compute functions (no reimplemented math)
 // and returns the same field set the fixtures store.
 function _selftestCompute(input) {
@@ -8963,6 +9108,22 @@ function _selftestCompute(input) {
 function runSelfTest() {
   const rows = [];
   let passN = 0, failN = 0, errN = 0;
+  // Load-path fixtures first: they exercise applyEngagement() against the live
+  // DOM, so they must run before renderSelfTest() replaces document.body.
+  SELFTEST_LOAD_FIXTURES.forEach(fx => {
+    let actual = null, err = null;
+    try { actual = _selftestLoad(fx.payload); }
+    catch (e) { err = e && e.message ? e.message : String(e); }
+    if (err) { errN++; rows.push({ fixture: fx.name, note: fx.note, error: err, fields: [] }); return; }
+    const fields = Object.keys(fx.expected).map(k => {
+      const exp = fx.expected[k], got = actual[k];
+      const norm = v => Array.isArray(v) ? JSON.stringify(v) : String(v);
+      const ok = norm(exp) === norm(got);
+      if (ok) passN++; else failN++;
+      return { field: k, expected: norm(exp), actual: norm(got), ok, delta: null };
+    });
+    rows.push({ fixture: fx.name, note: fx.note, error: null, fields });
+  });
   SELFTEST_FIXTURES.forEach(fx => {
     let actual = null, err = null;
     try { actual = _selftestCompute(fx.input); }
@@ -9018,7 +9179,8 @@ function renderSelfTest() {
     + '<div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#888;font-weight:700">Zebra Value Accelerator</div>'
     + '<h1 style="font-size:26px;margin:8px 0 2px">Self-test</h1>'
     + '<div style="font-size:13px;color:#666;margin-bottom:18px">'
-    + SELFTEST_FIXTURES.length + ' fixtures &middot; compute path: calcSc &rarr; rebuildCostState &rarr; calcNRV</div>'
+    + SELFTEST_FIXTURES.length + ' compute fixtures (calcSc &rarr; rebuildCostState &rarr; calcNRV) &middot; '
+    + SELFTEST_LOAD_FIXTURES.length + ' load-path fixtures (applyEngagement)</div>'
     + '<div style="padding:12px 16px;border-radius:6px;margin-bottom:24px;font-weight:700;font-size:15px;'
     + (bad ? 'background:#fef0f0;border:1px solid #f5b8b8;color:#7a1500'
            : 'background:#eefbf1;border:1px solid #a8dcb8;color:#1c6b32') + '">'
