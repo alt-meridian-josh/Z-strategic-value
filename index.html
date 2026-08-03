@@ -4269,7 +4269,12 @@ function gatherEngagement() {
   const val = id => document.getElementById(id)?.value;
   const sel = [...state.selectedIds];
   const inputs = {};
-  sel.forEach(id => { if(state.inputs[id]) inputs[id] = Object.assign({}, state.inputs[id]); });
+  // PR 5.1: gated levers contribute no inputs to the saved file.
+  sel.forEach(id => {
+    const sc = SCENARIOS.find(s => s.id === id);
+    if (sc && !leverCollectsDiscovery(sc)) return;
+    if (state.inputs[id]) inputs[id] = Object.assign({}, state.inputs[id]);
+  });
   const eng = {
     company: val('i-company'), customer: val('i-customer'), title: val('i-title'),
     sites: +val('i-sites') || undefined, seller: val('i-seller'), email: val('i-email'),
@@ -4830,7 +4835,8 @@ function toggleVcDq(btn) {
 }
 
 function generateIntakeForm() {
-  const selected = SCENARIOS.filter(s => state.selectedIds.has(s.id));
+  // PR 5.1: never print a gated lever's questions on a customer-facing form.
+  const selected = SCENARIOS.filter(s => state.selectedIds.has(s.id)).filter(leverCollectsDiscovery);
   if(!selected.length) {
     alert('Select at least one value case first, then click Generate.');
     return;
@@ -4993,7 +4999,10 @@ function selCount() {
 
 // ── STEP 4: DISCOVERY ──
 function renderDisc() {
-  const active = SCENARIOS.filter(s=>state.selectedIds.has(s.id));
+  // PR 5.1: gated levers are dropped here, not just styled. Their questions
+  // cannot be answered usefully, so an analyst must not spend a discovery call
+  // collecting them.
+  const active = SCENARIOS.filter(s=>state.selectedIds.has(s.id)).filter(leverCollectsDiscovery);
   const el = document.getElementById('disc-accordion');
   el.innerHTML = active.map((sc, idx) => `
     <div class="acc-item open" id="acc-${sc.id}">
@@ -5069,7 +5078,11 @@ function buildDonut(pct, rampType) {
 }
 
 function updateInput(scId, key, el) {
-  const v = parseFloat(el.value)||0;
+  // PR 5.1: a cleared field means "not discovered yet", NOT zero. Coercing it
+  // to 0 made the lever compute as legitimately weak instead of incomplete.
+  const raw = String(el.value).trim();
+  const parsed = parseFloat(raw);
+  const v = (raw === '' || !Number.isFinite(parsed)) ? undefined : parsed;
   state.inputs[scId][key] = v;
   el.classList.add('changed');
   const item = document.getElementById('acc-'+scId);
@@ -5221,7 +5234,8 @@ function renderCost() {
 
 // Compute a single row's total based on cadence
 function computeRowTotal(r) {
-  const base = (r.qty||1) * (r.unitCost||0);
+  // PR 5.1: ?? not || — a typed 0 means zero units, only blank defaults to 1.
+  const base = (r.qty ?? 1) * (r.unitCost || 0);
   if(r.cadence==='monthly')      return base * 12;  // annualized
   if(r.cadence==='per-site/yr')  return base;       // already per-site, qty = sites
   return base; // one-time, annual, other
@@ -5400,9 +5414,20 @@ function calcSc(sc) {
       case"FS-07":  return p.annual_refunds_credits*p.completeness_error_pct*p.reduction_from_rfid;
       case"FS-08":  return (p.annual_esg_labor_hours*p.labor_reduction_pct*p.loaded_rate)+(p.annual_esg_audit_fees*p.audit_fee_reduction);
 
-      default: return sc.annualBenefit;
+      // PR 5.1: a lever with no formula branch must NOT return its headline
+      // annualBenefit. That produced a confident number unrelated to anything
+      // the analyst discovered. Non-finite routes it into calcNRV's guard,
+      // which excludes it and names it.
+      default:
+        console.error('[calcSc] ' + sc.id + ': no formula branch — returning non-finite (was returning annualBenefit ' + sc.annualBenefit + ')');
+        return NaN;
     }
-  } catch(e) { return sc.annualBenefit; }
+  } catch(e) {
+    // Same rule for a formula that throws. Previously this silently became the
+    // headline number for ANY lever — with state.inputs[id] absent, all 88 did.
+    console.error('[calcSc] ' + sc.id + ': formula threw (' + (e && e.message) + ') — returning non-finite');
+    return NaN;
+  }
 }
 
 
@@ -5529,11 +5554,19 @@ function calcNRV(activeScenarios, costs, wacc, rates) {
   // lever turns B0, every yearly netBenefit, npv, mirr and bcr into NaN, and
   // several export formatters render NaN as a plausible "$0" (they use `v||0`,
   // and NaN is falsy). Excluded ids are returned so callers can name them.
-  const excludedLevers = [];
+  const excludedLevers = [], exclusionReasons = {};
   activeScenarios = (activeScenarios || []).filter(sc => {
     let v; try { v = calcSc(sc); } catch (e) { v = NaN; }
     if (Number.isFinite(v)) return true;
     excludedLevers.push(sc.id);
+    // Say WHY: gated, or incomplete naming the exact inputs still outstanding.
+    let why;
+    try { const st = leverStatus(sc);
+          why = st.status === 'gated' ? st.reason
+              : st.missing.length ? 'awaiting discovery: ' + st.missing.join(', ')
+              : 'formula produced a non-finite value'; }
+    catch (e) { why = 'formula produced a non-finite value'; }
+    exclusionReasons[sc.id] = why;
     return false;
   });
   const capex = costs.yr0 || 0;
@@ -5602,7 +5635,7 @@ function calcNRV(activeScenarios, costs, wacc, rates) {
 
   return {
     nrv, mirr, paybackMo, bcr, peakAnnual, roi5,
-    yearlyData, B0, totalAnnOpex, capex, wacc, excludedLevers
+    yearlyData, B0, totalAnnOpex, capex, wacc, excludedLevers, exclusionReasons
   };
 }
 
@@ -5995,11 +6028,10 @@ function renderROI() {
   // rows cannot disagree with the totals above them.
   const excluded = result.excludedLevers || [];
   if (excluded.length) {
-    showLoadWarning(
-      excluded.length + ' lever' + (excluded.length > 1 ? 's' : '') + ' could not be calculated and '
-      + (excluded.length > 1 ? 'were' : 'was') + ' EXCLUDED from this analysis: ' + excluded.join(', ')
-      + '. Every other lever is unaffected. Totals shown do not include '
-      + (excluded.length > 1 ? 'them' : 'it') + '.');
+    const why = result.exclusionReasons || {};
+    showLoadWarning(excluded.map(id =>
+      id + ' is EXCLUDED from the totals — ' + (why[id] || 'cannot be calculated')
+      + '. Every other lever is unaffected.'));
   }
   // Straight from computeEngagement — no arithmetic here.
   state.benefits = {
@@ -8265,7 +8297,7 @@ function exportLLMPrompt() {
 
     const b = state.benefits;
     const c = state.costs;
-    const active = SCENARIOS.filter(s => state.selectedIds.has(s.id));
+    const active = SCENARIOS.filter(s => state.selectedIds.has(s.id)).filter(leverCollectsDiscovery);
     const co      = document.getElementById('i-customer')?.value  || 'Your Customer';
     const vendor  = document.getElementById('i-company')?.value   || 'Zebra Technologies';
     const titleS  = document.getElementById('i-title')?.value     || 'RFID Strategic Value Analysis';
@@ -8676,8 +8708,63 @@ function validateRegistry() {
 const UNAVAILABLE_LEVERS = {
   'GOV-02': 'benchmark defaults pending',
   'TL-02':  'benchmark defaults pending',
+  // No calcSc branch: these returned their static annualBenefit regardless of
+  // what the analyst discovered. Gated until a real formula exists.
+  'DC-08':  'formula not implemented',
+  'DC-09':  'formula not implemented',
+  'AVN-08': 'formula not implemented',
 };
 function leverUnavailableReason(id) { return UNAVAILABLE_LEVERS[id] || null; }
+
+// ── LEVER STATUS (PR 5.1) ─────────────────────────────────────────────────────
+// Three distinct states, deliberately not collapsed into one:
+//   gated      — cannot be computed at all; withheld from selection AND from
+//                discovery collection. We do not ask questions we cannot use.
+//   incomplete — computable in principle, but a required input has not been
+//                discovered yet. Excluded from totals and named with what is
+//                missing. This is NOT the same as "worth little": a blank
+//                labour rate means unasked, not $0/hr.
+//   available  — every required input present.
+// PR 6 replaces the derivation below with an explicit requiredInputs
+// declaration per lever; the three-state contract stays the same.
+
+// Which p.<var> a lever's formula actually reads, parsed from calcSc itself so
+// it cannot drift from the formulas. Cached per lever id.
+const _requiredInputCache = {};
+function requiredInputsFor(sc) {
+  if (_requiredInputCache[sc.id]) return _requiredInputCache[sc.id];
+  let out = [];
+  try {
+    const m = String(calcSc).match(new RegExp('case\\s*"' + sc.id + '"\\s*:([\\s\\S]*?)(?=case\\s*"|\\n\\s*// PR 5.1|default:)'));
+    if (m) out = [...new Set([...m[1].matchAll(/\bp\.([A-Za-z_]\w*)/g)].map(x => x[1]))];
+  } catch (e) { out = []; }
+  _requiredInputCache[sc.id] = out;
+  return out;
+}
+
+function missingInputsFor(sc) {
+  const vals = (state.inputs && state.inputs[sc.id]) || {};
+  return requiredInputsFor(sc).filter(k => {
+    const v = vals[k];
+    return v === undefined || v === null || v === '' || !Number.isFinite(+v);
+  });
+}
+
+function leverStatus(sc) {
+  const gate = leverUnavailableReason(sc.id);
+  if (gate) return { status: 'gated', reason: gate, missing: [] };
+  if (sc.custom) return { status: 'available', reason: '', missing: [] };
+  const missing = missingInputsFor(sc);
+  if (missing.length) {
+    return { status: 'incomplete', missing,
+             reason: 'awaiting discovery: ' + missing.join(', ') };
+  }
+  return { status: 'available', reason: '', missing: [] };
+}
+
+// A lever whose questions must not be asked, because its answers cannot be used.
+function leverCollectsDiscovery(sc) { return leverStatus(sc).status !== 'gated'; }
+
 
 // Pre-existing data defects found by validateRegistry(). Listed here so the tool
 // still boots: quarantining them as ERRORs would take the whole app down for a
@@ -8787,6 +8874,74 @@ const SELFTEST_FIXTURES = [
    expected:{"nrv":832779,"mirr":1.5125195798,"paybackMo":1,"bcr":21.484172691,"peakAnnual":270949.72,"roi5":2048,"B0":320000,"totalAnnOpex":8000,"capex":15000,"y1net":140000,"y3net":262949.72,"y5net":246459.617807}
   }
  ];
+
+// ── STATUS / FAILURE FIXTURES (PR 5.1) ───────────────────────────────────────
+// The distinction these pin: a lever awaiting discovery is INCOMPLETE and
+// excluded with a named reason; it is not computed as a weak lever. Before
+// PR 5.1 a blanked input coerced to 0 and the lever quietly scored near-zero,
+// which reads as "not worth much" rather than "we have not asked yet".
+const SELFTEST_STATUS_FIXTURES = [
+  { name:'S1_blank_required_input_is_incomplete',
+    note:'WH-01 with loaded_rate cleared — incomplete and excluded, NOT scored as weak',
+    run:function(){
+      const sc = SCENARIOS.find(s=>s.id==='WH-01');
+      const keep = state.inputs['WH-01'].loaded_rate;
+      state.inputs['WH-01'].loaded_rate = undefined;
+      const st = leverStatus(sc);
+      const r = calcNRV([sc], {yr0:15000, yr1:0}, 0.10);
+      state.inputs['WH-01'].loaded_rate = keep;
+      return { status: st.status, missing: st.missing.join(','),
+               excluded: (r.excludedLevers||[]).join(','),
+               reasonNamesInput: String((r.exclusionReasons||{})['WH-01']).indexOf('loaded_rate') >= 0 };
+    },
+    expected:{ status:'incomplete', missing:'loaded_rate', excluded:'WH-01', reasonNamesInput:true } },
+
+  { name:'S2_complete_lever_available',
+    note:'same lever with every input present is available and scores normally',
+    run:function(){
+      const sc = SCENARIOS.find(s=>s.id==='WH-01');
+      const st = leverStatus(sc);
+      const r = calcNRV([sc], {yr0:15000, yr1:0}, 0.10);
+      return { status: st.status, excluded:(r.excludedLevers||[]).join(',')||'(none)', finite: Number.isFinite(r.nrv) };
+    },
+    expected:{ status:'available', excluded:'(none)', finite:true } },
+
+  { name:'S3_no_formula_branch_is_gated_not_headline',
+    note:'DC-08 must NOT return its 675000 headline number any more',
+    run:function(){
+      const sc = SCENARIOS.find(s=>s.id==='DC-08');
+      const v = calcSc(sc);
+      return { finite: Number.isFinite(v), equalsHeadline: v === sc.annualBenefit,
+               status: leverStatus(sc).status, collectsDiscovery: leverCollectsDiscovery(sc) };
+    },
+    expected:{ finite:false, equalsHeadline:false, status:'gated', collectsDiscovery:false } },
+
+  { name:'S4_throwing_lever_excluded_and_named',
+    note:'a formula that throws is excluded, never silently replaced by annualBenefit',
+    run:function(){
+      const sc = { id:'THROW-01', name:'throws', rampType:'hard_labor',
+                   accessibilityTier:'configured', haircut:0.10, annualBenefit:999999,
+                   inputs:{}, themeKeys:['x'] };
+      const keep = state.inputs['THROW-01'];
+      delete state.inputs['THROW-01'];            // p undefined -> formula throws
+      const v = calcSc(sc);
+      const r = calcNRV([sc], {yr0:1000, yr1:0}, 0.10);
+      if (keep !== undefined) state.inputs['THROW-01'] = keep;
+      return { finite: Number.isFinite(v), equalsHeadline: v === 999999,
+               excluded: (r.excludedLevers||[]).join(','), totalsFinite: Number.isFinite(r.nrv) };
+    },
+    expected:{ finite:false, equalsHeadline:false, excluded:'THROW-01', totalsFinite:true } },
+
+  { name:'S5_qty_zero_costs_nothing',
+    note:'an explicitly typed 0 quantity must cost 0; only blank defaults to 1',
+    run:function(){
+      return { zero: computeRowTotal({qty:0, unitCost:1200, cadence:'one-time'}),
+               blank: computeRowTotal({qty:undefined, unitCost:1200, cadence:'one-time'}),
+               three: computeRowTotal({qty:3, unitCost:1200, cadence:'one-time'}) };
+    },
+    expected:{ zero:0, blank:1200, three:3600 } },
+];
+function _selftestStatus(fx) { return fx.run(); }
 
 // ── FORMATTER STRING FIXTURES (PR 4.1) ───────────────────────────────────────
 // Golden strings for the single formatter, covering the modes each export path
@@ -8983,6 +9138,19 @@ function runSelfTest() {
       const ok = norm(exp) === norm(got);
       if (ok) passN++; else failN++;
       return { field: k, expected: norm(exp), actual: norm(got), ok, delta: null };
+    });
+    rows.push({ fixture: fx.name, note: fx.note, error: null, fields });
+  });
+  SELFTEST_STATUS_FIXTURES.forEach(fx => {
+    let actual = null, err = null;
+    try { actual = _selftestStatus(fx); }
+    catch (e) { err = e && e.message ? e.message : String(e); }
+    if (err) { errN++; rows.push({ fixture: fx.name, note: fx.note, error: err, fields: [] }); return; }
+    const fields = Object.keys(fx.expected).map(k => {
+      const exp = fx.expected[k], got = actual[k];
+      const ok = String(exp) === String(got);
+      if (ok) passN++; else failN++;
+      return { field: k, expected: String(exp), actual: String(got), ok, delta: null };
     });
     rows.push({ fixture: fx.name, note: fx.note, error: null, fields });
   });
