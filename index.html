@@ -995,6 +995,12 @@ svg{max-width:100%;height:auto}
   <span id="engagement-notice-text" style="flex:1;line-height:1.5"></span>
   <button onclick="document.getElementById('engagement-notice').style.display='none'" title="Dismiss" style="background:none;border:none;color:#7a5200;cursor:pointer;font-size:17px;line-height:1;padding:0 4px">&times;</button>
 </div>
+<!-- Load-path warning banner — shown when engagement loading drops or refuses data -->
+<div id="load-warning" style="display:none;align-items:center;gap:10px;background:#fef0f0;border:1px solid #f5b8b8;border-left:4px solid #c8330e;color:#7a1500;font-size:12px;padding:8px 14px;margin:0 0 14px;border-radius:5px">
+  <span style="font-size:14px">&#9888;</span>
+  <span id="load-warning-text" style="flex:1;line-height:1.5"></span>
+  <button onclick="document.getElementById('load-warning').style.display='none'" title="Dismiss" style="background:none;border:none;color:#7a1500;cursor:pointer;font-size:17px;line-height:1;padding:0 4px">&times;</button>
+</div>
 
 <!-- == STEP 1: ENGAGEMENT SETUP == -->
 <div class="panel active" id="panel-0">
@@ -4031,11 +4037,16 @@ function techScopeLabel() {
 function _techLabelForCopy() { return techScopeLabel(); }
 
 // ── SCHEMA v2 MIGRATION ───────────────────────────────────────────────────────
-// Any pre-v2 file (or one missing the additive blocks) loads unchanged: this
-// fills the v2 fields with v1-equivalent defaults so the rest of the app can
-// assume they exist. Absent => v1 behavior. First and only reader of _version.
+// Known versions: absent / 1 (v1, additive-compatible) and 2 (current).
+// Unknown or future version → returns a refusal sentinel; applyEngagement()
+// shows the user a message and aborts before touching any state.
+const KNOWN_ENGAGEMENT_VERSIONS = new Set([1, 2]);
 function migrateEngagement(p) {
   if(!p || typeof p !== 'object') return p;
+  const v = p._version;
+  if(v != null && !KNOWN_ENGAGEMENT_VERSIONS.has(v)) {
+    return { _refused: true, _refusedVersion: v };
+  }
   p = Object.assign({}, p); // shallow clone — never mutate the caller's object
   if(!Array.isArray(p.technologies))                   p.technologies = [];
   if(!p.overlay     || typeof p.overlay     !== 'object') p.overlay = {};
@@ -4047,10 +4058,22 @@ function migrateEngagement(p) {
   return p;
 }
 
+function showLoadWarning(msg) {
+  const el = document.getElementById('load-warning');
+  const txt = document.getElementById('load-warning-text');
+  if(!el || !txt) { console.warn('Load warning (no banner):', msg); return; }
+  txt.textContent = msg;
+  el.style.display = 'flex';
+}
+
 // Rehydrate the full live state + DOM from an engagement object, then re-render.
 function applyEngagement(p) {
   if(!p || typeof p !== 'object') { console.warn('applyEngagement: nothing to load'); return false; }
   p = migrateEngagement(p);
+  if(p && p._refused) {
+    showLoadWarning(`Cannot load: engagement was saved with schema version ${p._refusedVersion}. This tool supports versions ${[...KNOWN_ENGAGEMENT_VERSIONS].join(' and ')}. Update the tool to open this file.`);
+    return false;
+  }
   validateDedup(p.dedup); // hard error on invalid dedup — abort before any state change
   appMode = p.mode;
   updateModeBand();
@@ -4091,8 +4114,19 @@ function applyEngagement(p) {
     setSliderDefaults(p.verticals[0]);
   }
 
-  // 3) Selected levers
-  if(Array.isArray(p.selectedIds)) state.selectedIds = new Set(p.selectedIds);
+  // 3) Selected levers — validate against live registry; never drop silently
+  if(Array.isArray(p.selectedIds)) {
+    const knownIds = new Set(SCENARIOS.map(s => s.id));
+    const stale = p.selectedIds.filter(id => !knownIds.has(id));
+    state.selectedIds = new Set(p.selectedIds.filter(id => knownIds.has(id)));
+    if(stale.length) {
+      showLoadWarning(
+        `${stale.length} lever${stale.length > 1 ? 's were' : ' was'} not found in the ` +
+        `current scenario library and ${stale.length > 1 ? 'have' : 'has'} been removed: ` +
+        stale.join(', ') + '. Their benefit contributions are excluded from this analysis.'
+      );
+    }
+  }
 
   // 4) Discovery inputs — merge onto the benchmark defaults
   if(p.inputs) Object.entries(p.inputs).forEach(([scId, vals]) => {
@@ -4136,6 +4170,10 @@ function applyEngagement(p) {
   if(document.getElementById('panel-3')?.classList.contains('active')) { try { renderCost(); } catch(e){} }
   if(document.getElementById('panel-4')?.classList.contains('active')) { try { ensureCosts(); renderROI(); } catch(e){} }
   applyModeGuards();  // customer-lite locks/footer (no-op in analyst mode); after fields are set
+  // Boot assertion — log any state key that should exist but doesn't after load
+  ['selectedIds','inputs','customScenarios','costs'].forEach(k => {
+    if(state[k] == null) console.warn(`applyEngagement: state.${k} is undefined after load — check initialization`);
+  });
   console.log('Applied engagement:', p._label || p.engagement?.customer || '(unnamed)');
   return true;
 }
@@ -5663,7 +5701,7 @@ const SC_TIER_DESC = {
 function renderSolutionComparison() {
   const host = document.getElementById('sc-summary-host');
   if (!host) return;
-  const wacc = (typeof state !== 'undefined' && state.wacc) ? state.wacc : 0.10;
+  const wacc = (typeof state !== 'undefined' && state.wacc) ? state.wacc : (console.warn('renderSolutionComparison: state.wacc not set, falling back to 0.10 — call renderROI() first'), 0.10);
   const rev = 10000000, acc = 0.72, shrink = 0.018, labor = 80, laborRate = 21.50;
   const results = SC_SOLUTIONS.map(sol => {
     const grossBen = labor*52*laborRate*sol.laborMult + rev*(1-acc)*sol.availMult + rev*shrink*sol.shrinkMult + rev*sol.omniMult;
@@ -5727,6 +5765,7 @@ function renderROI() {
   // ── NRV toolbar state (kept for chart rendering below) ──
   const _waccEl = document.getElementById('nrv-wacc');
   const wacc    = _waccEl ? +_waccEl.value : 0.10;
+  state.wacc = wacc; // write so renderSolutionComparison() and exports read the live value
   const gRate   = +(document.getElementById('nrv-g')?.value ?? 0.035);
   const finRate = +(document.getElementById('nrv-fin')?.value ?? 0.10);
   const useDecay = (document.getElementById('nrv-decay')?.value ?? '1') === '1';
@@ -5738,7 +5777,7 @@ function renderROI() {
 
   ensureCosts();
   const c = state.costs;
-  const result = calcNRV(active, c, 0.10);
+  const result = calcNRV(active, c, wacc);
   const { nrv, mirr, paybackMo, bcr, peakAnnual, roi5, yearlyData } = result;
 
   state.nrvResult = result;
