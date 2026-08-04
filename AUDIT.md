@@ -842,3 +842,67 @@ Global `setSv(id,v)` at line 5001: `const el=document.getElementById(id); if(el)
 | 8 | **Delete `nrvSet()`, `applyPartnerBrand()`, `copyToClip()`** (lines 2371, 2166, 6363, ~10 total lines) | ~10 dead lines | Small isolated dead functions. `applyPartnerBrand` is the most misleading — it creates an undocumented "API" that could be accidentally invoked from the browser console. `nrvSet` appears to belong to a planned NRV override UI that was never wired. |
 | 9 | **Replace `_setSv` with global `setSv`** (lines 5734–5737) | 1 dead definition + 3 call sites | Byte-for-byte duplicate of `setSv` (line 5001). If `setSv` is ever extended (sanitization, animation), the three `renderROI` calls at lines 5735–5737 will silently miss the update. Three-line substitution. |
 | 10 | **Remove or document `syncNav()` call sites** (line 4527 + 5 call sites) | 5 wasted calls | Empty function called 5 times. Either remove all call sites or add a JSDoc comment documenting that it is a retained stub for forward compatibility. Low effort, clarity gain. |
+
+---
+
+# Status of findings
+
+Added after remediation. Every finding from the original audit above, plus the
+findings discovered **during** the work that the audit did not catch. Rationale for
+each ruling is in `DECISIONS.md`.
+
+## Original audit findings
+
+| # | Finding | Status | Commit |
+|---|---|---|---|
+| 1 | `renderROI` passed a hardcoded `0.10` to `calcNRV` — the Step-5 WACC control affected no number the tool produced | **FIXED** | `97ffedd` |
+| 2 | `applyEngagement` loaded `selectedIds` with no registry guard; stale ids dropped silently | **FIXED** — filtered and named in a banner | `97ffedd` |
+| 3 | `_version` written but never read; unknown versions partially applied | **FIXED** — unknown/future version refuses the load | `97ffedd` |
+| 4 | `state.wacc` never written; `renderSolutionComparison` always used its `\|\| 0.10` fallback | **FIXED** | `97ffedd` |
+| 5 | 17 currency formatters had drifted (`$1.50M` in PDF vs `$1.5M` on screen) | **FIXED** — one `fmtMoney`/`fmtPct` | `9d7b881` |
+| 6 | 3 `pct` formatters disagreed on null (`NaN%` vs `0%`) | **FIXED** | `9d7b881` |
+| 7 | Several formatters rendered non-finite as a plausible `$0` via `v\|\|0` | **FIXED** — real zero is `$0`, non-finite is `—` | `9d7b881` |
+| 8 | `VERTICAL_SCENARIO_MAP` was a hand-maintained 10-key set against 11 picker keys | **FIXED** — derived from canonical `VERTICALS` | `8307741` |
+| 9 | WH-01 unit fields said `"count"` for minutes and seconds | **FIXED** | `8307741` |
+| 10 | `calcDriverWalkdown` dead and diverged from the inline reimplementation | **FIXED** — deleted | `4c6ebbd` |
+| 11 | `async exportPPTX` (~487 lines) dead; Help text described its removed flow | **FIXED** — deleted, Help corrected | `4c6ebbd` |
+| 12 | `computeNRV` — a second, never-called ROI engine | **FIXED** — deleted | `4c6ebbd` |
+| 13 | `revertToBaseline` wired to live data but reachable from no UI | **FIXED** — deleted | `4c6ebbd` |
+| 14 | `_setSv` byte-identical clone of global `setSv` | **SUPERSEDED** — removed with the compute/render split | `9d7b881` |
+| 15 | No browser storage; state survives only an explicit save | **OPEN — by design.** Documented, not changed | — |
+| 16 | Orphan `PANEL 9` comment, no such panel | **OPEN** — cosmetic, left in place | — |
+| 17 | `inputsProvenance` not found; the real object is `engagementProvenance`, round-tripped but never rendered | **OPEN** — PR 8 surfaces it | — |
+| 18 | `i-email` collected, saved, never surfaced in any output | **FIXED** — internal header + save JSON, never customer-facing | `4c6ebbd` |
+| 19 | `exportJSON` has no round-trip schema or version field | **OPEN** | — |
+| 20 | Exports do not branch on `appMode`; customer-mode enforcement is CSS-only | **OPEN** | — |
+
+## Found during the work — not in the original audit
+
+These are the ones the audit missed, listed worst first.
+
+| # | Finding | How it surfaced | Status | Commit |
+|---|---|---|---|---|
+| A | **`DC-08`, `DC-09`, `AVN-08` collected discovery inputs and returned a static headline number.** DC-08 returned 675,000 with every one of its six inputs multiplied by ten. The analyst runs discovery, the customer answers, nothing changes | boot registry validator | **FIXED** — `default:` returns non-finite; all three gated | `d0ef9ec` |
+| B | **`calcSc`'s `catch:` returned `sc.annualBenefit` for any lever that threw.** With `state.inputs[id]` absent, **all 88** returned their headline number | census probe of all 88 | **FIXED** — returns non-finite and logs | `d0ef9ec` |
+| C | **`GOV-02` and `TL-02` read inputs that were never defined** → `NaN` → because `calcNRV` sums levers, selecting either turned **every figure in the engagement** into `NaN` | formula-vs-inputs validator | **FIXED** — excluded and named; both gated | `e228b35` |
+| D | **`renderLeverGrid` silently deleted levers** whose vertical was not active — and `applyEngagement` calls it, so loading a payload whose `verticals` list did not cover its `selectedIds` lost them after the banner had already run | load-path fixtures | **FIXED** — pure renderer; verticals inferred, never assumed | `6fd5caa` |
+| E | **`updateInput` coerced a cleared field to `0`.** Blanking WH-01's loaded rate took it from 320,000 to 0 — "not worth much" instead of "not asked yet" | coalesce audit | **FIXED** — `undefined`; lever becomes `incomplete` | `d0ef9ec` |
+| F | **`computeRowTotal` used `(r.qty\|\|1)`** — a typed `0` quantity was charged as 1 unit | coalesce audit | **FIXED** — `??` | `d0ef9ec` |
+| G | **A non-numeric `contingencyRate` turned the whole cost model `NaN`** (`yr0Sub * undefined`) | coalesce audit | **FIXED** — absent means 0% | `bce1048` |
+| H | **`RET-06` is badged SOFT PROD. but takes `num_stores`** — flagged `site` and multiplied by a 420-store group it would count 420 × 420 stores | scale review | **FIXED** — `enterprise` against its badge; check B′ enforces | `fa109d4` |
+| I | **`RET-01`'s discovery question said "across all stores" while its hint and default were per-store** — the two guidance texts pointed opposite ways | basis classification | **FIXED** — per-store ruling, question rewritten, 10× flag | `fa109d4` |
+| J | **`CAR-07` declares an input its formula never reads** (`annual_regulated_volume`) — collected, saved, printed, unused | two-way drift check | **OPEN** — content decision | — |
+| K | **Cost slider `sites` default disagrees**: HTML attribute `1` vs `VERTICAL_SLIDER_DEFAULTS.retail` `50` | duplicate-defaults scan | **OPEN** | — |
+| L | **WACC `0.10` has six definition sites** | duplicate-defaults scan | **OPEN** — one is now authoritative; consolidation not done | — |
+| M | **Five citations back more than one sellable lever**, led by `EV-RET-ACC-01` underwriting three retail levers | evidence report | **OPEN** — content | — |
+| N | **7 levers tagged `Strong` on a single citation; 10 non-Emerging levers rest only on Tier 3** — both against the tool's own stated rules. `WH-02` fails both at once | evidence report | **OPEN** — content | — |
+| O | **The 9 strategic data-foundation levers declare no `evidence` field at all** — the catalog shows no maturity dot, silent rather than explicit | evidence report | **OPEN** — content | — |
+| P | **`CAR-08`/`TL-03` are near-duplicates** sharing one citation and one vertical; Select all took both | dedup report | **FIXED** — mutually exclusive group | `5c6503a` |
+| Q | **`DC-02`/`DC-03` share a citation, a name, an input and a scale ruling** — possibly one lever twice | evidence report | **OPEN** — needs the same diff `CAR-08`/`TL-03` got | — |
+
+## Verification added
+
+`?selftest=1` runs **167 assertions** with no build system and no dependencies —
+compute, load-path, forecast-signal, formatter-string, lever-status fixtures, and a
+two-way drift check asserting `requiredInputs` matches what `calcSc` references.
+Verified from a fresh clone with all network blocked.
