@@ -7245,7 +7245,22 @@ function seedGate(leverId, n) {
 // tier. Works for library- or custom-lever analyses alike.
 function tiersActive() { return Array.isArray(state.tiers) && state.tiers.length > 0; }
 
+// FEATURE OFF (2026-08): the Solutions / Good-Better-Best tier layer is disabled.
+//
+// It presented three columns as a comparison while producing three identical
+// analyses. The cause is not the cloning code — it is that the data the feature
+// needs does not exist: the panel states "value activation is computed from the
+// capability matrix", but there is no lever->capability matrix in this file, and
+// only 19 of 88 levers declare techKeys at all. With no requirement data there is
+// nothing to compute activation from, so Good/Better/Best necessarily came out
+// identical (verified: all three returned NRV 1,539,283 on warehouse_starter).
+//
+// Re-enabling needs the per-lever capability requirement populated first — see
+// the note in the Solutions panel. Flip TIERS_ENABLED once that exists.
+const TIERS_ENABLED = false;
+
 function enableTiers() {
+  if (!TIERS_ENABLED) { console.warn('[tiers] disabled — lever capability requirements are not populated'); return; }
   if (tiersActive()) return;
   state.tiers = ['Good','Better','Best'].map(nm => ({ id: nm.toLowerCase(), name: nm }));
   state.selectedTier = state.tiers.length - 1;
@@ -7322,7 +7337,7 @@ function tierEnableHTML() {
   return `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px dashed var(--gray-300);border-radius:6px;background:var(--gray-50)">
     <span class="badge b-green">TIERS</span>
     <span style="font-size:12px;color:var(--muted)">Compare several solution options (Good / Better / Best) — each with its own cost and how much of each value lever it captures.</span>
-    <button class="btn btn-outline" style="margin-left:auto;height:28px;padding:0 12px;font-size:12px;white-space:nowrap" onclick="enableTiers()">+ Enable solution tiers</button>
+    <span style="margin-left:auto;font-size:11px;color:var(--muted,#888);font-style:italic;white-space:nowrap" title="Good/Better/Best produced three identical analyses because no lever declares the capability it requires. Disabled until that data exists.">Solution tiers temporarily unavailable</span>
   </div>`;
 }
 // The capabilities solutions can draw from: an explicit engagement catalog if present
