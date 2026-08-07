@@ -1239,27 +1239,27 @@ svg{max-width:100%;height:auto}
     <div class="g2">
       <div class="fg">
         <label class="flabel">Number of Sites</label>
-        <div class="srow"><input type="range" min="1" max="500" value="1" id="sl-sites" oninput="syncCost()"><div class="sval" id="sv-sites">1</div></div>
+        <div class="srow"><input type="range" min="1" max="2500" value="1" id="sl-sites" oninput="syncCost()"><input class="sval" id="sv-sites" value="1" onchange="setSliderFromBox('sl-sites','sv-sites')" onkeydown="if(event.key==='Enter')this.blur()" title="Type an exact value"></div>
       </div>
       <div class="fg">
         <label class="flabel">Tagged Items per Site</label>
-        <div class="srow"><input type="range" min="500" max="100000" step="500" value="15000" id="sl-items" oninput="syncCost()"><div class="sval" id="sv-items">15,000</div></div>
+        <div class="srow"><input type="range" min="500" max="100000" step="500" value="15000" id="sl-items" oninput="syncCost()"><input class="sval" id="sv-items" value="15,000" onchange="setSliderFromBox('sl-items','sv-items')" onkeydown="if(event.key==='Enter')this.blur()" title="Type an exact value"></div>
       </div>
       <div class="fg">
         <label class="flabel">Annual Tag Replenishment Rate</label>
-        <div class="srow"><input type="range" min="0.05" max="1" step="0.05" value="0.4" id="sl-replen" oninput="syncCost()"><div class="sval" id="sv-replen">40%</div></div>
+        <div class="srow"><input type="range" min="0.05" max="1" step="0.05" value="0.4" id="sl-replen" oninput="syncCost()"><input class="sval" id="sv-replen" value="40%" onchange="setSliderFromBox('sl-replen','sv-replen')" onkeydown="if(event.key==='Enter')this.blur()" title="Type an exact value"></div>
       </div>
       <div class="fg">
         <label class="flabel">SaaS / Platform Fee per Site/Year</label>
-        <div class="srow"><input type="range" min="0" max="20000" step="100" value="4800" id="sl-saas" oninput="syncCost()"><div class="sval" id="sv-saas">$4,800</div></div>
+        <div class="srow"><input type="range" min="0" max="20000" step="100" value="4800" id="sl-saas" oninput="syncCost()"><input class="sval" id="sv-saas" value="$4,800" onchange="setSliderFromBox('sl-saas','sv-saas')" onkeydown="if(event.key==='Enter')this.blur()" title="Type an exact value"></div>
       </div>
       <div class="fg">
         <label class="flabel">Unit Tag Cost ($)</label>
-        <div class="srow"><input type="range" min="0.04" max="0.50" step="0.01" value="0.08" id="sl-tag" oninput="syncCost()"><div class="sval" id="sv-tag">$0.08</div></div>
+        <div class="srow"><input type="range" min="0.04" max="0.50" step="0.01" value="0.08" id="sl-tag" oninput="syncCost()"><input class="sval" id="sv-tag" value="$0.08" onchange="setSliderFromBox('sl-tag','sv-tag')" onkeydown="if(event.key==='Enter')this.blur()" title="Type an exact value"></div>
       </div>
       <div class="fg">
         <label class="flabel">Reader Units per Site</label>
-        <div class="srow"><input type="range" min="1" max="20" step="1" value="4" id="sl-readers" oninput="syncCost()"><div class="sval" id="sv-readers">4</div></div>
+        <div class="srow"><input type="range" min="1" max="20" step="1" value="4" id="sl-readers" oninput="syncCost()"><input class="sval" id="sv-readers" value="4" onchange="setSliderFromBox('sl-readers','sv-readers')" onkeydown="if(event.key==='Enter')this.blur()" title="Type an exact value"></div>
       </div>
     </div>
   </div>
@@ -4226,6 +4226,7 @@ function applyEngagement(p) {
 
   // 3) Selected levers
   if(Array.isArray(p.selectedIds)) state.selectedIds = new Set(p.selectedIds);
+  if(Array.isArray(p.selectedIds)) leverSelectionTouched = true;
 
   // 4) Discovery inputs — merge onto the benchmark defaults
   if(p.inputs) Object.entries(p.inputs).forEach(([scId, vals]) => {
@@ -4296,7 +4297,10 @@ function applyEngagement(p) {
       if(Array.isArray(r.amountByTier)) copy.amountByTier = r.amountByTier.slice();
       return copy;
     });
-    costRowsEdited = true;
+    // Loading an engagement is NOT a manual edit. costRowsPreset alone already
+    // stops syncCost() regenerating these rows (see its preset guard), so the
+    // protection is unchanged — but the "you have manual edits" banner no longer
+    // fires on every opened file, which it did before and which was simply untrue.
     costRowsPreset = true;
     rebuildCostState();
   }
@@ -4787,6 +4791,7 @@ function toggleTechnology(id, on) {
 
 // Toggle an industry button on/off — always keep at least one active
 function toggleIndustry(btn) {
+  leverSelectionTouched = true;
   const v = btn.dataset.v;
   if(activeIndustries.has(v) && activeIndustries.size === 1) {
     btn.style.opacity = '0.4';
@@ -4811,6 +4816,7 @@ function toggleIndustry(btn) {
 
 // Set all lever checkboxes on or off
 function setAllLevers(on) {
+  leverSelectionTouched = true;
   if(on) {
     // Select all: check all scenarios for all active industries
     matchScenarios().forEach(s => state.selectedIds.add(s.id));
@@ -5015,6 +5021,7 @@ function renderLeverGrid() {
 
 // Toggle a single lever on/off
 function toggleLever(id, el) {
+  leverSelectionTouched = true;
   el.classList.toggle('on');
   if(state.selectedIds.has(id)) state.selectedIds.delete(id);
   else state.selectedIds.add(id);
@@ -5073,12 +5080,18 @@ function toggleSc(id, el) {
   });
 }
 
+// True once the lever selection reflects a real choice — a click, a bulk action,
+// or a loaded engagement. The app ships with 8 levers pre-selected, which tripped
+// the ">6" warning on first paint before the user had done anything; a warning
+// about a default you did not choose just teaches people to ignore warnings.
+let leverSelectionTouched = false;
+
 function selCount() {
   const n = state.selectedIds.size;
   const el = document.getElementById('sel-count');
   if(el) el.textContent = n + ' selected';
   const warn = document.getElementById('lever-count-warn');
-  if(warn) warn.style.display = n > 6 ? 'block' : 'none';
+  if(warn) warn.style.display = (leverSelectionTouched && n > 6) ? 'block' : 'none';
 }
 
 // ── STEP 4: DISCOVERY ──
@@ -5296,7 +5309,35 @@ function syncCost() {
   renderCost();
 }
 
-function setSv(id,v) { const el=document.getElementById(id); if(el) el.textContent=v; }
+function setSv(id,v) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (el.tagName === 'INPUT') { if (document.activeElement !== el) el.value = v; }
+  else el.textContent = v;
+}
+
+// Typed value -> slider. Strips $ , and %, clamps to the slider's own range, and
+// reports when a typed number is out of range rather than silently clamping it.
+function setSliderFromBox(sliderId, boxId) {
+  const sl = document.getElementById(sliderId), box = document.getElementById(boxId);
+  if (!sl || !box) return;
+  let raw = String(box.value).replace(/[$,\s]/g, '');
+  const isPct = raw.indexOf('%') >= 0;
+  raw = raw.replace('%', '');
+  let v = parseFloat(raw);
+  if (!Number.isFinite(v)) { syncCost(); return; }        // gibberish -> just repaint
+  if (isPct) v = v / 100;
+  const min = +sl.min, max = +sl.max;
+  if (v < min || v > max) {
+    if (typeof showLoadWarning === 'function')
+      showLoadWarning(boxId.replace('sv-','') + ': ' + v + ' is outside the slider range ('
+        + min + '-' + max + '). Using ' + Math.min(max, Math.max(min, v))
+        + '. Enter the exact figure in the cost table if you need a value beyond this.');
+    else console.warn('[slider]', boxId, v, 'out of range', min, max);
+  }
+  sl.value = Math.min(max, Math.max(min, v));
+  syncCost();
+}
 
 function resetCost() {
   costRowsEdited = false;
