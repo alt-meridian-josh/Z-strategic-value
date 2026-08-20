@@ -26,21 +26,39 @@ analysis — but it stops being silent.
 
 ## Payload
 
-```jsonc
-POST <OUTPUT_ENDPOINT>
-Content-Type: application/json
+This is the real body the tool sends — generated from `outputSummary()`, not an
+approximation. Paste it into Power Automate's **Use sample payload to generate
+schema** box verbatim.
 
+```json
 {
-  "summary": {                 // headline figures, for the mail body
-    "customer": "Acme Distribution",
+  "summary": {
+    "customer": "Healthcare Starter (illustrative)",
     "seller": "Joshua Willis",
     "date": "2026-08-20",
-    "nrv": 3670436, "paybackMo": 2.4, "mirr": 1.265, "capex": 112511,
-    "leverCount": 4, "levers": ["Equipment Rental Reduction", "..."]
+    "nrv": 3670436,
+    "paybackMo": 2.4,
+    "mirr": 1.2646353432976065,
+    "capex": 112511,
+    "leverCount": 4,
+    "levers": [
+      "Equipment Rental Reduction & Asset Utilization",
+      "Surgical Instrument Tracking — OR Throughput",
+      "Joint Commission Audit — Compliance Labor Reduction",
+      "Supply Stockout & Expiry Reduction"
+    ]
   },
-  "engagement": { /* full lossless envelope — the same JSON Save produces */ }
+  "engagement": {
+    "_type": "strategic-value-engagement",
+    "_version": 2,
+    "_label": "string"
+  }
 }
 ```
+
+`engagement` is the full lossless envelope — the same JSON **Save analysis**
+produces. It is trimmed to three fields here only to keep the generated schema
+small; the real object carries the whole engagement and can be attached as-is.
 
 Note there is no recipient field. That is deliberate — see above.
 
@@ -138,8 +156,14 @@ delivery, put a Worker or Azure Function in front (`'cors'` mode) instead.
 2. Paste the payload above into **Use sample payload to generate schema**.
 3. Add **Send an email (V2)**. Type your address into **To** literally — do not
    bind it to anything from the request body, or you have built an open relay.
-4. Map the body from `summary`; attach `engagement` as a `.json` if you want the
-   full file.
+4. Map the mail body from `summary` (dynamic content: Customer, Nrv, PaybackMo,
+   and so on). To attach the full analysis, add an attachment with:
+   - **Name** — `@{triggerBody()?['summary']?['customer']}.json`
+   - **Content** — `@{base64(string(triggerBody()?['engagement']))}`
+
+   Send an email (V2) expects attachment content base64-encoded, which is what
+   `base64(string(...))` does; without `string()` you are encoding an object and
+   the attachment arrives corrupt.
 5. Save, copy the generated URL, and set both values in `index.html`:
 
 ```js
