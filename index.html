@@ -1566,6 +1566,13 @@ svg{max-width:100%;height:auto}
         <div style="font-size:11px;color:#555;line-height:1.55;flex:1">The single JSON action — a portable, lossless <code style="font-size:10px;background:#eee;padding:1px 4px;border-radius:3px;">.json</code> of this engagement. Reopen anytime via <strong>Load analysis</strong> on the Engagement Setup page; it round-trips every field.</div>
       </div>
 
+      <div style="display:flex;gap:14px;align-items:flex-start">
+        <div style="flex:0 0 200px;display:flex;flex-direction:column;gap:4px">
+          <button class="btn btn-outline" id="send-output-btn" onclick="sendOutput()">Send completed analysis</button>
+        </div>
+        <div style="font-size:11px;color:#555;line-height:1.55;flex:1">Sends the finished analysis back to <strong id="send-output-to">the account team</strong>. Saves the <code style="font-size:10px;background:#eee;padding:1px 4px;border-radius:3px;">.json</code> and opens an email draft with the headline numbers already written — <strong>attach the saved file before sending</strong>.</div>
+      </div>
+
       <!-- analyst-only, de-emphasized (D2) -->
       <div class="analyst-only" style="display:flex;gap:14px;align-items:flex-start;opacity:.65;border-top:1px dashed var(--gray-200);padding-top:12px">
         <button class="btn btn-outline analyst-only" onclick="exportStandaloneHTML()" style="flex:0 0 200px;font-size:11px">Export analyst standalone</button>
@@ -4370,6 +4377,106 @@ function gatherEngagement() {
 }
 
 // Download the current analysis as a .json file.
+// ── SEND COMPLETED ANALYSIS ──────────────────────────────────────────────────
+// Where a finished analysis goes. OUTPUT_ENDPOINT is the ONE seam between the
+// two delivery modes:
+//
+//   '' (default) — no infrastructure. sendOutput() saves the .json and opens a
+//     prefilled draft in the user's mail client; they attach the file and send.
+//     Self-contained: works offline, and a copy handed to anyone else still works.
+//
+//   set to a URL — sendOutput() POSTs { summary, engagement } there and that
+//     service sends the mail with no user action. Requires an endpoint you host
+//     (Cloudflare Worker, Power Automate "when an HTTP request is received",
+//     Apps Script). Trade-off: every copy of this file then depends on that
+//     endpoint being up, and it no longer works offline.
+//
+//     SECURITY: hardcode the recipient IN THE ENDPOINT. Never let it mail an
+//     address taken from the request body, or you have published an open relay.
+//     Never put an API key in this file — it ships to everyone you send it to.
+const OUTPUT_EMAIL = 'joshua.willis@zebra.com';
+let OUTPUT_ENDPOINT = '';   // `let`: settable at runtime by a deployment or a test
+
+// Headline figures for the covering note, so the mail is useful even before the
+// attachment is opened. Reads the same state the ROI page renders.
+function outputSummary() {
+  ensureCosts();
+  if (!state.nrvResult || !state.nrvResult.nrv) renderROI();
+  const r = state.nrvResult || {};
+  const eng = (gatherEngagement() || {}).engagement || {};
+  const levers = activeScenariosForNRV().map(s => s.name);
+  return {
+    customer: eng.customer || 'Engagement',
+    seller: eng.seller || '', date: new Date().toISOString().slice(0, 10),
+    nrv: r.nrv || 0, paybackMo: r.paybackMo || 0, mirr: r.mirr || 0,
+    capex: r.capex || 0, leverCount: levers.length, levers,
+  };
+}
+
+function outputNoteText(s) {
+  return [
+    `Customer:      ${s.customer}`,
+    `Prepared by:   ${s.seller}`,
+    `Date:          ${s.date}`,
+    '',
+    `Net Realization Value:  ${fmt(s.nrv)}`,
+    `Payback:                ${s.paybackMo ? s.paybackMo.toFixed(1) + ' months' : 'n/a'}`,
+    `MIRR:                   ${s.mirr ? (s.mirr * 100).toFixed(1) + '%' : 'n/a'}`,
+    `Capex:                  ${fmt(s.capex)}`,
+    '',
+    `Value levers (${s.leverCount}):`,
+    ...s.levers.map(n => `  - ${n}`),
+  ].join('\n');
+}
+
+// Name the real recipient in the UI, and drop the "attach it" step when an
+// endpoint is configured (that path sends the payload itself).
+function renderSendOutput() {
+  const to = document.getElementById('send-output-to');
+  if (to) to.textContent = OUTPUT_EMAIL;
+  const btn = document.getElementById('send-output-btn');
+  if (btn && OUTPUT_ENDPOINT) {
+    const hint = btn.closest('div').nextElementSibling;
+    if (hint) hint.innerHTML = `Sends the finished analysis straight to <strong>${OUTPUT_EMAIL}</strong>. No attachment step — the analysis is delivered with the message.`;
+  }
+}
+
+// Deliver the finished analysis. Returns the mode used, so tests and callers can
+// tell which path ran without depending on browser navigation side effects.
+async function sendOutput() {
+  const summary = outputSummary();
+  const engagement = gatherEngagement();
+
+  if (OUTPUT_ENDPOINT) {
+    try {
+      const res = await fetch(OUTPUT_ENDPOINT, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ summary, engagement }),
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      alert(`Sent to ${OUTPUT_EMAIL}.`);
+      return 'endpoint';
+    } catch (e) {
+      // Never strand the user on a dead endpoint — fall back to the draft.
+      console.warn('auto-send failed, falling back to a mail draft:', e);
+    }
+  }
+
+  saveEngagementFile();   // the attachment: mailto: cannot attach on its own
+  const href = buildMailDraft(summary);
+  try { window.location.href = href; } catch (e) { console.warn('mailto failed:', e); }
+  return 'draft';
+}
+
+// The mailto: URL for a finished analysis. Pure — takes a summary, returns a
+// string — so the address, subject and body are verifiable without navigating.
+function buildMailDraft(summary) {
+  const subject = `Value analysis — ${summary.customer} — ${summary.date}`;
+  const body = outputNoteText(summary) +
+    '\n\nThe full analysis (.json) was just saved to your Downloads — please attach it before sending.\n';
+  return `mailto:${encodeURIComponent(OUTPUT_EMAIL)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
 function saveEngagementFile() {
   try {
     ensureCosts();
@@ -10075,6 +10182,7 @@ Keep it conversational. One paragraph, then the question.
 
 document.addEventListener('DOMContentLoaded', () => {
   renderTechSelect();
+  renderSendOutput();
   renderLeverGrid();
   selCount(); // fire on load so warning shows if defaults exceed 6
   // Init cost state from slider defaults (sliders have value= attrs so this works)
