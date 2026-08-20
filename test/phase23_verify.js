@@ -34,6 +34,7 @@ async function appWithCaptures() {
     const w = loadApp().window; await ready(w);
     ok('recipient is configured', w.eval('OUTPUT_EMAIL') === 'joshua.willis@zebra.com', w.eval('OUTPUT_EMAIL'));
     ok('no endpoint by default (self-contained)', w.eval('OUTPUT_ENDPOINT') === '');
+    ok('default endpoint mode is cors', w.eval('OUTPUT_ENDPOINT_MODE') === 'cors', w.eval('OUTPUT_ENDPOINT_MODE'));
     ok('no API key shipped in the file',
        !/sk-[A-Za-z0-9]{16,}|re_[A-Za-z0-9]{16,}|Bearer\s+[A-Za-z0-9._-]{20,}/.test(
          require('fs').readFileSync(abs('..', 'index.html'), 'utf8')));
@@ -98,6 +99,40 @@ async function appWithCaptures() {
        body.summary.to === undefined && body.to === undefined);
     ok('no attachment download on the endpoint path', cap.saved === 0, String(cap.saved));
     ok('user is told it was sent', cap.alerts.some(a => /sent to/i.test(a)), cap.alerts[0]);
+  }
+
+  // ── 5c) OPAQUE mode (Power Automate / Logic Apps): the flow returns no CORS
+  // headers, so the POST must be a CORS "simple request" (text/plain, no-cors) or
+  // the preflight blocks it and the flow never runs. The response is opaque, so
+  // res.ok is meaningless here — checking it would open a draft on every
+  // successful send, delivering twice.
+  {
+    const { w, cap } = await appWithCaptures();
+    // An opaque response: status 0, ok false — exactly what no-cors yields.
+    w.fetch = (u, o) => { cap.posted = { u, o }; return Promise.resolve({ ok: false, status: 0, type: 'opaque' }); };
+    w.eval("OUTPUT_ENDPOINT = 'https://prod-00.westus.logic.azure.com/workflows/abc/triggers/manual/paths/invoke'");
+    w.eval("OUTPUT_ENDPOINT_MODE = 'opaque'");
+    const mode = await w.sendOutput();
+    ok('opaque endpoint reports a send', mode === 'endpoint', String(mode));
+    ok('no draft opened despite an opaque (ok:false) response', cap.saved === 0, String(cap.saved));
+    ok('sent as no-cors so no preflight blocks the flow', cap.posted.o.mode === 'no-cors', String(cap.posted.o.mode));
+    ok('Content-Type is text/plain (a CORS simple request)',
+       cap.posted.o.headers['Content-Type'] === 'text/plain', cap.posted.o.headers['Content-Type']);
+    const body = JSON.parse(cap.posted.o.body);
+    ok('payload is still the full summary + engagement', !!body.summary && !!body.engagement);
+    ok('user is told delivery cannot be confirmed',
+       cap.alerts.some(a => /cannot be confirmed/i.test(a)), cap.alerts[0]);
+  }
+
+  // ── 5d) Opaque mode still falls back when the request itself cannot be made.
+  {
+    const { w, cap } = await appWithCaptures();
+    w.fetch = () => Promise.reject(new Error('DNS failure'));
+    w.eval("OUTPUT_ENDPOINT = 'https://prod-00.westus.logic.azure.com/x'");
+    w.eval("OUTPUT_ENDPOINT_MODE = 'opaque'");
+    const mode = await w.sendOutput();
+    ok('unreachable opaque endpoint falls back to a draft', mode === 'draft', String(mode));
+    ok('fallback saves the attachment', cap.saved === 1, String(cap.saved));
   }
 
   // ── 5b) A DEAD endpoint falls back to the draft rather than losing the analysis.

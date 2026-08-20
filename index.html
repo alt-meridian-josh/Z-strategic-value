@@ -4397,6 +4397,23 @@ function gatherEngagement() {
 const OUTPUT_EMAIL = 'joshua.willis@zebra.com';
 let OUTPUT_ENDPOINT = '';   // `let`: settable at runtime by a deployment or a test
 
+// How the endpoint answers a browser. This is not a preference — it has to match
+// what the service actually does, or sends silently double up or vanish.
+//
+//   'cors'   — the endpoint returns Access-Control-Allow-Origin (a Cloudflare
+//              Worker, Azure Function, or anything you wrote yourself). We can
+//              read the response, so delivery is CONFIRMED and a real failure
+//              falls back to a mail draft.
+//
+//   'opaque' — the endpoint returns NO CORS headers. Power Automate and Logic
+//              Apps are both like this. Sent as a CORS "simple request"
+//              (Content-Type text/plain, mode no-cors) so the browser skips the
+//              preflight and the flow DOES run — but the response is opaque, so
+//              delivery CANNOT be confirmed from here. Checking res.ok in this
+//              mode would be wrong: an opaque response always reports failure,
+//              so every successful send would also open a draft.
+let OUTPUT_ENDPOINT_MODE = 'cors';
+
 // Headline figures for the covering note, so the mail is useful even before the
 // attachment is opened. Reads the same state the ROI page renders.
 function outputSummary() {
@@ -4448,10 +4465,22 @@ async function sendOutput() {
   const engagement = gatherEngagement();
 
   if (OUTPUT_ENDPOINT) {
+    const payload = JSON.stringify({ summary, engagement });
     try {
+      if (OUTPUT_ENDPOINT_MODE === 'opaque') {
+        // text/plain keeps this a CORS "simple request" so there is no preflight
+        // for the endpoint to fail. The flow runs; we just cannot see the result.
+        await fetch(OUTPUT_ENDPOINT, {
+          method: 'POST', mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body: payload,
+        });
+        alert(`Sent to ${OUTPUT_EMAIL}.\n\nDelivery cannot be confirmed from the browser — check the flow run history if the mail does not arrive.`);
+        return 'endpoint';
+      }
       const res = await fetch(OUTPUT_ENDPOINT, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ summary, engagement }),
+        body: payload,
       });
       if (!res.ok) throw new Error('HTTP ' + res.status);
       alert(`Sent to ${OUTPUT_EMAIL}.`);

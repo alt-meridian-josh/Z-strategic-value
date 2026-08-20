@@ -101,27 +101,69 @@ Then in `index.html`:
 let OUTPUT_ENDPOINT = 'https://value-tool.<you>.workers.dev';
 ```
 
-## Power Automate
+## Power Automate / Logic Apps
 
-Likely the most IT-sanctioned route inside a corporate tenant, and it needs no
-key management: create a flow triggered by **When an HTTP request is received**,
-paste the payload above as the sample schema to generate it, then add **Send an
-email (V2)** with the To field typed literally as your address — not bound to
-anything from the request. Copy the generated URL into `OUTPUT_ENDPOINT`.
+Usually the most IT-sanctioned route inside a corporate tenant, and it needs no
+API key at all — the flow URL carries its own signature. Two constraints decide
+whether it works for you, and both are real.
 
-The generated URL contains its own signature, so treat it as semi-secret: anyone
-with the file can call it. Because the recipient is fixed in the flow, the blast
-radius is spam to you, and regenerating the URL revokes it.
+### It needs a Premium licence
+
+**When an HTTP request is received** is a premium trigger. The flow *owner* needs
+Power Automate Premium (or a per-flow plan). Because an HTTP-triggered flow is an
+automated flow, the people whose browsers call the URL do **not** need a licence —
+they are not Power Automate users, they are just POSTing. So one licence, yours,
+covers everyone you hand the file to. Check this before building anything.
+
+### It returns no CORS headers — set `OUTPUT_ENDPOINT_MODE = 'opaque'`
+
+Power Automate does not send `Access-Control-Allow-Origin`. That has two
+consequences, and getting either wrong breaks the feature:
+
+- A normal JSON POST triggers a CORS **preflight**, which the flow cannot answer,
+  so the browser never sends the real request and **the flow never runs**. This is
+  why the tool sends `Content-Type: text/plain` with `mode: 'no-cors'` in this
+  mode — that is a CORS "simple request", there is no preflight, and the flow runs.
+- The response is **opaque**: `res.ok` is always `false` even on success. Anything
+  that checks it would treat every successful send as a failure and open a mail
+  draft too, so you would be delivered twice. The `'opaque'` mode does not check.
+
+The trade-off you accept: **delivery cannot be confirmed from the browser.** If a
+mail does not arrive, check the flow's run history. If you want confirmed
+delivery, put a Worker or Azure Function in front (`'cors'` mode) instead.
+
+### Build it
+
+1. New flow → **When an HTTP request is received**.
+2. Paste the payload above into **Use sample payload to generate schema**.
+3. Add **Send an email (V2)**. Type your address into **To** literally — do not
+   bind it to anything from the request body, or you have built an open relay.
+4. Map the body from `summary`; attach `engagement` as a `.json` if you want the
+   full file.
+5. Save, copy the generated URL, and set both values in `index.html`:
+
+```js
+let OUTPUT_ENDPOINT = 'https://prod-00.westus.logic.azure.com/workflows/...';
+let OUTPUT_ENDPOINT_MODE = 'opaque';
+```
+
+The URL contains its own signature, so treat it as semi-secret: anyone with the
+file can call it. Because the recipient is fixed inside the flow, the blast radius
+is spam to you, and regenerating the URL revokes every copy at once.
 
 ## CORS and `file://`
 
-If the tool is opened from disk rather than a web host, the browser sends
-`Origin: null`. Either set `ALLOW` to `'*'` (fine when the recipient is fixed and
-the endpoint holds no secrets beyond its own URL) or host the HTML and lock the
-origin down. Without this the POST is blocked and the tool falls back to a draft.
+In `'cors'` mode, a tool opened from disk sends `Origin: null`. Either set the
+Worker's `ALLOW` to `'*'` (fine when the recipient is fixed and the endpoint holds
+no secret beyond its own URL) or host the HTML and lock the origin down. Without
+this the POST is blocked and the tool falls back to a draft.
+
+In `'opaque'` mode this does not apply — there is no preflight to fail.
 
 ## Verifying
 
-`test/phase23_verify.js` covers both paths — draft when `OUTPUT_ENDPOINT` is
-empty, POST when it is set, no recipient in the payload, and fallback to a draft
-when the endpoint is down. Run `npm test` after changing any of this.
+`test/phase23_verify.js` covers all three paths — draft when `OUTPUT_ENDPOINT` is
+empty, a confirmed JSON POST in `'cors'` mode, and a no-cors `text/plain` POST in
+`'opaque'` mode that does *not* also open a draft. It also asserts no recipient in
+the payload, no API key in `index.html`, and a draft fallback when the endpoint is
+unreachable. Run `npm test` after changing any of this.
