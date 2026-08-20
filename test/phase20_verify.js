@@ -147,36 +147,26 @@ const STEADY  = [20272013.12, 57332527.4, 81867420.8]; // credited steady-state 
      h2.includes('Qty') && h2.includes('Total') && !h2.includes('Handheld'));
   ok('legacy cost rollup intact ($1,525,400 Yr 0)', w5.eval('state.costs.yr0') === 1525400, String(w5.eval('state.costs.yr0')));
 
-  // ── 10) Enable tiers on ANY analysis from the UI — incl. a library-lever sample.
+  // ── 10) Tier layer is DORMANT (TIERS_ENABLED=false).
+  // The Good/Better/Best layer was disabled because the data it needs does not
+  // exist: there is no lever->capability matrix, and only 19 of 88 levers declare
+  // techKeys, so enableTiers() could only ever seed three identical clones.
+  // These checks assert it stays off and harmless. When TIERS_ENABLED flips back
+  // on, restore the enable/gate/round-trip assertions that this block replaced
+  // (see git history for phase20_verify.js).
   const HC = abs('..', 'examples', 'healthcare_starter.json');
   const w6 = loadApp().window; await ready(w6);
   w6.applyEngagement(readJSON(HC));   // 4 library levers, no tiers
   w6.eval("document.getElementById('panel-4').classList.add('active')");
   w6.renderROI();
-  ok('library sample starts non-tiered with an enable button',
-     w6.eval('tiersActive()') === false &&
-     w6.eval("document.getElementById('tier-controls-roi').innerHTML").includes('Enable solution tiers'));
+  ok('tier layer is gated off', w6.eval('TIERS_ENABLED') === false);
+  ok('analysis stays non-tiered', w6.eval('tiersActive()') === false);
+  ok('no enable button offered', !w6.eval("document.getElementById('tier-controls-roi').innerHTML").includes('Enable solution tiers'));
   const baseHC = w6.eval('state.nrvResult.nrv');
-  w6.enableTiers();
-  ok('enableTiers creates Good/Better/Best and shows the comparison',
-     w6.eval("state.tiers.map(t=>t.name).join('/')") === 'Good/Better/Best' &&
-     w6.eval("document.getElementById('tier-comparison').style.display") === 'block');
-  ok('all tiers start identical to the single-analysis baseline',
-     w6.eval('computeTierComparison().every(t=>t.result.nrv===' + baseHC + ')'), String(baseHC));
-  const lid = w6.eval('activeScenariosForNRV()[0].id');
-  w6.setGating(lid, 0, 50);   // a LIBRARY lever, gated via state.gating
-  ok('a library lever is gatable via state.gating (Good drops below Best)',
-     w6.eval(`state.gating['${lid}'][0]`) === 0.5 &&
-     w6.eval('computeTierComparison()[0].result.nrv') < w6.eval('computeTierComparison()[2].result.nrv'));
-  w6.addTier();
-  ok('addTier grows tiers and every gating array', w6.eval('state.tiers.length') === 4 && w6.eval(`state.gating['${lid}'].length`) === 4);
-  w6.removeTier(3);
-  ok('removeTier shrinks back to 3', w6.eval('state.tiers.length') === 3 && w6.eval(`state.gating['${lid}'].length`) === 3);
-  const savedHC = w6.eval('gatherEngagement()');
-  ok('enabled tiers + gating round-trip through save', Array.isArray(savedHC.tiers) && savedHC.tiers.length === 3 && !!savedHC.gating);
-  w6.disableTiers();
-  ok('disableTiers collapses back to the single analysis at the baseline NPV',
-     w6.eval('tiersActive()') === false && w6.eval('state.nrvResult.nrv') === baseHC, String(w6.eval('state.nrvResult.nrv')));
+  w6.enableTiers();                    // must be inert while gated off
+  ok('enableTiers() is inert while gated off', w6.eval('tiersActive()') === false);
+  ok('NPV unchanged after an enableTiers() call', w6.eval('state.nrvResult.nrv') === baseHC, String(baseHC));
+  ok('no tier keys leak into the saved envelope', !w6.eval('gatherEngagement()').tiers);
 
   console.log(`\n${fail ? '✗' : '✓'} ${pass} passed, ${fail} failed`);
   process.exit(fail ? 1 : 0);

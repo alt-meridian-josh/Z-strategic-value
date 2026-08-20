@@ -52,15 +52,31 @@ const V2 = abs('fixtures', 'v2_multitech_warehouse.json');
     ok('concentration flag visibility matches the 40% threshold (advisory, non-blocking)', shown === (conc.share > 0.40), `shown=${shown} share=${(conc.share*100).toFixed(0)}%`);
   }
 
-  // ── 4) TECHNOLOGY MULTI-SELECT writes to technologies[] and round-trips.
+  // ── 4) TECHNOLOGY PICKER is RETIRED (TECHNOLOGY_SELECT_ENABLED=false) while the
+  // lever library is RFID-only, but the data layer underneath it stays intact so
+  // the picker can be restored once levers carry real technologyIds.
   {
     const w = loadApp().window; await ready(w);
+    ok('technology picker is gated off', w.eval('TECHNOLOGY_SELECT_ENABLED') === false);
+    ok('no picker rendered in Setup', w.document.getElementById('tech-select') === null);
+    // Data layer kept: catalog, inference map and the writer all still work.
+    ok('catalog retained for re-enable', w.eval('TECHNOLOGY_CATALOG.length') === 7);
+    ok('leverTechnologyIds still infers', w.eval("leverTechnologyIds(SCENARIOS.find(s => s.id === 'RET-01')).includes('rfid')"));
     w.eval("engagementTechnologies=[]");
     w.toggleTechnology('rfid', true); w.toggleTechnology('mv', true);
     const g = w.gatherEngagement();
     ok('toggleTechnology writes to technologies[]', g.technologies.map(t => t.id).sort().join(',') === 'mv,rfid', g.technologies.map(t=>t.id).join(','));
-    const host = w.document.getElementById('tech-select').innerHTML;
-    ok('multi-select renders catalog checkboxes', /RFID/.test(host) && /Machine Vision/.test(host) && (host.match(/type="checkbox"/g) || []).length === w.eval('TECHNOLOGY_CATALOG.length'));
+  }
+
+  // ── 4b) A declared stack must NOT filter the lever grid while the picker is off —
+  // with no UI to change it, a loaded file could otherwise hide levers irreversibly.
+  {
+    const w = loadApp().window; await ready(w);
+    w.go(1);
+    const all = w.document.querySelectorAll('.lever-row').length;
+    w.eval("engagementTechnologies=[{id:'mv',label:'Machine Vision'}]"); w.go(1);
+    const withStack = w.document.querySelectorAll('.lever-row').length;
+    ok('declared stack does not hide levers while gated off', all > 0 && withStack === all, `${withStack}/${all}`);
   }
 
   // ── 5) PICKER FILTERS on the selection (mixed-tech levers need ALL their techs).

@@ -1112,11 +1112,9 @@ svg{max-width:100%;height:auto}
     </div>
   </div>
 
-  <div class="card">
-    <div class="card-title">Technology Stack</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Select the technologies in scope. The value-lever picker filters to what this stack can deliver — a lever needing a technology you haven't selected won't appear, and deselecting a technology deactivates any active lever that depends on it.</div>
-    <div id="tech-select" style="display:flex;flex-wrap:wrap;gap:10px"></div>
-  </div>
+  <!-- Technology Stack picker removed while the library is RFID-only (see
+       TECHNOLOGY_SELECT_ENABLED). The data layer behind it is intact; restoring
+       this card plus the flag brings the picker back unchanged. -->
 
   <div class="card">
     <div class="card-title">Team & Partners</div>
@@ -4746,6 +4744,7 @@ function matchScenarios() {
 // Checkboxes bound to engagementTechnologies[]; editable in analyst, locked in
 // customer. The catalog is fixed; the selection is the engagement's stack.
 function renderTechSelect() {
+  if (!TECHNOLOGY_SELECT_ENABLED) return;   // picker retired — see the flag
   const host = document.getElementById('tech-select');
   if (!host) return;
   const customer = (appMode === 'customer');
@@ -4925,6 +4924,25 @@ function emergingConcentration(activeScenarios, result) {
 }
 
 // ── TECHNOLOGY CATALOG + lever↔technology mapping (Chunk 13) ─────────────────
+// The Setup picker and the lever-grid technology filter are OFF: the catalog
+// lists seven technologies, but the lever library only carries data for RFID.
+// Of 88 library levers, 69 declare no technology at all, and the whole techKeys
+// vocabulary is four RFID-flavoured strings (RFID Core 19, Fixed RFID
+// Infrastructure 11, Handheld RFID 3, RTLS / Location 1). So five of the seven
+// chips — Machine Vision, Software Platform, BLE / Beacons, Barcode / Scanning,
+// Mobile Computing — mapped to ZERO levers: they could never reveal a lever,
+// only hide RFID ones. Measured before disabling: all 7 selected => 11 levers,
+// all 7 cleared => 11 levers (an empty selection skipped the filter entirely),
+// Machine Vision alone => 1 lever, and that lever was "RFID Data Foundation for
+// Retail AI & Analytics". Same missing-data root cause as TIERS_ENABLED.
+//
+// Everything below this flag is deliberately kept: the catalog, TECH_KEY_MAP,
+// leverTechnologyIds(), toggleTechnology(), and the technologies[] envelope
+// round-trip all still work, so a saved file never loses its declared stack.
+// To re-enable once the library expands beyond RFID: populate technologyIds on
+// the levers, flip this flag, and restore the "Technology Stack" card in the
+// Setup panel (see the comment where it was removed).
+const TECHNOLOGY_SELECT_ENABLED = false;
 const TECHNOLOGY_CATALOG = [
   { id: 'rfid',     label: 'RFID' },
   { id: 'mv',       label: 'Machine Vision' },
@@ -4971,7 +4989,9 @@ function renderLeverGrid() {
   // technologies are ALL present in the selection (mixed-tech levers need every tech).
   // Tech-agnostic levers (no mapping) always show. Filters DISPLAY only — never the
   // selectedIds sync above, so a loaded engagement never silently loses levers.
-  const selTechs = (engagementTechnologies || []).map(t => t.id);
+  // Gated off with the picker: with no UI to change the stack, a loaded file that
+  // declares technologies[] would filter the grid with no way to undo it.
+  const selTechs = TECHNOLOGY_SELECT_ENABLED ? (engagementTechnologies || []).map(t => t.id) : [];
   const display = selTechs.length
     ? matched.filter(sc => { const need = leverTechnologyIds(sc); return need.length === 0 || need.every(t => selTechs.includes(t)); })
     : matched;

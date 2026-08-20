@@ -7,7 +7,7 @@
     "doc": "docs"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "for f in test/phase*_verify.js; do echo \"\\n== $f ==\"; node \"$f\" || exit 1; done"
   },
   "repository": {
     "type": "git",
